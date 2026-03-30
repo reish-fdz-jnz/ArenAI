@@ -1,0 +1,117 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Theme: Purple Dream — Modern Lavender & Mint
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Light Mode ── */
+body.theme-lavender {
+  --ion-background-color: #F0ECF6;
+  --ion-item-background: #C8BED8;
+  --ion-card-background: #D4CCE0;
+  --ion-text-color: #282030;
+  --ion-text-color-step-150: #3C3448;
+  --ion-text-color-step-400: #706080;
+
+  --ion-color-primary: #7860A0;
+  --ion-color-primary-rgb: 120, 96, 160;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #68508C;
+  --ion-color-primary-tint: #8870B0;
+
+  --ion-color-accent: #E89060;
+  --ion-color-accent-rgb: 232, 144, 96;
+  --ion-color-accent-contrast: #ffffff;
+  --ion-color-accent-shade: #CC7C50;
+  --ion-color-accent-tint: #F0A070;
+
+  --ion-color-secondary: #60A888;
+  --ion-color-secondary-rgb: 96, 168, 136;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #509478;
+  --ion-color-secondary-tint: #70B898;
+  --ion-color-secondary-soft: rgba(96, 168, 136, 0.35);
+
+  --ion-color-tertiary: #6A9FCA;
+  --ion-color-tertiary-rgb: 106, 159, 202;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #5A8AB2;
+  --ion-color-tertiary-tint: #80B0D8;
+
+  --ion-color-card-header: #7860A0;
+  --ion-color-card-border: #60A888;
+  --ion-color-button-primary: #E89060;
+  --ion-color-button-secondary: #60A888;
+  --ion-color-chip: #6A9FCA;
+  --ion-color-chip-outline: #7860A0;
+  --ion-color-highlight: #7860A0;
+  --ion-color-focus-ring: #60A888;
+  --ion-color-link: #7860A0;
+  --ion-color-progress: #60A888;
+  --ion-color-badge: #E89060;
+
+  --ion-color-surface: #F6F2FA;
+  --ion-color-surface-elevated: #ffffff;
+  --ion-border-color: #C0B8D0;
+}
+
+/* ── Dark Mode ── */
+@media (prefers-color-scheme: dark) {
+  body.theme-lavender {
+    --ion-background-color: #141420;
+    --ion-item-background: #1E1E30;
+    --ion-card-background: #222235;
+    --ion-text-color: #E8E4F0;
+    --ion-text-color-step-150: #D0C8E0;
+    --ion-text-color-step-400: #9890B0;
+
+    --ion-color-primary: #7C6DAF;
+    --ion-color-primary-rgb: 124, 109, 175;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-shade: #6A5C98;
+    --ion-color-primary-tint: #8E80C0;
+
+    --ion-color-accent: #E8956A;
+    --ion-color-accent-rgb: 232, 149, 106;
+    --ion-color-accent-contrast: #ffffff;
+    --ion-color-accent-shade: #CC825C;
+    --ion-color-accent-tint: #F0A880;
+
+    --ion-color-secondary: #5EAD8A;
+    --ion-color-secondary-rgb: 94, 173, 138;
+    --ion-color-secondary-contrast: #ffffff;
+    --ion-color-secondary-shade: #509878;
+    --ion-color-secondary-tint: #70C09C;
+    --ion-color-secondary-soft: rgba(94, 173, 138, 0.2);
+
+    --ion-color-tertiary: #6A9FCA;
+    --ion-color-tertiary-rgb: 106, 159, 202;
+    --ion-color-tertiary-contrast: #ffffff;
+    --ion-color-tertiary-shade: #5A8AB2;
+    --ion-color-tertiary-tint: #80B0D8;
+
+    --ion-color-card-header: #7C6DAF;
+    --ion-color-card-border: #5EAD8A;
+    --ion-color-button-primary: #E8956A;
+    --ion-color-button-secondary: #5EAD8A;
+    --ion-color-chip: #6A9FCA;
+    --ion-color-chip-outline: #7C6DAF;
+    --ion-color-highlight: #7C6DAF;
+    --ion-color-focus-ring: #5EAD8A;
+    --ion-color-link: #6A9FCA;
+    --ion-color-progress: #5EAD8A;
+    --ion-color-badge: #E8956A;
+
+    --ion-color-success: #5CB880;
+    --ion-color-success-soft: rgba(92, 184, 128, 0.2);
+    --ion-color-warning: #D8A840;
+    --ion-color-warning-soft: rgba(216, 168, 64, 0.2);
+    --ion-color-danger: #D06060;
+    --ion-color-danger-soft: rgba(208, 96, 96, 0.2);
+
+    --ion-color-surface: #1E1E32;
+    --ion-color-surface-elevated: #2E2E45;
+    --ion-border-color: #3A3858;
+  }
+}

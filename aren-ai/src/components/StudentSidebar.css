@@ -1,46 +1,27 @@
-/* Scoped styles for the Student Menu to override global defaults */
-#student-menu {
-  --background: transparent;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-}
+/* ═══════════════════════════════════════════════════════════════════════════
+   StudentSidebar.css — Complete Rebuild
+   The menu panel background is set via inline style on IonContent because
+   Ionic Shadow DOM blocks external CSS. All other styles are here.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Ensure content background adapts to theme */
-#student-menu ion-content {
-  --background: var(--ion-background-color, #ffffff);
-  background: var(--ion-background-color, #ffffff);
-}
-
-/* DARK MODE - Use theme variable as base, then override per theme */
-@media (prefers-color-scheme: dark) {
-
-  /* Keep menu host transparent so backdrop shows through */
-  #student-menu {
-    --background: transparent !important;
-  }
-
-  #student-menu ion-content {
-    --background: var(--ion-background-color) !important;
-    background: var(--ion-background-color) !important;
-  }
-
-  /* Theme-specific backgrounds now handled by var(--ion-background-color) */
-}
-
+/* ── Profile Header ── */
 .student-menu-header {
-  padding: 30px 20px 25px 20px;
-  background: linear-gradient(180deg, var(--ion-color-primary), var(--ion-color-primary-shade));
-  color: var(--ion-color-primary-contrast);
-  border-bottom: none;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: all 0.3s ease;
+  padding: 30px 20px 20px 20px;
+  background: linear-gradient(
+    180deg,
+    var(--ion-color-primary, #8d6b56),
+    var(--ion-color-primary-shade, #7c5e4c)
+  );
+  color: var(--ion-color-primary-contrast, #fff);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   position: relative;
   overflow: hidden;
 }
 
-/* Subtle decorative background pattern */
+/* Decorative shimmer */
 .student-menu-header::before {
   content: '';
   position: absolute;
@@ -48,433 +29,176 @@
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+  background: radial-gradient(
+    circle at 30% 20%,
+    rgba(255, 255, 255, 0.08) 0%,
+    transparent 50%
+  );
   pointer-events: none;
 }
 
-.student-menu-header.clickable-header {
-  cursor: pointer;
+/* ── Avatar ── */
+.sidebar-mascot-img {
+  width: 90px !important;
+  height: 90px !important;
+  border-radius: 50% !important;
+  border: 3px solid rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  object-fit: cover !important;
+  transition: transform 0.3s ease;
 }
 
-.student-menu-header.clickable-header:hover {
-  background: linear-gradient(180deg, var(--ion-color-primary-shade), var(--ion-color-primary-tint));
-  transform: scale(1.01);
-}
-
-/* Avatar styling */
-.student-avatar-wrapper {
-  position: relative;
-  margin-bottom: 15px;
-}
-
-.student-avatar-wrapper img,
-.student-menu-header img {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  object-fit: cover;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.student-menu-header img:hover {
+.sidebar-mascot-img:hover {
   transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
 }
 
+/* ── User Details ── */
 .student-info {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  margin-top: 5px;
+  margin-top: 8px;
 }
 
 .student-details {
   text-align: center;
-  z-index: 10;
   position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
 }
 
 .student-name {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  color: var(--ion-color-primary-contrast);
+  color: var(--ion-color-primary-contrast, #fff) !important;
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   line-height: 1.3;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .student-email {
-  font-size: 0.85rem;
-  color: var(--ion-color-primary-contrast);
+  font-size: 0.82rem;
+  color: var(--ion-color-primary-contrast, #fff) !important;
   opacity: 0.85;
   display: block;
-  margin-bottom: 3px;
-  line-height: 1.2;
+  margin-bottom: 2px;
 }
 
 .student-username {
-  font-size: 0.8rem;
-  color: var(--ion-color-primary-contrast);
-  opacity: 0.75;
+  font-size: 0.78rem;
+  color: var(--ion-color-primary-contrast, #fff) !important;
+  opacity: 0.7;
   display: block;
-  margin-bottom: 8px;
-  line-height: 1.2;
+  margin-bottom: 10px;
   font-style: italic;
 }
 
-.student-role {
-  font-size: 0.8rem;
-  color: var(--ion-color-primary);
+/* ── "Ver perfil" Button — small, elegant pill ── */
+.sidebar-profile-btn {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 6px 20px;
+  gap: 6px;
+  padding: 6px 18px;
   border-radius: 20px;
-  margin-top: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--ion-color-primary-contrast, #fff);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-transform: none;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 6px;
+}
+
+.sidebar-profile-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.student-role:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+.sidebar-profile-btn:active {
+  transform: translateY(0);
 }
 
+.sidebar-profile-btn ion-icon {
+  font-size: 0.9rem;
+}
+
+/* ── Navigation Lists ── */
 #main-list,
-#settings-list,
-#theme-list {
+#settings-list {
   padding: 8px 0;
   background: transparent;
 }
 
-ion-list-header {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--ion-color-primary);
+#student-menu ion-list-header {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ion-color-secondary, #90BEAB);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
-  padding-left: 16px;
-  padding-right: 16px;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  padding-left: 20px;
 }
 
-ion-item {
+/* ── Menu Items ── */
+#student-menu ion-item {
   --background: transparent;
-  --background-hover: var(--ion-color-primary-tint);
-  --background-activated: var(--ion-color-primary-shade);
-  --color: var(--ion-text-color);
-  margin: 2px 8px;
-  border-radius: 8px;
-  --min-height: 48px;
-  --padding-start: 12px;
-  --inner-padding-end: 12px;
-}
-
-ion-item.selected {
-  --background: var(--ion-color-primary-tint);
-  --color: var(--ion-color-primary-contrast);
-  font-weight: 500;
-}
-
-ion-item.selected-theme {
-  --background: var(--ion-color-primary-tint);
-  --color: var(--ion-color-primary-contrast);
-  font-weight: 500;
-}
-
-ion-item ion-icon {
-  color: var(--ion-color-primary);
-  margin-right: 12px;
-}
-
-ion-item.selected ion-icon {
-  color: var(--ion-color-primary-contrast);
-}
-
-ion-item::part(native) {
-  padding-left: 12px;
-  padding-right: 12px;
-}
-
-.student-menu-footer {
-  padding: 16px;
-  text-align: center;
-  border-top: 1px solid var(--ion-color-primary-tint);
-  margin-top: 20px;
-  background: var(--ion-color-primary-tint);
-}
-
-.app-version {
-  font-size: 0.75rem;
-  color: var(--ion-color-primary-contrast);
-  opacity: 0.7;
-}
-
-/* Animation for menu items */
-ion-item {
-  transition: all 0.2s ease-in-out;
-}
-
-ion-item:hover {
-  transform: translateX(4px);
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .menu-header {
-    padding: 16px 12px;
-  }
-
-  .student-avatar {
-    width: 44px;
-    height: 44px;
-  }
-
-  .student-avatar ion-icon {
-    font-size: 20px;
-  }
-
-  .student-name {
-    font-size: 1rem;
-  }
-
-  .student-email {
-    font-size: 0.75rem;
-  }
-
-  .student-username {
-    font-size: 0.7rem;
-  }
-
-  ion-item {
-    margin: 1px 6px;
-    --min-height: 44px;
-  }
-}
-
-@media (max-width: 480px) {
-  .menu-header {
-    padding: 14px 10px;
-  }
-
-  .student-info {
-    gap: 10px;
-  }
-
-  .student-avatar {
-    width: 40px;
-    height: 40px;
-  }
-
-  .student-avatar ion-icon {
-    font-size: 18px;
-  }
-
-  .student-name {
-    font-size: 0.95rem;
-  }
-
-  .student-email,
-  .student-username {
-    font-size: 0.7rem;
-  }
-
-  ion-list-header {
-    font-size: 0.85rem;
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-}
-
-/* Make backdrop transparent to see page background behind sidebar */
-#student-menu::part(backdrop) {
-  background-color: transparent !important;
-  opacity: 0 !important;
-}
-
-/* Dark mode support - Solid Opaque Backgrounds Per Theme */
-@media (prefers-color-scheme: dark) {
-
-  /* Keep menu host transparent so backdrop stays see-through */
-  #student-menu {
-    --background: transparent !important;
-  }
-
-  /* Content panel gets solid opaque background */
-  #student-menu ion-content {
-    --background: var(--ion-background-color) !important;
-    background: var(--ion-background-color) !important;
-  }
-
-  /* Theme-specific solid backgrounds — only on ion-content */
-  body.theme-navy #student-menu ion-content {
-    --background: #0A1830 !important;
-    background: #0A1830 !important;
-  }
-
-  body.theme-sage #student-menu ion-content {
-    --background: #0F2010 !important;
-    background: #0F2010 !important;
-  }
-
-  body.theme-burgundy #student-menu ion-content {
-    --background: #200810 !important;
-    background: #200810 !important;
-  }
-
-  body.theme-bamboo #student-menu ion-content {
-    --background: #0E1F14 !important;
-    background: #0E1F14 !important;
-  }
-
-  body.theme-earth #student-menu ion-content {
-    --background: #1A1810 !important;
-    background: #1A1810 !important;
-  }
-
-  body.theme-original-alter #student-menu ion-content {
-    --background: #2A2018 !important;
-    background: #2A2018 !important;
-  }
-
-  body.theme-ocean #student-menu ion-content {
-    --background: #0C1929 !important;
-    background: #0C1929 !important;
-  }
-
-  body.theme-sunset #student-menu ion-content {
-    --background: #1A1520 !important;
-    background: #1A1520 !important;
-  }
-
-  body.theme-lavender #student-menu ion-content {
-    --background: #141420 !important;
-    background: #141420 !important;
-  }
-
-  body.theme-forest #student-menu ion-content {
-    --background: #0D1A12 !important;
-    background: #0D1A12 !important;
-  }
-
-  body.theme-arctic #student-menu ion-content {
-    --background: #12161C !important;
-    background: #12161C !important;
-  }
-
-  /* Default/Original theme */
-  body:not([class*="theme-"]) #student-menu ion-content {
-    --background: #2A2018 !important;
-    background: #2A2018 !important;
-  }
-
-  /* Menu items - scoped to sidebar for specificity */
-  #student-menu ion-item {
-    --color: #ffffff !important;
-    color: #ffffff !important;
-    --background: transparent;
-    --background-hover: rgba(255, 255, 255, 0.12);
-  }
-
-  #student-menu ion-item ion-label {
-    color: #ffffff !important;
-  }
-
-  #student-menu ion-item ion-icon {
-    color: rgba(255, 255, 255, 0.85) !important;
-  }
-
-  /* List headers */
-  #student-menu ion-list-header {
-    color: rgba(255, 255, 255, 0.7) !important;
-  }
-
-  /* Selected item - LIGHTER for contrast */
-  #student-menu ion-item.selected {
-    --background: rgba(255, 255, 255, 0.18);
-    --color: #ffffff !important;
-    color: #ffffff !important;
-    font-weight: 600;
-  }
-
-  #student-menu ion-item.selected ion-icon {
-    color: var(--ion-color-secondary) !important;
-  }
-
-  .student-menu-footer {
-    border-top-color: rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.25);
-  }
-
-  .app-version {
-    color: rgba(255, 255, 255, 0.7);
-  }
-
-  .sidebar-usage-info {
-    background: rgba(0, 0, 0, 0.2);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-  }
-
-  .usage-label,
-  .usage-progress-label {
-    color: #ffffff !important;
-  }
-}
-
-/* Light mode - ensure proper text color adaptation */
-@media (prefers-color-scheme: light) {
-  #student-menu ion-item {
-    --color: var(--ion-text-color);
-    color: var(--ion-text-color);
-  }
-
-  #student-menu ion-item ion-label {
-    color: var(--ion-text-color);
-  }
-
-  #student-menu ion-list-header {
-    color: var(--ion-color-primary);
-  }
-}
-
-.sidebar.animate {
-  animation: slideIn 1s ease;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.sidebar-usage-info {
-  margin: 24px 16px 0 16px;
-  padding: 12px 10px 10px 10px;
-  background: var(--ion-card-background);
+  --color: var(--ion-text-color, #2c3e50);
+  --min-height: 46px;
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+  margin: 1px 10px;
   border-radius: 10px;
-  border: 1px solid var(--ion-color-secondary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  font-size: 0.97rem;
-  color: var(--ion-text-color);
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+#student-menu ion-item:hover {
+  --background: rgba(var(--ion-color-primary-rgb, 141, 107, 86), 0.1);
+  transform: translateX(3px);
+}
+
+/* ── Selected State ── */
+#student-menu ion-item.selected {
+  --background: var(--ion-color-primary, #8d6b56);
+  --color: var(--ion-color-primary-contrast, #fff);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+#student-menu ion-item.selected ion-icon {
+  color: var(--ion-color-primary-contrast, #fff) !important;
+}
+
+/* ── Icons ── */
+#student-menu ion-item ion-icon {
+  color: var(--ion-color-secondary, #90BEAB);
+  margin-right: 10px;
+  font-size: 1.2rem;
+}
+
+/* ── Usage Info Card ── */
+.sidebar-usage-info {
+  margin: 20px 14px 0 14px;
+  padding: 12px;
+  background: var(--ion-card-background, #a09470);
+  border-radius: 14px;
+  border: 1px solid rgba(var(--ion-color-secondary-rgb, 144, 190, 171), 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  font-size: 0.92rem;
+  color: var(--ion-text-color, #2c3e50);
 }
 
 .usage-row {
@@ -486,21 +210,21 @@ ion-item:hover {
 
 .usage-label {
   font-weight: 600;
-  font-size: 0.97em;
+  font-size: 0.92em;
   margin-left: 6px;
   flex: 1;
+  color: var(--ion-text-color, #2c3e50);
 }
 
 .usage-value {
   font-weight: 700;
-  color: var(--ion-color-secondary);
+  color: var(--ion-color-secondary, #90BEAB);
   margin-left: 8px;
 }
 
 .usage-icon {
-  color: var(--ion-color-primary);
+  color: var(--ion-color-secondary, #90BEAB);
   font-size: 1.1em;
-  margin-right: 4px;
 }
 
 .usage-help-btn {
@@ -511,78 +235,124 @@ ion-item:hover {
   outline: none;
   display: flex;
   align-items: center;
-  color: var(--ion-color-secondary);
+  color: var(--ion-color-secondary, #90BEAB);
   font-size: 1.1em;
-  transition: color 0.2s;
-}
-
-.usage-help-btn:hover ion-icon {
-  color: var(--ion-color-primary);
 }
 
 .usage-formula-tooltip {
   position: absolute;
-  left: 30px;
-  right: 30px;
+  left: 20px;
+  right: 20px;
   bottom: 80px;
-  background: var(--ion-card-background);
-  color: var(--ion-text-color);
-  border: 1px solid var(--ion-color-secondary);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  background: var(--ion-card-background, #a09470);
+  color: var(--ion-text-color, #2c3e50);
+  border: 1px solid var(--ion-color-secondary, #90BEAB);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   padding: 14px 16px 10px 16px;
   z-index: 9999;
-  font-size: 0.98em;
-  animation: fadeIn 0.2s;
+  font-size: 0.95em;
+  animation: tooltipIn 0.2s ease;
   cursor: pointer;
+}
+
+@keyframes tooltipIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .usage-formula-tooltip strong {
   display: block;
   margin-bottom: 6px;
-  font-size: 1em;
 }
 
 .usage-formula-close {
   margin-top: 8px;
   font-size: 0.9em;
-  color: var(--ion-color-secondary);
+  color: var(--ion-color-secondary, #90BEAB);
   text-align: right;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .usage-progress-bar {
   width: 100%;
-  height: 12px;
-  background: var(--ion-item-background);
-  border-radius: 6px;
-  margin: 8px 0 2px 0;
+  height: 8px;
+  background: rgba(var(--ion-color-primary-rgb, 141, 107, 86), 0.15);
+  border-radius: 4px;
+  margin: 6px 0 2px 0;
   overflow: hidden;
-  position: relative;
 }
 
 .usage-progress-inner {
   height: 100%;
-  background: linear-gradient(90deg, var(--ion-color-secondary) 60%, var(--ion-color-tertiary) 100%);
-  border-radius: 6px;
-  transition: width 0.4s;
+  background: linear-gradient(
+    90deg,
+    var(--ion-color-secondary, #90BEAB) 60%,
+    var(--ion-color-tertiary, #536E83) 100%
+  );
+  border-radius: 4px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .usage-progress-label {
-  font-size: 0.88em;
-  color: var(--ion-text-color);
-  margin-bottom: 6px;
-  margin-top: 2px;
+  font-size: 0.85em;
+  color: var(--ion-text-color, #2c3e50);
+  margin-bottom: 4px;
   text-align: right;
+  opacity: 0.6;
+}
+
+/* ── Footer ── */
+.student-menu-footer {
+  padding: 14px;
+  text-align: center;
+  border-top: 1px solid rgba(var(--ion-color-primary-rgb, 141, 107, 86), 0.15);
+  margin-top: 16px;
+}
+
+.app-version {
+  font-size: 0.72rem;
+  color: var(--ion-text-color, #2c3e50) !important;
+  opacity: 0.4;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  #student-menu ion-item {
+    --color: var(--ion-text-color, #F5EDE5);
+  }
+
+  #student-menu ion-item:hover {
+    --background: rgba(255, 255, 255, 0.07);
+  }
+
+  #student-menu ion-item.selected {
+    --background: rgba(var(--ion-color-secondary-rgb, 144, 190, 171), 0.2);
+    --color: var(--ion-text-color, #F5EDE5);
+    border-left: 3px solid var(--ion-color-secondary, #90BEAB);
+  }
+
+  #student-menu ion-item.selected ion-icon {
+    color: var(--ion-color-secondary, #90BEAB) !important;
+  }
+
+  .sidebar-usage-info {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(var(--ion-color-secondary-rgb, 144, 190, 171), 0.15);
+  }
+
+  .sidebar-profile-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .student-name { font-size: 1rem; }
+  .student-email { font-size: 0.75rem; }
+  .student-username { font-size: 0.7rem; }
 }

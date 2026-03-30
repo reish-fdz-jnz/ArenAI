@@ -17,7 +17,7 @@ import {
   IonToggle,
 } from "@ionic/react";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, THEME_REGISTRY } from "../context/ThemeContext";
 import StudentHeader from "../components/StudentHeader";
 import PageTransition from "../components/PageTransition";
 // import { UserData } from "../types/user"; // Could be used if we show user info here
@@ -25,7 +25,7 @@ import "./StudentSettings.css";
 
 const StudentSettings: React.FC = () => {
   console.log("StudentSettings mounting");
-  const { theme, setTheme, availableThemes } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { t, i18n } = useTranslation();
   const { isMuted, toggleMute } = useSound();
 
@@ -48,9 +48,9 @@ const StudentSettings: React.FC = () => {
             <IonItem>
               <IonLabel>{t("settings.theme")}</IonLabel>
               <IonSelect value={theme} onIonChange={handleThemeChange}>
-                {availableThemes.map((themeName) => (
-                  <IonSelectOption key={themeName} value={themeName}>
-                    {themeName.charAt(0).toUpperCase() + themeName.slice(1)}
+                {THEME_REGISTRY.map((t) => (
+                  <IonSelectOption key={t.id} value={t.id}>
+                    {t.emoji} {t.displayName}
                   </IonSelectOption>
                 ))}
               </IonSelect>

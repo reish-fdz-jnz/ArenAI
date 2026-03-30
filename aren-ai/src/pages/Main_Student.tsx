@@ -300,6 +300,22 @@ const Main_Student: React.FC = () => {
     setCurrentQuestionIndex((prev) => (prev - 1 + 5) % 5);
   };
 
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // Available subjects
+  const availableSubjects = ["Math", "Science", "Social Studies", "Spanish"];
+
+  // Handlers
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    console.log("Selected date:", date);
+  };
+
+  const handleCalendarSubjectSelect = (subject: string, date: Date) => {
+    setSelectedSubject(subject);
+    setSelectedDate(date);
+  };
+
   const navigateTo = (path: string) => {
     router.push(path, "forward", "push");
   };
@@ -364,13 +380,14 @@ const Main_Student: React.FC = () => {
               </div>
             ) : (
               <>
-                {/* Calendar Selector */}
+                {/* Calendar Selector — now wired to subject selection */}
                 <div className="ms-week-selector">
                   <CalendarSelector
-                    onDateSelect={(date: any) =>
-                      console.log("Selected date:", date)
-                    }
+                    onDateSelect={handleDateSelect}
+                    onSubjectSelect={handleCalendarSubjectSelect}
                     title={t("Clase prototipo") || "Class Schedule"}
+                    subjects={availableSubjects}
+                    selectedSubject={selectedSubject}
                   />
                 </div>
 

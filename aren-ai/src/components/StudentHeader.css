@@ -121,7 +121,7 @@
 
 .sh-subject-display.interactive:active {
     transform: scale(0.95);
-    background: #FFCCBC;
+    background: var(--ion-color-secondary-tint);
     /* Lighter shade interact */
 }
 

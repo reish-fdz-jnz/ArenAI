@@ -52,7 +52,7 @@
 .input-label {
     font-size: 0.9rem;
     font-weight: 600;
-    color: #333333 !important;
+    color: var(--ion-text-color) !important;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -60,20 +60,11 @@
 }
 
 .input-label ion-icon {
-    color: #666666 !important;
+    color: var(--ion-text-color-step-400, var(--ion-text-color)) !important;
     font-size: 1.1rem;
 }
 
-/* Dark mode fix for labels */
-@media (prefers-color-scheme: dark) {
-    .input-label {
-        color: #e0e0e0 !important;
-    }
-
-    .input-label ion-icon {
-        color: #aaaaaa !important;
-    }
-}
+/* Dark mode label colors are now handled by theme variables above */
 
 /* MODERN INPUT STYLING */
 .modern-input {

@@ -32,7 +32,7 @@
 }
 
 .search-bar-container {
-    background: white;
+    background: var(--st-surface, white);
     border-radius: 50px;
     padding: 10px 20px;
     display: flex;
@@ -41,6 +41,7 @@
     max-width: 500px;
     margin: 0 auto;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s ease;
 }
 
 .search-bar-container .search-icon {
@@ -67,7 +68,7 @@
     align-items: center;
     gap: 10px;
     margin-bottom: 15px;
-    color: var(--ion-color-dark);
+    color: var(--ion-text-color);
 }
 
 .section-header h2 {

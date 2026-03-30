@@ -300,7 +300,7 @@ const StudentProfile: React.FC = () => {
       >
         <div className="picker-modal-content">
           <h2 className="picker-modal-title">
-            {t("studentProfile.choosePicture") || "Choose Profile Picture"}
+            {t("studentProfile.choosePicture", "Elige tu foto de perfil")}
           </h2>
           <div className="picker-grid">
             {PROFILE_PICTURES.map((pic) => (
@@ -326,7 +326,7 @@ const StudentProfile: React.FC = () => {
             className="picker-close-btn"
             onClick={() => setShowPicturePicker(false)}
           >
-            {t("common.cancel") || "Cancel"}
+            {t("common.cancel", "Cancelar")}
           </button>
         </div>
       </IonModal>
