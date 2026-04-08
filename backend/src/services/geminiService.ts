@@ -1,80 +1,57 @@
 // C:\ArenAI\ArenAI\backend\src\services\geminiService.ts
 
-import { GoogleGenAI } from '@google/genai';
-// import { appConfig } from '../config/env.js'; // Descomenta si usas tu config centralizada
+const OLLAMA_URL = "http://213.250.149.27:11434/api/generate";
+const OLLAMA_MODEL = "qwen2.5:0.5b";
 
-const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT_ID;
-const LOCATION = process.env.GOOGLE_CLOUD_LOCATION;
-
-if (!PROJECT_ID || !LOCATION) {
-    console.warn("⚠️ ADVERTENCIA: GOOGLE_CLOUD_PROJECT_ID o GOOGLE_CLOUD_LOCATION no están definidos. El servicio de Gemini podría fallar.");
-}
-
-// CORRECCIÓN AQUÍ:
-const ai = new GoogleGenAI({
-    vertexai: true, // Esto activa el modo Vertex AI
-    location: LOCATION || 'us-central1',
-    project: PROJECT_ID || 'coastal-burner-491004-f0',
-});
-
-// Usamos el modelo 1.5 Flash que es rápido y económico en Vertex AI
-const GEMINI_MODEL = "gemini-2.0-flash-lite-001";
-
-// Modificamos la función para aceptar un segundo parámetro: systemInstruction
 // Modificamos la función para aceptar un segundo parámetro: systemInstruction
 // Y un tercer parámetro opcional: history
 export async function generateContentWithGemini(
-    userPrompt: string,
-    systemInstruction?: string,
+    userPrompt: string, 
+    systemInstruction?: string, 
     history?: any[]
 ): Promise<string> {
     try {
-        let contentsPayload: any[] = [];
+        let finalPrompt = "";
 
-        // 1. If history exists, format it correctly
+        // Si hay historial (history), podemos agregarlo al contexto
         if (history && Array.isArray(history) && history.length > 0) {
-            // Ensure proper format for Gemini API
-            contentsPayload = history.map(msg => ({
-                role: msg.role === 'user' ? 'user' : 'model',
-                parts: msg.parts || [{ text: msg.message || "" }]
-            }));
+            for (const msg of history) {
+                const role = msg.role === 'user' ? 'Usuario' : 'IA';
+                const text = msg.parts?.[0]?.text || msg.message || "";
+                finalPrompt += `${role}: ${text}\n\n`;
+            }
         }
 
-        // 2. Construct the logical "Final Prompt" for the current turn
-        // We attach the System Instruction to the CURRENT user prompt effectively by formatting.
-        // Or we can just pretend the system instruction is a preamble. 
-        // For simplicity and robustness with this SDK:
-        // We will append the current user prompt to the contents list.
-
-        let finalUserText = userPrompt;
-
-        // If it's a fresh chat (no history), or we just want to reinforce the instruction:
+        // Agregar la instrucción del sistema al prompt final si existe
         if (systemInstruction) {
-            finalUserText = `${systemInstruction}\n\n----------------\nPREGUNTA DEL USUARIO:\n${userPrompt}`;
+             finalPrompt += `${systemInstruction}\n\n----------------\nPREGUNTA DEL USUARIO:\n${userPrompt}`;
+        } else {
+             finalPrompt += `Usuario: ${userPrompt}`;
         }
 
-        // Add the current interaction
-        contentsPayload.push({
-            role: "user",
-            parts: [{ text: finalUserText }]
+        const payload = {
+            model: OLLAMA_MODEL,
+            prompt: finalPrompt,
+            stream: false
+        };
+
+        const response = await fetch(OLLAMA_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
         });
 
-        const response: any = await ai.models.generateContent({
-            model: GEMINI_MODEL,
-            contents: contentsPayload,
-        });
-
-        if (response && response.text) {
-            return typeof response.text === 'function' ? response.text() : response.text;
+        if (!response.ok) {
+            throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
         }
 
-        if (response?.candidates?.[0]?.content?.parts?.[0]?.text) {
-            return response.candidates[0].content.parts[0].text;
-        }
-
-        return JSON.stringify(response);
+        const data: any = await response.json();
+        
+        return data.response ? data.response.trim() : JSON.stringify(data);
     } catch (error) {
-        console.error("Error generating content with Gemini:", error);
+        console.error("Error generating content with Ollama (geminiService):", error);
         throw error;
     }
 }
@@ -83,31 +60,36 @@ export async function generateContentWithGemini(
  * Quick test function to verify connection.
  */
 export async function checkGeminiConnection(): Promise<string> {
-    const prompt = "Hello how are you";
-    console.log(`[Gemini Test] Sending prompt: ${prompt}`);
-
+    const prompt = "Asume el rol del motor de inteligencia artificial de ArenAI. Responde en una sola oración: ¿estás listo para empezar a procesar contenido educativo?";
+    console.log(`[Ollama Test] Sending prompt: ${prompt}`);
+    
     try {
-        // Nota: en este SDK a veces se usa config como segundo argumento, 
-        // pero para generateContent suele ser el primero con las opciones.
-        const response: any = await ai.models.generateContent({
-            model: GEMINI_MODEL,
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
+        const payload = {
+            model: OLLAMA_MODEL,
+            prompt: prompt,
+            stream: false
+        };
+
+        const response = await fetch(OLLAMA_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
         });
 
-        let text = '';
-        if (response.text) {
-            text = typeof response.text === 'function' ? response.text() : response.text;
-        } else if (response?.candidates?.[0]?.content?.parts?.[0]?.text) {
-            text = response.candidates[0].content.parts[0].text;
+        if (!response.ok) {
+            throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
         }
 
-        return text;
+        const data: any = await response.json();
+        return data.response ? data.response.trim() : JSON.stringify(data);
     } catch (error) {
-        console.error("Gemini connection test failed:", error);
-        // Mostrar detalles del error si es de Google Cloud
+        console.error("Ollama connection test failed:", error);
         if (error instanceof Error) {
             console.error("Detalles del error:", error.message);
         }
         throw error;
     }
 }
+
