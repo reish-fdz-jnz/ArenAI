@@ -1,0 +1,117 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Theme: Sage Wisdom — Calming Natural Sage Green
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Light Mode ── */
+body.theme-sage {
+  --ion-background-color: #F0F4EC;
+  --ion-item-background: #C4D6B4;
+  --ion-card-background: #D6E2CC;
+  --ion-text-color: #2C3E2D;
+  --ion-text-color-step-150: #3D5040;
+  --ion-text-color-step-400: #6B8470;
+
+  --ion-color-primary: #5E8C52;
+  --ion-color-primary-rgb: 94, 140, 82;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #507A46;
+  --ion-color-primary-tint: #6E9C62;
+
+  --ion-color-accent: #D4A843;
+  --ion-color-accent-rgb: 212, 168, 67;
+  --ion-color-accent-contrast: #ffffff;
+  --ion-color-accent-shade: #B89038;
+  --ion-color-accent-tint: #E0B858;
+
+  --ion-color-secondary: #82AC70;
+  --ion-color-secondary-rgb: 130, 172, 112;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #709860;
+  --ion-color-secondary-tint: #92BC80;
+  --ion-color-secondary-soft: rgba(130, 172, 112, 0.35);
+
+  --ion-color-tertiary: #8C7450;
+  --ion-color-tertiary-rgb: 140, 116, 80;
+  --ion-color-tertiary-contrast: #ffffff;
+  --ion-color-tertiary-contrast-rgb: 255, 255, 255;
+  --ion-color-tertiary-shade: #7A6444;
+  --ion-color-tertiary-tint: #9C8460;
+
+  --ion-color-card-header: #5E8C52;
+  --ion-color-card-border: #82AC70;
+  --ion-color-button-primary: #D4A843;
+  --ion-color-button-secondary: #82AC70;
+  --ion-color-chip: #82AC70;
+  --ion-color-chip-outline: #D4A843;
+  --ion-color-highlight: #D4A843;
+  --ion-color-focus-ring: #82AC70;
+  --ion-color-link: #5E8C52;
+  --ion-color-progress: #82AC70;
+  --ion-color-badge: #D4A843;
+
+  --ion-color-surface: #F8FAF4;
+  --ion-color-surface-elevated: #ffffff;
+  --ion-border-color: #C0D0B0;
+}
+
+/* ── Dark Mode ── */
+@media (prefers-color-scheme: dark) {
+  body.theme-sage {
+    --ion-background-color: #1A2818;
+    --ion-item-background: #263E22;
+    --ion-card-background: #2C4428;
+    --ion-text-color: #E8F0E4;
+    --ion-text-color-step-150: #D0E0CC;
+    --ion-text-color-step-400: #A0C0A0;
+
+    --ion-color-primary: #4D8048;
+    --ion-color-primary-rgb: 77, 128, 72;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-shade: #3D6838;
+    --ion-color-primary-tint: #5D9058;
+
+    --ion-color-accent: #E8C850;
+    --ion-color-accent-rgb: 232, 200, 80;
+    --ion-color-accent-contrast: #1a1a1a;
+    --ion-color-accent-shade: #C8A840;
+    --ion-color-accent-tint: #F0D868;
+
+    --ion-color-secondary: #6CA060;
+    --ion-color-secondary-rgb: 108, 160, 96;
+    --ion-color-secondary-contrast: #ffffff;
+    --ion-color-secondary-shade: #5C8850;
+    --ion-color-secondary-tint: #7CB070;
+    --ion-color-secondary-soft: rgba(108, 160, 96, 0.2);
+
+    --ion-color-tertiary: #C49A6C;
+    --ion-color-tertiary-rgb: 196, 154, 108;
+    --ion-color-tertiary-contrast: #ffffff;
+    --ion-color-tertiary-shade: #A8845C;
+    --ion-color-tertiary-tint: #D0AA7C;
+
+    --ion-color-card-header: #6CA060;
+    --ion-color-card-border: #E8C850;
+    --ion-color-button-primary: #E8C850;
+    --ion-color-button-secondary: #6CA060;
+    --ion-color-chip: #6CA060;
+    --ion-color-chip-outline: #E8C850;
+    --ion-color-highlight: #E8C850;
+    --ion-color-focus-ring: #6CA060;
+    --ion-color-link: #6CA060;
+    --ion-color-progress: #6CA060;
+    --ion-color-badge: #E8C850;
+
+    --ion-color-success: #81C784;
+    --ion-color-success-soft: rgba(129, 199, 132, 0.2);
+    --ion-color-warning: #FFCA28;
+    --ion-color-warning-soft: rgba(255, 202, 40, 0.2);
+    --ion-color-danger: #EF5350;
+    --ion-color-danger-soft: rgba(239, 83, 80, 0.2);
+
+    --ion-color-surface: #263E22;
+    --ion-color-surface-elevated: #346030;
+    --ion-border-color: #4A7840;
+  }
+}

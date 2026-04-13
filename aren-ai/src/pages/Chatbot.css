@@ -1,137 +1,49 @@
-/* Chatbot.css - Universal Dynamic Theme Architecture (Final Fix) */
-
-/* 0. Theme Variables (Light Mode Defaults & Fallbacks) */
-:root {
-  --chat-bg-color: var(--ion-background-color, #f9f4e6);
-  --chat-header-bg: var(--ion-background-color, #f9f4e6);
-  --chat-bot-bubble-bg: var(--ion-card-background, #fff);
-  --chat-bot-text: var(--ion-text-color, #333);
-  --chat-input-bg: var(--ion-item-background, #fff);
-  --chat-input-border: var(--ion-color-light-shade, #ddd);
-  --chat-footer-bg: var(--ion-color-primary);
-  --chat-input-pill-bg: var(--ion-card-background, #fff);
-}
-
 /* ═══════════════════════════════════════════════════════════════════════════
-   UNIVERSAL THEME SUPPORT 
-   Applied ALWAYS. No @media queries restricting these rules.
+   Chatbot.css — Complete Rebuild
+   Theme-agnostic using Ionic CSS variables. No per-theme overrides needed.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* 1. Page Background & Layout (Aggressive Enforcement) */
-
-/* Apply background to the absolute root of the page components */
-.chatbot-page,
-ion-content.chat-content,
-.chat-container,
-.chatbot-page ion-header,
-.chatbot-page .sh-notch-container {
-  --background: var(--ion-background-color) !important;
-  background: var(--ion-background-color) !important;
-  background-color: var(--ion-background-color) !important;
-}
-
-/* IonPage - Use theme background variable (not hardcoded) */
+/* ── Page & Content — seamless background, no gaps ── */
 .chatbot-page {
-  --background: var(--ion-background-color) !important;
-  background: var(--ion-background-color) !important;
-  background-color: var(--ion-background-color) !important;
-  z-index: 1;
+  --background: var(--ion-background-color, #e8dfc8) !important;
+  background: var(--ion-background-color, #e8dfc8) !important;
 }
 
-/* Force café background ONLY for default theme (no theme class) */
-body:not([class*="theme-"]) .chatbot-page,
-body:not([class*="theme-"]) .chat-content,
-body:not([class*="theme-"]) .chat-container,
-body:not([class*="theme-"]) .messages-list,
-body:not([class*="theme-"]) .chat-messages-area {
-  --ion-background-color: #3D2E24 !important;
-  --background: #3D2E24 !important;
-  background: #3D2E24 !important;
-  background-color: #3D2E24 !important;
+.chatbot-page ion-content.chat-content {
+  --background: var(--ion-background-color, #e8dfc8) !important;
+  background: var(--ion-background-color, #e8dfc8) !important;
 }
 
-/* 2. Gap & Notch Fixes */
-
-/* Make notch container transparent to reveal the page background */
+/* Notch should blend — no visible gap below it */
 .chatbot-page .sh-notch-container {
   background: transparent !important;
   box-shadow: none !important;
 }
 
-/* Pull content up to connect with header */
+/* Pull the IonContent up so it sits RIGHT below the toolbar,
+   behind the notch. The notch floats over the content seamlessly. */
 .chatbot-page ion-content {
-  margin-top: -20px !important;
-  padding-top: 20px !important;
-  --padding-top: 20px !important;
-  overflow: hidden;
-  /* Prevent double scrollbars if any */
+  margin-top: -30px !important;
+  --padding-top: 0px !important;
 }
 
-/* Chat Container - Force theme background (FIX BLACK BUG) */
+/* ── Chat Container — start messages below notch ── */
 .chat-container {
-  background: var(--ion-background-color, #3D2E24) !important;
-  background-color: var(--ion-background-color, #3D2E24) !important;
-  margin-top: -10px;
-  padding-top: 30px !important;
-  min-height: 100vh;
-  /* Ensure it fills screen */
+  padding: 50px 16px 100px 16px;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: transparent;
 }
 
-/* Messages area also needs background */
-.messages-list,
-.chat-messages-area {
-  background: var(--ion-background-color, #3D2E24) !important;
-  background-color: var(--ion-background-color, #3D2E24) !important;
-}
-
-/* 3. Bubbles & Avatars */
-
-/* Bot Bubble: Uses tertiary color border for contrast */
-.chat-bubble.bot {
-  background: var(--ion-color-surface, var(--ion-card-background, #f5f5f5)) !important;
-  color: var(--ion-text-color) !important;
-  border: 3px solid var(--ion-color-card-border, var(--ion-color-tertiary)) !important;
-  border-bottom-left-radius: 4px;
-  box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.15);
-}
-
-.chat-bubble.bot .bubble-text {
-  color: var(--ion-text-color) !important;
-}
-
-/* User Bubble: Uses accent color for vibrant look */
-.chat-bubble.user {
-  background: linear-gradient(135deg, var(--ion-color-button-primary, var(--ion-color-accent)), var(--ion-color-accent-shade)) !important;
-  color: var(--ion-color-accent-contrast, #fff) !important;
-  border: 3px solid var(--ion-color-chip-outline, var(--ion-color-secondary)) !important;
-  border-bottom-right-radius: 4px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-
-/* Avatars */
-.chat-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-  margin-bottom: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.chat-avatar.bot {
-  margin-right: 8px;
-}
-
-.chat-avatar.user {
-  margin-left: 8px;
-}
-
-/* 4. Message Rows */
+/* ── Message Rows ── */
 .message-row {
   display: flex;
   width: 100%;
   align-items: flex-end;
+  gap: 8px;
+  animation: msgSlideIn 0.3s ease-out;
 }
 
 .message-row.user {
@@ -142,87 +54,69 @@ body:not([class*="theme-"]) .chat-messages-area {
   justify-content: flex-start;
 }
 
-/* 5. Input Area (VISIBILITY FIX) */
-
-.chat-footer {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 16px 16px calc(16px + env(safe-area-inset-bottom)) 16px;
-  background: linear-gradient(135deg, var(--ion-color-card-header, var(--ion-color-primary)), var(--ion-color-primary-shade)) !important;
-  border-top-left-radius: 30px;
-  border-top-right-radius: 30px;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 -5px 20px rgba(var(--ion-color-primary-rgb), 0.25);
+@keyframes msgSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* INPUT PILL: Use highlight color for border */
-.input-pill {
-  width: 100%;
-  max-width: 600px;
-  background: var(--ion-color-surface, var(--ion-card-background, #fff)) !important;
-  border-radius: 28px;
-  display: flex;
-  align-items: center;
-  padding: 4px 6px 4px 20px;
-  box-shadow: 0 4px 20px rgba(var(--ion-color-primary-rgb), 0.1);
-  border: 2px solid var(--ion-color-highlight, var(--ion-color-secondary));
-  min-height: 56px;
-}
-
-/* INPUT TEXT: Enforce Text Color */
-.chat-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  font-size: 1rem;
-  color: var(--ion-text-color, #fff) !important;
-  /* Force visible text color */
-  margin: 0;
-  --padding-top: 10px;
-  --padding-bottom: 10px;
-  --placeholder-color: var(--ion-text-color, #ccc);
-  --placeholder-opacity: 0.7;
-}
-
-/* Force inner input elements to inherit color */
-.chat-input input,
-.chat-input textarea,
-.chat-input .native-input,
-.chat-input .native-textarea {
-  color: var(--ion-text-color, #fff) !important;
-  -webkit-text-fill-color: var(--ion-text-color, #fff) !important;
-  background: transparent !important;
-}
-
-/* Placeholder Styling */
-.chat-input::placeholder,
-.chat-input input::placeholder,
-.chat-input .native-input::placeholder,
-.chat-input textarea::placeholder {
-  color: var(--ion-text-color, #ccc) !important;
-  -webkit-text-fill-color: var(--ion-text-color, #ccc) !important;
-  opacity: 0.7 !important;
-}
-
-/* 6. Layout Utilities & Header */
+/* ── Bubbles ── */
 .chat-bubble {
   max-width: 75%;
   padding: 12px 16px;
   border-radius: 18px;
-  font-size: 1rem;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  line-height: 1.55;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
-  color: white !important;
+  word-break: break-word;
 }
 
+/* Bot bubble — surface card with primary border accent */
+.chat-bubble.bot {
+  background: var(--ion-color-surface, var(--ion-card-background, #fff));
+  color: var(--ion-text-color, #333);
+  border: 2px solid var(--ion-color-card-border, var(--ion-color-tertiary, #536E83));
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+}
+
+.chat-bubble.bot .bubble-text {
+  color: var(--ion-text-color, #333);
+}
+
+.chat-bubble.bot .bubble-time {
+  color: var(--ion-text-color, #333);
+}
+
+/* User bubble — accent gradient with secondary border */
+.chat-bubble.user {
+  background: linear-gradient(
+    135deg,
+    var(--ion-color-secondary, #90BEAB),
+    var(--ion-color-secondary-shade, #7fa796)
+  );
+  color: var(--ion-color-secondary-contrast, #fff);
+  border: 2px solid var(--ion-color-primary, #8d6b56);
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.chat-bubble.user .bubble-text {
+  color: var(--ion-color-secondary-contrast, #fff);
+}
+
+.chat-bubble.user .bubble-time {
+  color: var(--ion-color-secondary-contrast, #fff);
+}
+
+/* ── Bubble Contents ── */
 .bubble-text {
   word-wrap: break-word;
   white-space: pre-wrap;
@@ -231,381 +125,238 @@ body:not([class*="theme-"]) .chat-messages-area {
 .bubble-time {
   font-size: 0.7rem;
   margin-top: 4px;
-  opacity: 0.7;
+  opacity: 0.6;
   align-self: flex-end;
 }
 
-/* Clean Headers */
-.student-header-container {
-  background: transparent !important;
+/* Typing cursor */
+.typing-cursor {
+  animation: blink 1s step-end infinite;
+  font-weight: bold;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── Code blocks inside bubbles ── */
+.chat-bubble code {
+  background: rgba(0, 0, 0, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Fira Code', 'Consolas', monospace;
+  font-size: 0.88rem;
+}
+
+/* ── Avatars ── */
+.chat-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  border: 2px solid rgba(var(--ion-color-primary-rgb, 141, 107, 86), 0.2);
+}
+
+.chat-avatar.bot {
+  margin-right: 0;
+}
+
+.chat-avatar.user {
+  margin-left: 0;
+}
+
+.chat-avatar.hidden {
+  opacity: 0;
   pointer-events: none;
 }
 
-.student-toolbar {
-  --background: var(--ion-color-primary) !important;
-  background: var(--ion-color-primary) !important;
-  pointer-events: auto;
+/* ── Input Footer — fixed at bottom ── */
+.chat-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px)) 16px;
+  background: linear-gradient(
+    135deg,
+    var(--ion-color-primary, #8d6b56),
+    var(--ion-color-primary-shade, #7c5e4c)
+  );
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
 }
 
-.student-top-right,
-.sh-brand-name,
-.sh-menu-btn {
-  color: var(--ion-color-primary-contrast) !important;
+/* Input pill */
+.input-pill {
+  width: 100%;
+  max-width: 600px;
+  background: var(--ion-color-surface, var(--ion-card-background, #fff));
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  padding: 4px 6px 4px 20px;
+  border: 2px solid var(--ion-color-secondary, #90BEAB);
+  min-height: 52px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: border-color 0.2s ease;
 }
 
-.sh-brand-sub {
-  color: rgba(255, 255, 255, 0.8) !important;
+.input-pill:focus-within {
+  border-color: var(--ion-color-tertiary, #536E83);
+  box-shadow: 0 2px 16px rgba(var(--ion-color-primary-rgb, 141, 107, 86), 0.15);
 }
 
-.sh-notch {
-  background-color: var(--ion-color-primary) !important;
+/* Input text */
+.chat-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-size: 0.95rem;
+  color: var(--ion-text-color, #333) !important;
+  margin: 0;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  --placeholder-color: var(--ion-text-color, #aaa);
+  --placeholder-opacity: 0.5;
+  --color: var(--ion-text-color, #333);
 }
 
-.app-header ion-toolbar {
-  --background: transparent !important;
+.chat-input input,
+.chat-input textarea,
+.chat-input .native-input,
+.chat-input .native-textarea {
+  color: var(--ion-text-color, #333) !important;
+  -webkit-text-fill-color: var(--ion-text-color, #333) !important;
+  background: transparent !important;
 }
 
-code {
-  background: rgba(127, 127, 127, 0.15);
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-family: monospace;
+.chat-input::placeholder,
+.chat-input input::placeholder,
+.chat-input .native-input::placeholder,
+.chat-input textarea::placeholder {
+  color: var(--ion-text-color, #999) !important;
+  -webkit-text-fill-color: var(--ion-text-color, #999) !important;
+  opacity: 0.5 !important;
+}
+
+/* Send button */
+.send-button {
+  --color: var(--ion-color-primary, #8d6b56);
+  font-size: 1.2rem;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.send-button ion-icon {
+  color: var(--ion-color-primary, #8d6b56);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   THEME-SPECIFIC CHATBOT STYLES (Dark Mode)
-   Each theme gets unique tinted backgrounds with HIGH CONTRAST
+   DARK MODE — Only overrides needed for contrast
    ═══════════════════════════════════════════════════════════════════════════ */
-
 @media (prefers-color-scheme: dark) {
-
-  .chat-bubble.bot,
-  .chat-bubble.bot .bubble-text {
-    color: #ffffff !important;
-  }
-
-  /* Default Original Dark - Café con Menta/Coral/Amber */
-  .chatbot-page,
-  ion-content.chat-content,
-  .chat-container,
-  .messages-list,
-  .chat-messages-area {
-    --background: #3D2E24 !important;
-    background: #3D2E24 !important;
-    background-color: #3D2E24 !important;
-  }
-
+  /* Bot bubble — darker surface */
   .chat-bubble.bot {
-    background: #5A4A40 !important;
-    border-color: #FFB74D !important;
-    /* Amber border */
+    background: var(--ion-color-surface, var(--ion-card-background, #4A3830));
+    border-color: var(--ion-color-tertiary, #FFB74D);
   }
 
+  .chat-bubble.bot .bubble-text,
+  .chat-bubble.bot .bubble-time {
+    color: var(--ion-text-color, #F5EDE5);
+  }
+
+  /* User bubble — more vivid in dark */
   .chat-bubble.user {
-    background: linear-gradient(135deg, #90BEAB, #7FA796) !important;
-    /* Menta vibrante */
-    color: #3D2E24 !important;
-    border-color: #FF7B7B !important;
-    /* Coral border */
+    background: linear-gradient(
+      135deg,
+      var(--ion-color-secondary, #90BEAB),
+      var(--ion-color-secondary-tint, #A0CEBB)
+    );
+    color: var(--ion-color-secondary-contrast, #fff);
+    border-color: var(--ion-color-accent, #FF7B7B);
   }
 
+  .chat-bubble.user .bubble-text,
+  .chat-bubble.user .bubble-time {
+    color: var(--ion-color-secondary-contrast, #fff);
+  }
+
+  /* Footer — use accent gradient */
   .chat-footer {
-    background: linear-gradient(135deg, #FF7B7B, #E06B6B) !important;
-    /* Coral footer */
+    background: linear-gradient(
+      135deg,
+      var(--ion-color-accent, var(--ion-color-primary, #A07860)),
+      var(--ion-color-accent-shade, var(--ion-color-primary-shade, #8d6b56))
+    );
   }
 
+  /* Input pill */
   .input-pill {
-    background: #4A3830 !important;
-    border-color: #FFB74D !important;
-    /* Amber border */
+    background: var(--ion-color-surface, var(--ion-card-background, #4A3830));
+    border-color: var(--ion-color-tertiary, #FFB74D);
   }
 
-  /* Navy Theme - Cyan/Naranja/Coral intercambiado */
-  body.theme-navy .chatbot-page,
-  body.theme-navy ion-content.chat-content,
-  body.theme-navy .chat-container,
-  body.theme-navy .messages-list,
-  body.theme-navy .chat-messages-area {
-    --background: #0D1F35 !important;
-    background: #0D1F35 !important;
-    background-color: #0D1F35 !important;
+  .chat-input,
+  .chat-input input,
+  .chat-input textarea,
+  .chat-input .native-input,
+  .chat-input .native-textarea {
+    color: var(--ion-text-color, #F5EDE5) !important;
+    -webkit-text-fill-color: var(--ion-text-color, #F5EDE5) !important;
   }
 
-  body.theme-navy .chat-bubble.bot {
-    background: #2A3A5A !important;
-    border-color: #FF9E44 !important;
-    /* Naranja border */
+  /* Code blocks */
+  .chat-bubble code {
+    background: rgba(255, 255, 255, 0.1);
   }
 
-  body.theme-navy .chat-bubble.user {
-    background: linear-gradient(135deg, #00D4FF, #00B8E0) !important;
-    /* Cyan vibrante */
-    color: #0D1F35 !important;
-    border-color: #FF7B7B !important;
-    /* Coral border */
-  }
-
-  body.theme-navy .chat-footer {
-    background: linear-gradient(135deg, #FF9E44, #E08B3A) !important;
-    /* Naranja footer */
-  }
-
-  body.theme-navy .input-pill {
-    background: #1E4070 !important;
-    border-color: #00D4FF !important;
-    /* Cyan border */
-  }
-
-  /* Sage Theme - Lima/Oro/Lavanda intercambiado */
-  body.theme-sage .chatbot-page,
-  body.theme-sage ion-content.chat-content,
-  body.theme-sage .chat-container,
-  body.theme-sage .messages-list,
-  body.theme-sage .chat-messages-area {
-    --background: #0F2010 !important;
-    background: #0F2010 !important;
-    background-color: #0F2010 !important;
-  }
-
-  body.theme-sage .chat-bubble.bot {
-    background: #3D4A35 !important;
-    border-color: #FFD700 !important;
-    /* Oro border */
-  }
-
-  body.theme-sage .chat-bubble.user {
-    background: linear-gradient(135deg, #B8FF44, #A0E03A) !important;
-    /* Lima vibrante */
-    color: #0F2010 !important;
-    border-color: #C8A8E0 !important;
-    /* Lavanda border */
-  }
-
-  body.theme-sage .chat-footer {
-    background: linear-gradient(135deg, #C8A8E0, #B090C8) !important;
-    /* Lavanda footer */
-  }
-
-  body.theme-sage .input-pill {
-    background: #2A5530 !important;
-    border-color: #B8FF44 !important;
-    /* Lima border */
-  }
-
-  /* Burgundy Theme - Oro/Turquesa/Coral intercambiado */
-  body.theme-burgundy .chatbot-page,
-  body.theme-burgundy ion-content.chat-content,
-  body.theme-burgundy .chat-container,
-  body.theme-burgundy .messages-list,
-  body.theme-burgundy .chat-messages-area {
-    --background: #200810 !important;
-    background: #200810 !important;
-    background-color: #200810 !important;
-  }
-
-  body.theme-burgundy .chat-bubble.bot {
-    background: #4A2838 !important;
-    border-color: #40E0D0 !important;
-    /* Turquesa border */
-  }
-
-  body.theme-burgundy .chat-bubble.user {
-    background: linear-gradient(135deg, #FFD54F, #E0BC40) !important;
-    /* Oro vibrante */
-    color: #200810 !important;
-    border-color: #E07850 !important;
-    /* Coral border */
-  }
-
-  body.theme-burgundy .chat-footer {
-    background: linear-gradient(135deg, #40E0D0, #35C4B6) !important;
-    /* Turquesa footer */
-  }
-
-  body.theme-burgundy .input-pill {
-    background: #5A2040 !important;
-    border-color: #FFD54F !important;
-    /* Oro border */
-  }
-
-  /* Bamboo Theme - Azul cielo/Magenta/Chartreuse intercambiado */
-  body.theme-bamboo .chatbot-page,
-  body.theme-bamboo ion-content.chat-content,
-  body.theme-bamboo .chat-container,
-  body.theme-bamboo .messages-list,
-  body.theme-bamboo .chat-messages-area {
-    --background: #0A2510 !important;
-    background: #0A2510 !important;
-    background-color: #0A2510 !important;
-  }
-
-  body.theme-bamboo .chat-bubble.bot {
-    background: #2A4532 !important;
-    border-color: #FF44AA !important;
-    /* Magenta border */
-  }
-
-  body.theme-bamboo .chat-bubble.user {
-    background: linear-gradient(135deg, #64B5F6, #509BE0) !important;
-    /* Azul cielo vibrante */
-    color: #0A2510 !important;
-    border-color: #CCFF00 !important;
-    /* Chartreuse border */
-  }
-
-  body.theme-bamboo .chat-footer {
-    background: linear-gradient(135deg, #CCFF00, #B3E000) !important;
-    /* Chartreuse footer */
-  }
-
-  body.theme-bamboo .input-pill {
-    background: #206840 !important;
-    border-color: #64B5F6 !important;
-    /* Azul cielo border */
-  }
-
-  /* Earth Theme - Coral/Teal/Dorado intercambiado */
-  body.theme-earth .chatbot-page,
-  body.theme-earth ion-content.chat-content,
-  body.theme-earth .chat-container,
-  body.theme-earth .messages-list,
-  body.theme-earth .chat-messages-area {
-    --background: #1A1508 !important;
-    background: #1A1508 !important;
-    background-color: #1A1508 !important;
-  }
-
-  body.theme-earth .chat-bubble.bot {
-    background: #3A3025 !important;
-    border-color: #20B2AA !important;
-    /* Teal border */
-  }
-
-  body.theme-earth .chat-bubble.user {
-    background: linear-gradient(135deg, #E07860, #C86850) !important;
-    /* Coral vibrante */
-    color: #ffffff !important;
-    border-color: #DAA520 !important;
-    /* Dorado border */
-  }
-
-  body.theme-earth .chat-footer {
-    background: linear-gradient(135deg, #DAA520, #C0901A) !important;
-    /* Dorado footer */
-  }
-
-  body.theme-earth .input-pill {
-    background: #5A4530 !important;
-    border-color: #E07860 !important;
-    /* Coral border */
-  }
-
-  /* Neon Theme - Cyan/Amarillo/Lima intercambiado */
-  body.theme-neon .chatbot-page,
-  body.theme-neon ion-content.chat-content,
-  body.theme-neon .chat-container,
-  body.theme-neon .messages-list,
-  body.theme-neon .chat-messages-area {
-    --background: #050010 !important;
-    background: linear-gradient(180deg, #050010, #100020) !important;
-    background-color: #050010 !important;
-  }
-
-  body.theme-neon .chat-bubble.bot {
-    background: #180030 !important;
-    border-color: #ffea00 !important;
-    /* Amarillo neón border */
-    box-shadow: 0 0 20px rgba(255, 234, 0, 0.4) !important;
-  }
-
-  body.theme-neon .chat-bubble.user {
-    background: linear-gradient(135deg, #00e5ff, #00cae0) !important;
-    /* Cyan eléctrico */
-    color: #050010 !important;
-    border-color: #76ff03 !important;
-    /* Lima border */
-    box-shadow: 0 0 20px rgba(0, 229, 255, 0.5) !important;
-  }
-
-  body.theme-neon .chat-footer {
-    background: linear-gradient(135deg, #76ff03, #68e003) !important;
-    /* Lima neón footer */
-    box-shadow: 0 -5px 40px rgba(118, 255, 3, 0.5) !important;
-  }
-
-  body.theme-neon .input-pill {
-    background: #3A0060 !important;
-    border-color: #00e5ff !important;
-    /* Cyan border */
-    box-shadow: 0 0 15px rgba(0, 229, 255, 0.3) !important;
-  }
-
-  /* Original-Alter Theme - Café oscuro más profundo */
-  body.theme-original-alter .chatbot-page,
-  body.theme-original-alter ion-content.chat-content,
-  body.theme-original-alter .chat-container,
-  body.theme-original-alter .messages-list,
-  body.theme-original-alter .chat-messages-area {
-    --background: #3D2E24 !important;
-    background: #3D2E24 !important;
-    background-color: #3D2E24 !important;
-  }
-
-  body.theme-original-alter .chat-bubble.bot {
-    background: #5A4A40 !important;
-    border-color: #70A090 !important;
-  }
-
-  body.theme-original-alter .chat-bubble.user {
-    background: linear-gradient(135deg, #6A5A50, #5A4A40) !important;
-    border-color: #7890A0 !important;
-  }
-
-  body.theme-original-alter .chat-footer {
-    background: linear-gradient(135deg, #7A6450, #6A5440) !important;
-  }
-
-  body.theme-original-alter .input-pill {
-    background: #4A3830 !important;
-    border-color: #70A090 !important;
+  .send-button ion-icon {
+    color: var(--ion-color-secondary, #90BEAB);
   }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   RESPONSIVE BREAKPOINTS
+   RESPONSIVE
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Small screens (320px - very small phones) */
+/* Small phones */
 @media (max-width: 360px) {
   .chat-container {
-    padding-top: 20px !important;
+    padding: 20px 12px 90px 12px;
   }
 
   .chat-bubble {
-    max-width: 90%;
-    padding: 12px;
-    font-size: 14px;
+    max-width: 88%;
+    padding: 10px 14px;
+    font-size: 0.9rem;
   }
 
   .input-pill {
-    padding: 3px 4px 3px 15px;
-    min-height: 50px;
+    padding: 3px 4px 3px 14px;
+    min-height: 48px;
   }
 
   .chat-footer {
-    padding: 12px 12px calc(12px + env(safe-area-inset-bottom)) 12px;
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)) 12px;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
   }
 }
 
 /* Short screens */
 @media (max-height: 650px) {
-
-  .bot-avatar,
-  .user-avatar {
-    width: 35px;
-    height: 35px;
+  .chat-avatar {
+    width: 32px;
+    height: 32px;
   }
 
   .chat-bubble {
@@ -613,13 +364,21 @@ code {
   }
 }
 
-/* Ensure chat footer respects safe area */
-.chat-footer {
-  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-}
+/* Tablet+ */
+@media (min-width: 768px) {
+  .chat-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px 24px 110px 24px;
+  }
 
-/* Minimum touch size for send button */
-.send-btn {
-  min-width: 44px;
-  min-height: 44px;
+  .chat-bubble {
+    max-width: 65%;
+    font-size: 1rem;
+  }
+
+  .chat-avatar {
+    width: 42px;
+    height: 42px;
+  }
 }

@@ -211,60 +211,61 @@ const StudentSidebar: React.FC<StudentSidebarProps> = ({ onLogout }) => {
   const [showFormulaInfo, setShowFormulaInfo] = useState(false);
 
   return (
-    <IonMenu contentId="main" id="student-menu">
-      <IonContent>
+    <IonMenu
+      contentId="main"
+      id="student-menu"
+      style={{
+        '--background': 'var(--ion-background-color, #e8dfc8)',
+      } as React.CSSProperties}
+    >
+      <IonContent
+        style={{
+          '--background': 'var(--ion-background-color, #e8dfc8)',
+        } as React.CSSProperties}
+      >
         {/* Header del menú */}
-        <div
-          className="student-menu-header clickable-header"
-          onClick={() => {
-            // Close menu first if needed, or just navigate
-            // Using a simple window location or router hook would be best,
-            // but we can use Link wrapper or just an onClick handler if we have router
-            // converting to click handler on the container
-          }}
-        >
-          <Link
-            to="/profile"
+        <div className="student-menu-header">
+          <div
+            className="sidebar-mascot-wrapper"
             style={{
-              textDecoration: "none",
-              color: "inherit",
-              display: "block",
-              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: "5px",
+              marginLeft: "0",
             }}
           >
-            <div
-              className="sidebar-mascot-wrapper"
+            <img
+              src={getProfilePicPath()}
+              alt="Profile"
+              className="sidebar-mascot-img"
               style={{
-                display: "flex",
-                justifyContent: "center",
-                marginBottom: "5px",
-                marginLeft: "0",
+                width: "100px",
+                height: "100px",
+                objectFit: "cover",
+                borderRadius: "50%",
+                border: "3px solid rgba(255,255,255,0.3)",
               }}
-            >
-              <img
-                src={getProfilePicPath()}
-                alt="Profile"
-                className="sidebar-mascot-img"
-                style={{
-                  width: "100px",
-                  height: "100px",
-                  objectFit: "cover",
-                  borderRadius: "50%",
-                  border: "3px solid rgba(255,255,255,0.3)",
+            />
+          </div>
+          <div className="student-info">
+            <div className="student-details">
+              <IonLabel className="student-name">{currentUser.name}</IonLabel>
+              <IonNote className="student-email">{currentUser.email}</IonNote>
+              <IonNote className="student-username">
+                @{currentUser.username}
+              </IonNote>
+              <Link
+                to="/profile"
+                className="sidebar-profile-btn"
+                onClick={() => {
+                  const menu = document.querySelector('ion-menu');
+                  menu?.close();
                 }}
-              />
+              >
+                Ver perfil →
+              </Link>
             </div>
-            <div className="student-info">
-              <div className="student-details">
-                <IonLabel className="student-name">{currentUser.name}</IonLabel>
-                <IonNote className="student-email">{currentUser.email}</IonNote>
-                <IonNote className="student-username">
-                  @{currentUser.username}
-                </IonNote>
-                <IonNote className="student-role">Student</IonNote>
-              </div>
-            </div>
-          </Link>
+          </div>
         </div>
 
         {/* Navegación principal */}

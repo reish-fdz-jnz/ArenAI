@@ -1,0 +1,229 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   AREN AI — Reusable Component Classes
+   Drop-in CSS classes for cards, buttons, badges, pills, progress bars.
+   All classes use semantic tokens from _tokens.css.
+   Usage: <div className="aren-card"> or <button className="aren-btn aren-btn--primary">
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══ CARDS ═══ */
+.aren-card {
+  background: var(--st-card-bg);
+  border: 1px solid var(--st-card-border);
+  border-radius: var(--card-border-radius, 24px);
+  padding: 20px;
+  box-shadow: var(--st-card-shadow);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.aren-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+.aren-card--flat {
+  box-shadow: none;
+  border: 1px solid var(--st-card-border);
+}
+.aren-card--flat:hover {
+  box-shadow: none;
+  transform: none;
+}
+.aren-card__header {
+  background: var(--st-card-header-accent);
+  color: var(--st-header-text);
+  padding: 12px 20px;
+  border-radius: var(--card-border-radius, 24px) var(--card-border-radius, 24px) 0 0;
+  margin: -20px -20px 16px -20px;
+  font-weight: 700;
+}
+
+/* ═══ BUTTONS ═══ */
+.aren-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: var(--button-border-radius, 30px);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  min-height: 44px;
+}
+.aren-btn:active { transform: scale(0.97); }
+
+.aren-btn--primary {
+  background: var(--st-btn-primary-bg);
+  color: var(--st-btn-primary-text);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+.aren-btn--primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.aren-btn--secondary {
+  background: var(--st-btn-secondary-bg);
+  color: var(--st-btn-secondary-text);
+}
+.aren-btn--secondary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.aren-btn--outline {
+  background: transparent;
+  color: var(--ion-color-secondary);
+  border: 2px solid var(--ion-color-secondary);
+}
+.aren-btn--outline:hover {
+  background: var(--st-container-soft-bg);
+  transform: translateY(-1px);
+}
+
+.aren-btn--accent {
+  background: var(--ion-color-accent, var(--ion-color-secondary));
+  color: var(--ion-color-accent-contrast, #ffffff);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+.aren-btn--accent:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.aren-btn:disabled, .aren-btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  filter: grayscale(0.5);
+  box-shadow: none;
+}
+
+/* ═══ PILLS ═══ */
+.aren-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.aren-pill--primary {
+  background: var(--st-card-header-accent);
+  color: var(--st-header-text);
+}
+.aren-pill--highlight {
+  background: var(--st-highlight-bg);
+  color: var(--st-highlight-text);
+}
+.aren-pill--soft {
+  background: var(--st-container-soft-bg);
+  color: var(--ion-text-color);
+}
+
+/* ═══ BADGES ═══ */
+.aren-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.aren-badge--accent {
+  background: var(--st-badge-bg);
+  color: var(--st-badge-text);
+}
+.aren-badge--success {
+  background: var(--ion-color-success-soft);
+  color: var(--ion-color-success);
+}
+.aren-badge--warning {
+  background: var(--ion-color-warning-soft);
+  color: var(--ion-color-warning);
+}
+.aren-badge--danger {
+  background: var(--ion-color-danger-soft);
+  color: var(--ion-color-danger);
+}
+
+/* ═══ CHIPS ═══ */
+.aren-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: var(--st-chip-bg);
+  color: var(--st-chip-text);
+}
+.aren-chip--outline {
+  background: transparent;
+  border: 2px solid var(--st-chip-outline);
+  color: var(--st-chip-outline);
+}
+
+/* ═══ PROGRESS BARS ═══ */
+.aren-progress {
+  width: 100%;
+  height: 8px;
+  background: var(--st-progress-track);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.aren-progress__bar {
+  height: 100%;
+  background: var(--st-progress-fill);
+  border-radius: 4px;
+  transition: width 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+.aren-progress--thick {
+  height: 12px;
+  border-radius: 6px;
+}
+.aren-progress--thick .aren-progress__bar {
+  border-radius: 6px;
+}
+
+/* ═══ CONTAINERS ═══ */
+.aren-container-soft {
+  background: var(--st-container-soft-bg);
+  border-radius: 15px;
+  padding: 15px;
+}
+.aren-container-surface {
+  background: var(--st-surface);
+  border: 1px solid var(--st-card-border);
+  border-radius: 15px;
+  padding: 15px;
+}
+
+/* ═══ TEXT UTILITIES ═══ */
+.aren-text-primary { color: var(--ion-color-primary); }
+.aren-text-secondary { color: var(--ion-color-secondary); }
+.aren-text-accent { color: var(--ion-color-accent, var(--ion-color-secondary)); }
+.aren-text-muted { color: var(--ion-text-color-step-400); }
+.aren-text-link { color: var(--st-link-color); cursor: pointer; }
+.aren-text-link:hover { filter: brightness(1.2); text-decoration: underline; }
+
+/* ═══ FOCUS ═══ */
+.aren-focus-ring:focus-visible {
+  outline: 2px solid var(--st-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ═══ RESPONSIVE ═══ */
+@media (min-width: 768px) {
+  .aren-card { padding: 24px; border-radius: 20px; }
+  .aren-card__header { margin: -24px -24px 18px -24px; }
+  .aren-btn { padding: 12px 28px; font-size: 1.05rem; }
+}
+@media (min-width: 1200px) {
+  .aren-card { padding: 28px; }
+  .aren-card__header { margin: -28px -28px 20px -28px; }
+}

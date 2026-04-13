@@ -1,0 +1,53 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   AREN AI — Semantic Component Tokens
+   Maps theme variables → component-level tokens.
+   Components use --st-* tokens instead of raw --ion-color-* vars.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Header ── */
+  --st-header-bg: var(--ion-color-primary);
+  --st-header-text: var(--ion-color-primary-contrast, #ffffff);
+
+  /* ── Cards ── */
+  --st-card-bg: var(--ion-card-background);
+  --st-card-border: var(--ion-border-color, rgba(0, 0, 0, 0.1));
+  --st-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --st-card-header-accent: var(--ion-color-card-header, var(--ion-color-primary));
+
+  /* ── Action Buttons ── */
+  --st-btn-primary-bg: var(--ion-color-button-primary, var(--ion-color-accent, var(--ion-color-secondary)));
+  --st-btn-primary-text: var(--ion-color-primary-contrast, #ffffff);
+  --st-btn-secondary-bg: var(--ion-color-button-secondary, var(--ion-color-secondary));
+  --st-btn-secondary-text: var(--ion-color-secondary-contrast, #ffffff);
+
+  /* ── Progress & Stats ── */
+  --st-progress-fill: var(--ion-color-progress, var(--ion-color-secondary));
+  --st-progress-track: rgba(var(--ion-color-primary-rgb, 141, 107, 86), 0.1);
+  --st-highlight-bg: var(--ion-color-highlight, var(--ion-color-tertiary));
+  --st-highlight-text: var(--ion-color-tertiary-contrast, #ffffff);
+
+  /* ── Badges & Chips ── */
+  --st-badge-bg: var(--ion-color-badge, var(--ion-color-tertiary));
+  --st-badge-text: var(--ion-color-tertiary-contrast, #ffffff);
+  --st-chip-bg: var(--ion-color-chip, var(--ion-color-secondary));
+  --st-chip-text: var(--ion-color-secondary-contrast, #ffffff);
+  --st-chip-outline: var(--ion-color-chip-outline, var(--ion-color-primary));
+
+  /* ── Links & Focus ── */
+  --st-link-color: var(--ion-color-link, var(--ion-color-secondary));
+  --st-focus-ring: var(--ion-color-focus-ring, var(--ion-color-secondary));
+
+  /* ── Containers ── */
+  --st-container-soft-bg: var(--ion-color-secondary-soft, rgba(var(--ion-color-secondary-rgb, 144, 190, 171), 0.3));
+
+  /* ── Surfaces ── */
+  --st-surface: var(--ion-color-surface, #ffffff);
+  --st-surface-elevated: var(--ion-color-surface-elevated, #ffffff);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --st-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+}
