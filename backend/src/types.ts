@@ -25,13 +25,31 @@ export interface Topic {
 
 export interface ClassRecord {
   id_class: number;
-  name_class: string;
-  id_subject: number;
+  id_class_template: number | null;
+  id_professor: number;
   id_section: number;
-  fecha: string | null;
-  ai_summary: string | null;
-  current_questions_summary: string | null;
+  id_institution: number | null;
+  start_time: string | null;
+  end_time: string | null;
   score_average: string | null;
+  ai_summary: string | null;
+  status: 'scheduled' | 'running' | 'paused' | 'finished';
+}
+
+export interface ClassTemplate {
+  id_class_template: number;
+  id_professor: number;
+  id_subject: number;
+  name_template: string;
+  grade: string;
+  description: string | null;
+  settings: any;
+  created_at: string;
+}
+
+export interface ClassTemplateTopic {
+  id_class_template: number;
+  id_topic: number;
 }
 
 export interface StudentProgressRow {

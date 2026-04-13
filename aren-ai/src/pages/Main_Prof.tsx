@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAvatar } from "../context/AvatarContext";
 import {
   IonContent,
@@ -7,7 +7,6 @@ import {
   IonHeader,
   IonToolbar,
   IonMenuButton,
-  useIonRouter,
 } from "@ionic/react";
 import {
   calculator,
@@ -35,6 +34,7 @@ import {
   pencilOutline,
   schoolOutline,
 } from "ionicons/icons";
+import { useHistory } from "react-router-dom";
 import "./Main_Prof.css";
 import "../components/ProfessorHeader.css";
 import ProfessorMenu from "../components/ProfessorMenu";
@@ -48,7 +48,7 @@ import PageTransition from "../components/PageTransition";
 import { socketService } from "../services/socket";
 
 const Main_Prof: React.FC = () => {
-  const router = useIonRouter();
+  const history = useHistory();
   const { t } = useTranslation();
   const { getAvatarAssets } = useAvatar();
   const avatarAssets = getAvatarAssets();
@@ -149,11 +149,6 @@ const Main_Prof: React.FC = () => {
   };
 
   const subjectKey = getInsightKey(selectedSubject);
-
-  const currentEnforceText = t(
-    `professor.dashboard.insights.enforce.${subjectKey}`,
-    "No insight available.",
-  );
 
   // Typing animation effect for summary + issues
   const startTypingAnimation = (
@@ -313,7 +308,7 @@ const Main_Prof: React.FC = () => {
     };
   }, []);
 
-  const navigateTo = (path: string) => router.push(path);
+  const navigateTo = (path: string) => history.push(path);
 
   const getColorForPercentage = (p: number) => {
     const ratio = Math.max(0, Math.min(100, p)) / 100;
@@ -403,63 +398,73 @@ const Main_Prof: React.FC = () => {
                 {overallPerformance}%
               </div>
             </div>
-            <div className="ms-topics-scroll-container">
-              <div className="ms-topics-track">
-                {topics.length > 0 ? (
-                  topics.map((topic, i) => (
-                    <div key={i} className="ms-topic-btn">
-                      <div className="ms-topic-fill-box">
+
+            <div className="ms-topics-container">
+              <div className="ms-topics-header">
+                <h3>{t("professor.dashboard.topicPerformance")}</h3>
+                <div className="ms-header-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+              <div className="ms-topics-list">
+                {topics.map((topic, index) => (
+                  <div key={index} className="ms-topic-item">
+                    <div className="ms-topic-icon">{topic.icon}</div>
+                    <div className="ms-topic-content">
+                      <div className="ms-topic-info">
+                        <span className="ms-topic-name">{topic.name}</span>
+                        <span className="ms-topic-percentage">
+                          {topic.percentage}%
+                        </span>
+                      </div>
+                      <div className="ms-progress-bar">
                         <div
-                          className="ms-topic-fill"
+                          className="ms-progress-fill"
                           style={{
-                            height: `${topic.percentage}%`,
-                            backgroundColor:
-                              topic.percentage < 60 ? "#FFC107" : "#78B8B0",
+                            width: `${topic.percentage}%`,
+                            backgroundColor: getColorForPercentage(
+                              topic.percentage,
+                            ),
                           }}
                         ></div>
-                        <div className="ms-topic-icon">
-                          <IonIcon icon={calculator} />
-                        </div>
+                        {selectedSubject === 'Math' && (
+                          <>
+                            <IonIcon icon={calculator} className="ms-empty-icon" />
+                            <IonIcon icon={infiniteOutline} className="ms-empty-icon" />
+                            <IonIcon icon={statsChartOutline} className="ms-empty-icon" />
+                            <IonIcon icon={createOutline} className="ms-empty-icon" />
+                          </>
+                        )}
+                        {selectedSubject === 'Science' && (
+                          <>
+                            <IonIcon icon={flaskOutline} className="ms-empty-icon" />
+                            <IonIcon icon={leafOutline} className="ms-empty-icon" />
+                            <IonIcon icon={planetOutline} className="ms-empty-icon" />
+                            <IonIcon icon={nuclearOutline} className="ms-empty-icon" />
+                          </>
+                        )}
+                        {selectedSubject === 'Social Studies' && (
+                          <>
+                            <IonIcon icon={globeOutline} className="ms-empty-icon" />
+                            <IonIcon icon={mapOutline} className="ms-empty-icon" />
+                            <IonIcon icon={earthOutline} className="ms-empty-icon" />
+                            <IonIcon icon={schoolOutline} className="ms-empty-icon" />
+                          </>
+                        )}
+                        {selectedSubject === 'Spanish' && (
+                          <>
+                            <IonIcon icon={languageOutline} className="ms-empty-icon" />
+                            <IonIcon icon={chatbubblesOutline} className="ms-empty-icon" />
+                            <IonIcon icon={bookOutline} className="ms-empty-icon" />
+                            <IonIcon icon={pencilOutline} className="ms-empty-icon" />
+                          </>
+                        )}
                       </div>
-                      <span className="ms-topic-label">{topic.name}</span>
                     </div>
-                  ))
-                ) : (
-                  <div className="ms-empty-topics-placeholder">
-                    {selectedSubject === 'Math' && (
-                      <>
-                        <IonIcon icon={calculator} className="ms-empty-icon" />
-                        <IonIcon icon={infiniteOutline} className="ms-empty-icon" />
-                        <IonIcon icon={statsChartOutline} className="ms-empty-icon" />
-                        <IonIcon icon={createOutline} className="ms-empty-icon" />
-                      </>
-                    )}
-                    {selectedSubject === 'Science' && (
-                      <>
-                        <IonIcon icon={flaskOutline} className="ms-empty-icon" />
-                        <IonIcon icon={leafOutline} className="ms-empty-icon" />
-                        <IonIcon icon={planetOutline} className="ms-empty-icon" />
-                        <IonIcon icon={nuclearOutline} className="ms-empty-icon" />
-                      </>
-                    )}
-                    {selectedSubject === 'Social Studies' && (
-                      <>
-                        <IonIcon icon={globeOutline} className="ms-empty-icon" />
-                        <IonIcon icon={mapOutline} className="ms-empty-icon" />
-                        <IonIcon icon={earthOutline} className="ms-empty-icon" />
-                        <IonIcon icon={schoolOutline} className="ms-empty-icon" />
-                      </>
-                    )}
-                    {selectedSubject === 'Spanish' && (
-                      <>
-                        <IonIcon icon={languageOutline} className="ms-empty-icon" />
-                        <IonIcon icon={chatbubblesOutline} className="ms-empty-icon" />
-                        <IonIcon icon={bookOutline} className="ms-empty-icon" />
-                        <IonIcon icon={pencilOutline} className="ms-empty-icon" />
-                      </>
-                    )}
                   </div>
-                )}
+                ))}
               </div>
             </div>
             <div className="ms-bottom-section">
@@ -598,7 +603,7 @@ const Main_Prof: React.FC = () => {
             closedSrc={avatarAssets.closed}
             winkSrc={avatarAssets.wink}
             className="student-mascot-btn"
-            onClick={() => navigateTo("/professor-chat")}
+            onClick={() => navigateTo("/start-class-session")}
           />
         </div>
         <div

@@ -14,6 +14,8 @@ import chatbotRouter from './chatbotRoutes.js';
 import assignmentRouter from './assignmentRoutes.js';
 import friendRouter from './friendRoutes.js';
 import leaderboardRouter from './leaderboardRoutes.js';
+import diagnosticRouter from './diagnosticRoutes.js';
+import { classTemplateRouter } from './classTemplateRoutes.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
@@ -34,5 +36,7 @@ router.use('/chatbot', chatbotRouter);
 router.use('/assignments', assignmentRouter);
 router.use('/friends', friendRouter);
 router.use('/leaderboard', leaderboardRouter);
+router.use('/diagnostics', diagnosticRouter);
+router.use('/class-templates', classTemplateRouter);
 
 export const apiRouter = router;

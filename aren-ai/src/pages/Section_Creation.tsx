@@ -12,13 +12,13 @@ import { useHistory } from 'react-router-dom';
 import * as QRCode from 'qrcode';
 import { useTranslation } from 'react-i18next';
 import { Capacitor } from '@capacitor/core';
-import './Class_Creation.css';
+import './Section_Creation.css';
 import { getApiUrl } from '../config/api';
 import ProfessorHeader from '../components/ProfessorHeader';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const Class_Creation: React.FC = () => {
+const Section_Creation: React.FC = () => {
   const { t } = useTranslation();
   const history = useHistory();
   const [gradeLevel, setGradeLevel] = useState('');
@@ -328,4 +328,4 @@ const Class_Creation: React.FC = () => {
   );
 };
 
-export default Class_Creation;
+export default Section_Creation;

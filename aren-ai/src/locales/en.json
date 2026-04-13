@@ -49,7 +49,9 @@
     },
     "common": {
         "save": "Save",
-        "cancel": "Cancel"
+        "cancel": "Cancel",
+        "grade": "Grade",
+        "noDescription": "No description provided."
     },
     "professor": {
         "sidebar": {
@@ -349,6 +351,20 @@
         },
         "admin": {
             "title": "Admin Tools"
+        },
+        "liveClass": {
+            "initSession": "Initialize Session",
+            "startLiveTitle": "Live Session",
+            "targetTitle": "Target Section",
+            "sectionLabel": "Section {{section}}",
+            "chooseTemplate": "Choose Template",
+            "noTemplates": "No templates found.",
+            "createNew": "Create New Template",
+            "overview": "Session Overview",
+            "aiDifficulty": "AI Level",
+            "launchClass": "Launch Class",
+            "selectTemplateFirst": "Please select a class template first.",
+            "startingClass": "Starting \"{{name}}\" for Section {{section}}..."
         }
     },
     "mainStudent": {

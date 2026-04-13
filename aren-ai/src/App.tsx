@@ -14,7 +14,7 @@ import Chat from "./pages/Chatbot";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import RegisterStudent from "./pages/RegisterStudent";
-import Class_Creation from "./pages/Class_Creation";
+import Section_Creation from "./pages/Section_Creation";
 import StudentSectionPage from "./pages/StudentScores";
 import StudentDetail from "./pages/StudentDetail";
 import Quiz from "./pages/Quiz";
@@ -46,6 +46,8 @@ import AssignmentsMenu from "./pages/AssignmentsMenu";
 import StudentAssignments from "./pages/StudentAssignments";
 import EditAssignment from "./pages/EditAssignment";
 import ProfessorAssignmentReview from "./pages/ProfessorAssignmentReview";
+import CreateClassSession from "./pages/CreateClassSession";
+import ClassLibrary from "./pages/ClassLibrary";
 import AvatarSelection from "./pages/AvatarSelection";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AvatarProvider } from "./context/AvatarContext";
@@ -53,6 +55,7 @@ import { ProfilePictureProvider } from "./context/ProfilePictureContext";
 import { SoundProvider } from "./context/SoundContext";
 import ChatMenu from "./pages/ChatMenu";
 import StudentChat from "./pages/StudentChat";
+import StartClassSession from "./pages/StartClassSession";
 import ArenEntityPage from "./pages/ArenEntityPage";
 import { socketService } from "./services/socket";
 import { chatStorage } from "./services/chatStorage";
@@ -387,9 +390,9 @@ const App: React.FC = () => {
                     </Route>
 
                     {/* Additional Features */}
-                    <Route path="/class-creation" exact={true}>
+                    <Route path="/section-creation" exact={true}>
                       {userRole === "professor" ? (
-                        <Class_Creation />
+                        <Section_Creation />
                       ) : (
                         <Redirect to="/login" />
                       )}
@@ -474,6 +477,29 @@ const App: React.FC = () => {
                     <Route path="/page/assignment-review/:id" exact={true}>
                       {userRole === "professor" ? (
                         <ProfessorAssignmentReview />
+                      ) : (
+                        <Redirect to="/login" />
+                      )}
+                    </Route>
+
+                    {/* Live Class Session Routes */}
+                    <Route path="/create-class" exact={true}>
+                      {userRole === "professor" ? (
+                        <CreateClassSession />
+                      ) : (
+                        <Redirect to="/login" />
+                      )}
+                    </Route>
+                    <Route path="/class-library" exact={true}>
+                      {userRole === "professor" ? (
+                        <ClassLibrary />
+                      ) : (
+                        <Redirect to="/login" />
+                      )}
+                    </Route>
+                    <Route path="/start-class-session" exact={true}>
+                      {userRole === "professor" ? (
+                        <StartClassSession />
                       ) : (
                         <Redirect to="/login" />
                       )}

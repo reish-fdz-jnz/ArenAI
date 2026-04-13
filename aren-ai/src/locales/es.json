@@ -50,7 +50,9 @@
     },
     "common": {
         "save": "Guardar",
-        "cancel": "Cancelar"
+        "cancel": "Cancelar",
+        "grade": "Grado",
+        "noDescription": "Sin descripción disponible."
     },
     "professor": {
         "sidebar": {
@@ -349,6 +351,20 @@
         },
         "admin": {
             "title": "Administración de Profesores"
+        },
+        "liveClass": {
+            "initSession": "Inicializar Sesión",
+            "startLiveTitle": "Sesión en Vivo",
+            "targetTitle": "Sección Objetivo",
+            "sectionLabel": "Sección {{section}}",
+            "chooseTemplate": "Elegir Plantilla",
+            "noTemplates": "No se encontraron plantillas.",
+            "createNew": "Crear Nueva Plantilla",
+            "overview": "Resumen de la Sesión",
+            "aiDifficulty": "Nivel de IA",
+            "launchClass": "Lanzar Clase",
+            "selectTemplateFirst": "Por favor, selecciona una plantilla de clase primero.",
+            "startingClass": "Iniciando \"{{name}}\" para la Sección {{section}}..."
         }
     },
     "studentProfile": {

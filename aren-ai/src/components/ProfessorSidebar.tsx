@@ -71,6 +71,12 @@ const ProfessorSidebar: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
       mdIcon: chatbubbleEllipsesSharp,
     },
     {
+      titleKey: "Chat with AI",
+      url: "/professor-chat",
+      iosIcon: chatbubbleEllipsesOutline,
+      mdIcon: chatbubbleEllipsesSharp,
+    },
+    {
       titleKey: "professor.sidebar.students",
       url: "/prof-students",
       iosIcon: peopleOutline,
@@ -126,7 +132,19 @@ const ProfessorSidebar: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
 
     {
       titleKey: "professor.sidebar.createSection",
-      url: "/class-creation",
+      url: "/section-creation",
+      iosIcon: createOutline,
+      mdIcon: createSharp,
+    },
+    {
+      titleKey: "Live Sessions Library",
+      url: "/class-library",
+      iosIcon: documentTextOutline,
+      mdIcon: documentTextOutline,
+    },
+    {
+      titleKey: "Plan Live Session",
+      url: "/create-class",
       iosIcon: createOutline,
       mdIcon: createSharp,
     },

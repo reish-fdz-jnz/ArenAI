@@ -1,0 +1,299 @@
+/* StartClassSession.css - Premium Professor-Style Design */
+
+.start-session-page {
+  background-color: var(--ion-background-color) !important;
+}
+
+.start-session-content {
+  --background: var(--ion-background-color) !important;
+}
+
+/* Fix header line issue */
+.start-session-page .professor-header-container ion-toolbar::after,
+.start-session-page ion-header::after {
+  display: none !important;
+}
+
+.ss-container {
+  padding: 25px 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.ss-footer-spacer {
+  height: 100px;
+}
+
+/* ========== SECTION TITLE / HEADER ========== */
+.ss-page-header {
+  text-align: center;
+  padding: 10px 0;
+  margin-top: 50px;
+}
+
+.ss-page-title {
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--ion-color-primary);
+  font-family: 'Georgia', serif;
+  letter-spacing: 1px;
+}
+
+.floral-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.floral-line {
+  height: 1px;
+  width: 80px;
+  background: linear-gradient(to right, transparent, var(--ion-color-primary), transparent);
+}
+
+.floral-center {
+  color: var(--ion-color-primary);
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+/* ========== CARD STYLE SECTIONS ========== */
+.ss-card {
+  background-color: var(--ion-color-secondary-soft);
+  border-radius: 15px;
+  padding: 25px 15px 20px 15px;
+  position: relative;
+  margin-top: 40px;
+}
+
+.ss-card-title {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--ion-color-primary);
+  color: white;
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ========== SECTION INFO ========== */
+.ss-section-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 5px;
+}
+
+.ss-section-main {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.ss-section-icon-box {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: var(--ion-color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 24px;
+}
+
+.ss-section-text h2 {
+  margin: 0;
+  font-size: 22px;
+  font-family: 'Georgia', serif;
+  color: var(--ion-text-color);
+}
+
+.ss-section-text p {
+  margin: 2px 0 0 0;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.ss-live-badge {
+  background: #def7ec;
+  color: #03543f;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 20px;
+  animation: ss-blink 2s infinite;
+}
+
+@keyframes ss-blink { 50% { opacity: 0.6; } }
+
+/* ========== TEMPLATE GRID ========== */
+.ss-templates-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ss-template-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background-color: rgba(var(--ion-text-color-rgb), 0.05);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.ss-template-card.selected {
+  background-color: var(--ion-color-secondary);
+  border-color: var(--ion-color-secondary);
+}
+
+.ss-template-radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--ion-color-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  flex-shrink: 0;
+}
+
+.ss-template-card.selected .ss-template-radio {
+  border-color: white;
+}
+
+.radio-inner {
+  width: 10px;
+  height: 10px;
+  background: var(--ion-color-secondary);
+  border-radius: 50%;
+}
+
+.ss-template-info {
+  flex: 1;
+}
+
+.ss-template-name {
+  font-weight: 600;
+  color: var(--ion-text-color);
+  font-size: 15px;
+  font-family: 'Georgia', serif;
+}
+
+.ss-template-topics {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.ss-template-card.selected .ss-template-name,
+.ss-template-card.selected .ss-template-topics {
+  color: white;
+  opacity: 1;
+}
+
+.ss-empty-box {
+  text-align: center;
+  padding: 20px;
+  opacity: 0.6;
+}
+
+/* ========== FOOTER - Semicircle ========== */
+.ss-footer {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 400px;
+  height: 60px;
+  background-color: var(--ion-color-primary);
+  border-radius: 200px 200px 0 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+.ss-start-btn {
+  width: 280px;
+  height: 48px;
+  background-color: var(--ion-color-secondary);
+  border-radius: 140px 140px 0 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 20px;
+  font-weight: 500;
+  font-family: 'Georgia', serif;
+  border: none;
+  cursor: pointer;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  position: absolute;
+  bottom: 0;
+  gap: 10px;
+}
+
+.ss-start-btn:active:not(:disabled) { transform: scale(0.96); }
+
+.ss-start-btn:disabled {
+  background-color: var(--ion-color-medium);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ========== DARK MODE OVERRIDES ========== */
+@media (prefers-color-scheme: dark) {
+  .ss-page-title,
+  .ss-section-text h2,
+  .ss-template-name {
+    color: var(--ion-text-color) !important;
+  }
+
+  .floral-center,
+  .floral-center {
+    color: var(--ion-color-secondary) !important;
+  }
+
+  .floral-line {
+    background: linear-gradient(to right, transparent, var(--ion-color-secondary), transparent) !important;
+  }
+
+  .ss-card {
+    background-color: var(--ion-card-background) !important;
+  }
+
+  .ss-template-card {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .ss-template-radio {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: var(--ion-color-secondary) !important;
+  }
+
+  .ss-template-card.selected {
+    background-color: var(--ion-color-secondary) !important;
+  }
+
+  .ss-start-btn {
+    border: 2px solid var(--ion-color-secondary-shade);
+  }
+}
