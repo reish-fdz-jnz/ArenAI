@@ -275,6 +275,55 @@
     color: #e67e22;
 }
 
+/* ========== NO SESSION WARNING ========== */
+.pa-no-session-warning {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    gap: 15px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.pa-no-session-warning ion-icon {
+    font-size: 64px;
+    color: #e74c3c;
+    opacity: 0.8;
+}
+
+.pa-no-session-warning p {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.pa-go-btn {
+    background: var(--ion-color-secondary);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.pa-go-btn:hover {
+    background: var(--ion-color-secondary-tint);
+    transform: translateY(-2px);
+}
+
+.pa-empty-state {
+    text-align: center;
+    padding: 30px;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+}
+
 /* ========== COMPACT HEADER TEXT ========== */
 .pa-compact-text {
     font-size: 14px !important;

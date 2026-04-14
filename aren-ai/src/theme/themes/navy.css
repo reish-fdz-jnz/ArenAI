@@ -116,3 +116,39 @@ body.theme-navy {
     --ion-border-color: #5A8AC0;
   }
 }
+
+/* Forced dark mode (Settings → Modo de Color: 🌙 Oscuro) */
+html[data-force-dark] body.theme-navy {
+  --ion-background-color: #0D1F35;
+  --ion-item-background: #1E4070;
+  --ion-card-background: #2A3A5A;
+  --ion-text-color: #F0F5FA;
+  --ion-text-color-step-150: #D8E4F0;
+  --ion-text-color-step-400: #A0B8D0;
+  --ion-color-primary: #2A4A78;
+  --ion-color-primary-rgb: 42, 74, 120;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-shade: #1A3A68;
+  --ion-color-primary-tint: #3A5A88;
+  --ion-color-accent: #FF9E44;
+  --ion-color-secondary: #00D4FF;
+  --ion-color-secondary-rgb: 0, 212, 255;
+  --ion-color-secondary-contrast: #ffffff;
+  --ion-color-secondary-shade: #00B8E0;
+  --ion-color-secondary-tint: #33DDFF;
+  --ion-color-secondary-soft: rgba(0, 212, 255, 0.25);
+  --ion-color-tertiary: #FF7B7B;
+  --ion-color-card-header: #FF9E44;
+  --ion-color-card-border: #FF9E44;
+  --ion-color-button-primary: #00D4FF;
+  --ion-color-button-secondary: #FF9E44;
+  --ion-color-success: #66BB6A;
+  --ion-color-success-soft: rgba(102, 187, 106, 0.2);
+  --ion-color-warning: #FFB74D;
+  --ion-color-warning-soft: rgba(255, 183, 77, 0.2);
+  --ion-color-danger: #EF7086;
+  --ion-color-danger-soft: rgba(239, 112, 134, 0.2);
+  --ion-color-surface: #1E4070;
+  --ion-color-surface-elevated: #3A5A90;
+  --ion-border-color: #5A8AC0;
+}

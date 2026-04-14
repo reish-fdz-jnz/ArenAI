@@ -27,7 +27,13 @@ export async function upsertStudentTopicScore(payload) {
      WHERE st.id_user = ? AND st.id_topic = ?`, [payload.userId, payload.topicId]);
     return result.rows[0];
 }
-export async function listStudentsBySection(sectionId) {
+export async function listStudentsBySection(sectionId, institutionId) {
+    const conditions = ['us.id_section = ?'];
+    const params = [sectionId];
+    if (institutionId) {
+        conditions.push('u.id_institution = ?');
+        params.push(institutionId);
+    }
     const result = await db.query(`SELECT
         u.id_user,
         u.username,
@@ -41,9 +47,9 @@ export async function listStudentsBySection(sectionId) {
         sp.quiz_streak
      FROM user_section us
      INNER JOIN \`user\` u ON u.id_user = us.id_user
-     INNER JOIN student_profile sp ON sp.id_user = u.id_user
-     WHERE us.id_section = ?
-     ORDER BY u.name, u.last_name, u.username`, [sectionId]);
+     LEFT JOIN student_profile sp ON sp.id_user = u.id_user
+     WHERE ${conditions.join(' AND ')}
+     ORDER BY u.name, u.last_name, u.username`, params);
     return result.rows;
 }
 export async function getStudentStats(userId) {

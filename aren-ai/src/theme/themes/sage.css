@@ -115,3 +115,62 @@ body.theme-sage {
     --ion-border-color: #4A7840;
   }
 }
+
+
+/* Forced dark mode (Settings - Modo de Color: Oscuro) */
+html[data-force-dark] body.theme-sage {
+    --ion-background-color: #1A2818;
+    --ion-item-background: #263E22;
+    --ion-card-background: #2C4428;
+    --ion-text-color: #E8F0E4;
+    --ion-text-color-step-150: #D0E0CC;
+    --ion-text-color-step-400: #A0C0A0;
+
+    --ion-color-primary: #4D8048;
+    --ion-color-primary-rgb: 77, 128, 72;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-shade: #3D6838;
+    --ion-color-primary-tint: #5D9058;
+
+    --ion-color-accent: #E8C850;
+    --ion-color-accent-rgb: 232, 200, 80;
+    --ion-color-accent-contrast: #1a1a1a;
+    --ion-color-accent-shade: #C8A840;
+    --ion-color-accent-tint: #F0D868;
+
+    --ion-color-secondary: #6CA060;
+    --ion-color-secondary-rgb: 108, 160, 96;
+    --ion-color-secondary-contrast: #ffffff;
+    --ion-color-secondary-shade: #5C8850;
+    --ion-color-secondary-tint: #7CB070;
+    --ion-color-secondary-soft: rgba(108, 160, 96, 0.2);
+
+    --ion-color-tertiary: #C49A6C;
+    --ion-color-tertiary-rgb: 196, 154, 108;
+    --ion-color-tertiary-contrast: #ffffff;
+    --ion-color-tertiary-shade: #A8845C;
+    --ion-color-tertiary-tint: #D0AA7C;
+
+    --ion-color-card-header: #6CA060;
+    --ion-color-card-border: #E8C850;
+    --ion-color-button-primary: #E8C850;
+    --ion-color-button-secondary: #6CA060;
+    --ion-color-chip: #6CA060;
+    --ion-color-chip-outline: #E8C850;
+    --ion-color-highlight: #E8C850;
+    --ion-color-focus-ring: #6CA060;
+    --ion-color-link: #6CA060;
+    --ion-color-progress: #6CA060;
+    --ion-color-badge: #E8C850;
+
+    --ion-color-success: #81C784;
+    --ion-color-success-soft: rgba(129, 199, 132, 0.2);
+    --ion-color-warning: #FFCA28;
+    --ion-color-warning-soft: rgba(255, 202, 40, 0.2);
+    --ion-color-danger: #EF5350;
+    --ion-color-danger-soft: rgba(239, 83, 80, 0.2);
+
+    --ion-color-surface: #263E22;
+    --ion-color-surface-elevated: #346030;
+    --ion-border-color: #4A7840;
+}

@@ -70,14 +70,6 @@ const AIQuizGenerator: React.FC = () => {
     SUBJECTS.includes(filterSubject) ? filterSubject : "Math",
   );
 
-  // Sync with Professor Filters
-  React.useEffect(() => {
-    if (filterSubject && SUBJECTS.includes(filterSubject)) {
-      setSelectedSubject(filterSubject);
-      setSelectedTopics([]); // Clear topics when subject changes
-      setAddedTopics([]);
-    }
-  }, [filterSubject]);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [addedTopics, setAddedTopics] = useState<
     { key: string; name: string; subject: string }[]
@@ -103,10 +95,68 @@ const AIQuizGenerator: React.FC = () => {
   const [showGradeModal, setShowGradeModal] = useState(false);
   const [tempGrade, setTempGrade] = useState("");
 
-  // Default topics for the current subject
+  const [activeSession, setActiveSession] = useState<any>(null);
+
+  // Sync with Professor Filters & Fetch Active Session Topics
+  React.useEffect(() => {
+    const fetchActiveSessionData = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) return;
+
+        // Using labels from professor filters for the hardened active session check
+        const params = new URLSearchParams();
+        if (filterGrade) params.append("grade", String(filterGrade));
+        if (filterSubject) params.append("sectionNumber", "1"); // Defaulting to 1 for detection
+
+        const response = await fetch(
+          getApiUrl(`api/class-templates/active?${params.toString()}`),
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            const session = result.data;
+            setActiveSession(session);
+
+            if (session.topics && session.topics.length > 0) {
+              const sessionTopics = session.topics.map((t: any) => ({
+                key: t.name,
+                name: t.name,
+                subject: selectedSubject,
+              }));
+              setAddedTopics(sessionTopics);
+              setSelectedTopics(sessionTopics.map((t: any) => t.key));
+            }
+          } else {
+            // No active session, ensure we start empty as requested
+            setActiveSession(null);
+            setSelectedTopics([]);
+            setAddedTopics([]);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching active session for quiz:", err);
+      }
+    };
+
+    fetchActiveSessionData();
+  }, [filterGrade, filterSubject, selectedSubject]);
+
+  // Sync Subject from Filters
+  React.useEffect(() => {
+    if (filterSubject && SUBJECTS.includes(filterSubject)) {
+      setSelectedSubject(filterSubject);
+    }
+  }, [filterSubject]);
+
+  // Default topics - Empty if not in a class
   const defaultTopics = useMemo(() => {
-    return ALL_TOPICS.filter((t) => t.subject === selectedSubject).slice(0, 3);
-  }, [selectedSubject]);
+    return [];
+  }, []);
 
   // All displayed topics
   const displayedTopics = useMemo(() => {

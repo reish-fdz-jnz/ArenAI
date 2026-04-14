@@ -62,6 +62,9 @@ const CreateClassSession: React.FC = () => {
   const [searchText, setSearchText] = useState("");
   const [gradeLevel, setGradeLevel] = useState(filterGrade || 5);
 
+  const [addedTopics, setAddedTopics] = useState<{ id_topic: number; name: string }[]>([]);
+  const [modalSelectedTopics, setModalSelectedTopics] = useState<number[]>([]);
+
   // Sync with Professor Filters & Fetch Topics
   useEffect(() => {
     if (filterSubject && SUBJECTS.includes(filterSubject)) {
@@ -91,12 +94,52 @@ const CreateClassSession: React.FC = () => {
     fetchTopics();
   }, [selectedSubject]);
 
-  const filteredTopics = availableTopics;
+  const defaultTopics = useMemo(() => 
+    availableTopics.slice(0, 4),
+    [availableTopics]
+  );
+
+  const displayedTopics = useMemo(() => {
+    const result = [...defaultTopics];
+    addedTopics.forEach(topic => {
+      if (!result.find(t => t.id_topic === topic.id_topic)) {
+        result.push(topic);
+      }
+    });
+    return result;
+  }, [defaultTopics, addedTopics]);
+
+  const searchResults = useMemo(() => {
+    if (!searchText.trim()) return availableTopics;
+    const query = searchText.toLowerCase();
+    return availableTopics.filter(t => t.name.toLowerCase().includes(query));
+  }, [searchText, availableTopics]);
+
+  const filteredTopics = displayedTopics;
 
   const toggleTopic = (id: number) => {
     setSelectedTopics(prev => 
       prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
     );
+  };
+
+  const toggleModalTopic = (id: number) => {
+    setModalSelectedTopics(prev =>
+      prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
+    );
+  };
+
+  const handleAddTopicsFromModal = () => {
+    const newTopics = availableTopics.filter(t => modalSelectedTopics.includes(t.id_topic));
+    setAddedTopics(prev => {
+      const existingIds = prev.map(t => t.id_topic);
+      const toAdd = newTopics.filter(t => !existingIds.includes(t.id_topic));
+      return [...prev, ...toAdd];
+    });
+    setSelectedTopics(prev => [...new Set([...prev, ...modalSelectedTopics])]);
+    setModalSelectedTopics([]);
+    setSearchText("");
+    setShowTopicModal(false);
   };
 
   const handleCreateTemplate = async () => {
@@ -253,7 +296,7 @@ const CreateClassSession: React.FC = () => {
             <div className="template-card">
               <div className="template-card-title">Temas a Cubrir</div>
               <div className="template-topics-grid">
-                {filteredTopics.map(topic => (
+                {displayedTopics.map(topic => (
                   <div 
                     key={topic.id_topic} 
                     className={`template-topic-item ${selectedTopics.includes(topic.id_topic) ? 'selected' : ''}`}
@@ -266,17 +309,20 @@ const CreateClassSession: React.FC = () => {
                   </div>
                 ))}
               </div>
-              <div className="template-add-more" onClick={() => setShowTopicModal(true)}>
-                <IonIcon icon={addCircleOutline} />
-                <span>Agregar más temas</span>
+              
+              <div className="template-add-more-container">
+                <div className="template-add-more-btn" onClick={() => { setModalSelectedTopics([]); setShowTopicModal(true); }}>
+                  <IonIcon icon={addCircleOutline} />
+                  <span>{t("quizGenerator.addMore") || "Agregar más temas"}</span>
+                </div>
               </div>
             </div>
 
             {/* Description Card */}
             <div className="template-card">
-              <div className="template-card-title">Descripción AI</div>
+              <div className="template-card-title">Resumen / Objetivo</div>
               <IonTextarea 
-                placeholder="Escribe una breve descripción del objetivo de esta clase para que la IA sepa como guiar la sesión..."
+                placeholder="Escribe una breve descripción del objetivo de esta clase para que sirva como referencia o guía para la sesión..."
                 className="template-textarea"
                 rows={4}
                 value={description}
@@ -324,33 +370,60 @@ const CreateClassSession: React.FC = () => {
         </div>
       </IonModal>
 
-      {/* Topic Search Modal */}
       <IonModal
         isOpen={showTopicModal}
         onDidDismiss={() => setShowTopicModal(false)}
-        className="topic-search-modal"
+        className="quiz-topic-modal-premium"
       >
-        <div className="modal-header">
-          <h3>Buscar Temas</h3>
-          <IonIcon icon={closeOutline} onClick={() => setShowTopicModal(false)} />
-        </div>
-        <div className="modal-search-container">
-          <IonSearchbar 
-            value={searchText}
-            onIonInput={(e) => setSearchText(e.detail.value!)}
-            placeholder="Busca un tema..."
-          />
-        </div>
-        <div className="modal-content">
-          {availableTopics.filter(t => t.name.toLowerCase().includes(searchText.toLowerCase())).map(t => (
-            <div key={t.id_topic} className="modal-topic-row" onClick={() => { toggleTopic(t.id_topic); setShowTopicModal(false); }}>
-              <IonIcon icon={schoolOutline} />
-              <div className="topic-info">
-                <span className="name">{t.name}</span>
-                <span className="sub">{selectedSubject}</span>
-              </div>
+        <div className="quiz-modal-inner topic-modal-wide">
+          <div className="quiz-modal-header-premium">
+            <h2 className="quiz-modal-title" style={{ margin: 0 }}>{t("quizGenerator.searchTopics") || "Buscar Temas"}</h2>
+            <IonIcon 
+              icon={closeOutline} 
+              className="modal-close-icon-premium"
+              onClick={() => setShowTopicModal(false)} 
+            />
+          </div>
+
+          <div className="quiz-input-wrapper" style={{ marginBottom: '15px' }}>
+            <IonSearchbar 
+              value={searchText}
+              onIonInput={(e) => setSearchText(e.detail.value!)}
+              placeholder="Busca un tema..."
+              debounce={200}
+              className="premium-searchbar"
+            />
+          </div>
+
+          <div className="quiz-modal-content-premium">
+            <div className="quiz-modal-grid">
+              {searchResults.map(t => (
+                <div 
+                  key={t.id_topic} 
+                  className={`quiz-topic-item ${modalSelectedTopics.includes(t.id_topic) ? 'selected' : ''}`}
+                  onClick={() => toggleModalTopic(t.id_topic)}
+                >
+                  <div className="quiz-topic-checkbox">
+                    {modalSelectedTopics.includes(t.id_topic) && <div className="quiz-topic-checkmark" />}
+                  </div>
+                  <div className="quiz-topic-info">
+                    <span className="quiz-topic-name">{t.name}</span>
+                    <span className="quiz-topic-subject">{selectedSubject}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          <div className="quiz-modal-buttons">
+            <button 
+              className="quiz-modal-btn save"
+              onClick={handleAddTopicsFromModal}
+              disabled={modalSelectedTopics.length === 0}
+            >
+              Agregar {modalSelectedTopics.length > 0 ? `(${modalSelectedTopics.length})` : ""} Temas
+            </button>
+          </div>
         </div>
       </IonModal>
     </IonPage>

@@ -115,3 +115,62 @@ body.theme-arctic {
     --ion-border-color: #303848;
   }
 }
+
+
+/* Forced dark mode (Settings - Modo de Color: Oscuro) */
+html[data-force-dark] body.theme-arctic {
+    --ion-background-color: #12161C;
+    --ion-item-background: #1C2028;
+    --ion-card-background: #202830;
+    --ion-text-color: #E8ECF0;
+    --ion-text-color-step-150: #CCD4DC;
+    --ion-text-color-step-400: #8898A8;
+
+    --ion-color-primary: #4A7DA8;
+    --ion-color-primary-rgb: 74, 125, 168;
+    --ion-color-primary-contrast: #ffffff;
+    --ion-color-primary-shade: #3D6B92;
+    --ion-color-primary-tint: #5C90B8;
+
+    --ion-color-accent: #D4855A;
+    --ion-color-accent-rgb: 212, 133, 90;
+    --ion-color-accent-contrast: #ffffff;
+    --ion-color-accent-shade: #B8724D;
+    --ion-color-accent-tint: #E09870;
+
+    --ion-color-secondary: #64B0C8;
+    --ion-color-secondary-rgb: 100, 176, 200;
+    --ion-color-secondary-contrast: #ffffff;
+    --ion-color-secondary-shade: #559AB0;
+    --ion-color-secondary-tint: #78C0D8;
+    --ion-color-secondary-soft: rgba(100, 176, 200, 0.2);
+
+    --ion-color-tertiary: #8878A8;
+    --ion-color-tertiary-rgb: 136, 120, 168;
+    --ion-color-tertiary-contrast: #ffffff;
+    --ion-color-tertiary-shade: #756892;
+    --ion-color-tertiary-tint: #9A8CB8;
+
+    --ion-color-card-header: #4A7DA8;
+    --ion-color-card-border: #64B0C8;
+    --ion-color-button-primary: #D4855A;
+    --ion-color-button-secondary: #64B0C8;
+    --ion-color-chip: #8878A8;
+    --ion-color-chip-outline: #4A7DA8;
+    --ion-color-highlight: #4A7DA8;
+    --ion-color-focus-ring: #64B0C8;
+    --ion-color-link: #64B0C8;
+    --ion-color-progress: #64B0C8;
+    --ion-color-badge: #D4855A;
+
+    --ion-color-success: #4A9870;
+    --ion-color-success-soft: rgba(74, 152, 112, 0.2);
+    --ion-color-warning: #D0A040;
+    --ion-color-warning-soft: rgba(208, 160, 64, 0.2);
+    --ion-color-danger: #C85555;
+    --ion-color-danger-soft: rgba(200, 85, 85, 0.2);
+
+    --ion-color-surface: #1E2430;
+    --ion-color-surface-elevated: #283240;
+    --ion-border-color: #303848;
+}

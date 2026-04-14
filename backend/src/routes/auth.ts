@@ -43,6 +43,7 @@ router.post('/login', async (req, res, next) => {
       userId: user.id_user,
       username: user.username,
       role: user.role,
+      idInstitution: user.id_institution,
     });
 
     res.json({
@@ -127,6 +128,7 @@ router.post('/register', async (req, res, next) => {
       userId: created.id_user,
       username: created.username,
       role: created.role,
+      idInstitution: created.id_institution,
     });
 
     res.status(201).json({
@@ -245,6 +247,7 @@ router.post('/register-student', async (req, res, next) => {
       userId: created.id_user,
       username: created.username,
       role: created.role,
+      idInstitution: created.id_institution,
     });
 
     res.status(201).json({

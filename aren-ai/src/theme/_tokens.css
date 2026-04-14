@@ -1,53 +1,192 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    AREN AI — Semantic Component Tokens
-   Maps theme variables → component-level tokens.
-   Components use --st-* tokens instead of raw --ion-color-* vars.
+   ─────────────────────────────────────────────────────────────────────────
+   PURPOSE: Maps raw theme color variables → named component-level tokens.
+   Components and page CSS files should ALWAYS use --st-* tokens instead of
+   raw --ion-color-* variables. This is the single source of truth for what
+   a "card background" or "primary button" looks like at the component level.
+
+   ARCHITECTURE:
+   ┌─────────────────────────────────────────────────────────┐
+   │  themes/*.css   →   defines raw --ion-color-* variables  │
+   │  _tokens.css    →   maps them to --st-* semantic names   │
+   │  _components.css →  uses --st-* tokens in .aren-* classes│
+   │  pages/*.css    →   use --st-* tokens (NEVER hardcode)   │
+   └─────────────────────────────────────────────────────────┘
+
+   HOW DARK MODE WORKS:
+   Each theme's CSS file (themes/*.css) provides BOTH light and dark mode
+   values for its --ion-color-* variables (via @media prefers-color-scheme).
+   The --st-* tokens below automatically inherit the correct value.
+   The dark-mode @media block at the bottom of THIS FILE only needs to
+   override tokens whose semantics change in dark mode (e.g. shadow depth).
+
+   ADDING NEW TOKENS:
+   1. Add the token in the appropriate section below with a clear comment
+   2. Map it to an existing --ion-color-* variable (raw variables live in themes/*.css)
+   3. If the token needs a different value in dark mode, add it to the
+      @media (prefers-color-scheme: dark) block at the bottom of this file
+   4. Use the token in your component's CSS — never hardcode a color value
+
+   DO NOT:
+   ✗ Hardcode hex colors anywhere in page CSS files (e.g. #ffffff, #E0E0E0)
+   ✗ Use raw --ion-color-* in components — use --st-* tokens instead
+   ✗ Add !important to override tokens — fix the source token instead
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Header ── */
-  --st-header-bg: var(--ion-color-primary);
+
+  /* ══════════════════════════════════════════════════════════
+     HEADER
+     ────────────────────────────────────────────────────────── */
+  --st-header-bg:   var(--ion-color-primary);
   --st-header-text: var(--ion-color-primary-contrast, #ffffff);
 
-  /* ── Cards ── */
-  --st-card-bg: var(--ion-card-background);
-  --st-card-border: var(--ion-border-color, rgba(0, 0, 0, 0.1));
-  --st-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  /* ══════════════════════════════════════════════════════════
+     CARDS
+     Used by: .aren-card, student-card, page-level quiz/template cards
+     ────────────────────────────────────────────────────────── */
+  --st-card-bg:            var(--ion-card-background);
+  --st-card-border:        var(--ion-border-color, rgba(0, 0, 0, 0.1));
+  --st-card-shadow:        0 4px 12px rgba(0, 0, 0, 0.08);
   --st-card-header-accent: var(--ion-color-card-header, var(--ion-color-primary));
 
-  /* ── Action Buttons ── */
-  --st-btn-primary-bg: var(--ion-color-button-primary, var(--ion-color-accent, var(--ion-color-secondary)));
-  --st-btn-primary-text: var(--ion-color-primary-contrast, #ffffff);
-  --st-btn-secondary-bg: var(--ion-color-button-secondary, var(--ion-color-secondary));
+  /* ══════════════════════════════════════════════════════════
+     MODALS
+     Used by: quiz name modal, class session name modal, topic picker modal,
+              loading modal in AIQuizGenerator and CreateClassSession.
+     NOTE: Always reference these instead of specifying background/border/text
+           directly on modal elements. This guarantees every modal is opaque
+           and correctly themed in ALL themes and both light + dark mode.
+     ────────────────────────────────────────────────────────── */
+  --st-modal-bg:        var(--ion-background-color);
+  --st-modal-card-bg:   var(--ion-card-background);
+  --st-modal-border:    var(--ion-color-primary);
+  --st-modal-text:      var(--ion-text-color);
+  --st-modal-text-muted: var(--ion-text-color-step-400);
+
+  /* ══════════════════════════════════════════════════════════
+     INPUTS AND TEXTAREAS
+     Used by: quiz modal input fields, searchbars, topic textareas,
+              class template additional details input.
+     NOTE: --st-input-bg is intentionally very subtle so it works on both
+           light card backgrounds and dark card backgrounds.
+     ────────────────────────────────────────────────────────── */
+  --st-input-bg:            var(--ion-color-surface, rgba(255, 255, 255, 0.6));
+  --st-input-border:        var(--ion-border-color, rgba(0, 0, 0, 0.12));
+  --st-input-text:          var(--ion-text-color);
+  --st-input-placeholder:   var(--ion-text-color-step-400);
+
+  /* ══════════════════════════════════════════════════════════
+     CANCEL / SECONDARY ACTION BUTTONS
+     Used by: quiz name modal cancel button, class session cancel button.
+     These must work on both light and dark modal backgrounds.
+     In light mode: light grey surface + dark text.
+     In dark mode: semi-transparent white + light text (see dark override below).
+     ────────────────────────────────────────────────────────── */
+  --st-cancel-btn-bg:     rgba(0, 0, 0, 0.06);
+  --st-cancel-btn-text:   var(--ion-text-color-step-400);
+  --st-cancel-btn-border: var(--ion-border-color, rgba(0, 0, 0, 0.15));
+
+  /* ══════════════════════════════════════════════════════════
+     DROPDOWNS (Subject picker, section picker, etc.)
+     Used by: .quiz-subject-dropdown, .template-subject-dropdown
+     IMPORTANT: This MUST be a fully opaque color — do not use rgba with
+                low alpha here. Dropdowns float above other content and a
+                transparent background breaks the visual hierarchy.
+     ────────────────────────────────────────────────────────── */
+  --st-dropdown-bg:        var(--ion-card-background);
+  --st-dropdown-text:      var(--ion-text-color);
+  --st-dropdown-border:    var(--ion-border-color, rgba(0, 0, 0, 0.08));
+  --st-dropdown-hover-bg:  rgba(var(--ion-color-primary-rgb, 141, 107, 86), 0.06);
+
+  /* ══════════════════════════════════════════════════════════
+     ACTION BUTTONS
+     ────────────────────────────────────────────────────────── */
+  --st-btn-primary-bg:    var(--ion-color-button-primary, var(--ion-color-accent, var(--ion-color-secondary)));
+  --st-btn-primary-text:  var(--ion-color-primary-contrast, #ffffff);
+  --st-btn-secondary-bg:  var(--ion-color-button-secondary, var(--ion-color-secondary));
   --st-btn-secondary-text: var(--ion-color-secondary-contrast, #ffffff);
 
-  /* ── Progress & Stats ── */
-  --st-progress-fill: var(--ion-color-progress, var(--ion-color-secondary));
-  --st-progress-track: rgba(var(--ion-color-primary-rgb, 141, 107, 86), 0.1);
-  --st-highlight-bg: var(--ion-color-highlight, var(--ion-color-tertiary));
-  --st-highlight-text: var(--ion-color-tertiary-contrast, #ffffff);
+  /* ══════════════════════════════════════════════════════════
+     PROGRESS & STATS
+     ────────────────────────────────────────────────────────── */
+  --st-progress-fill:   var(--ion-color-progress, var(--ion-color-secondary));
+  --st-progress-track:  rgba(var(--ion-color-primary-rgb, 141, 107, 86), 0.1);
+  --st-highlight-bg:    var(--ion-color-highlight, var(--ion-color-tertiary));
+  --st-highlight-text:  var(--ion-color-tertiary-contrast, #ffffff);
 
-  /* ── Badges & Chips ── */
-  --st-badge-bg: var(--ion-color-badge, var(--ion-color-tertiary));
-  --st-badge-text: var(--ion-color-tertiary-contrast, #ffffff);
-  --st-chip-bg: var(--ion-color-chip, var(--ion-color-secondary));
-  --st-chip-text: var(--ion-color-secondary-contrast, #ffffff);
-  --st-chip-outline: var(--ion-color-chip-outline, var(--ion-color-primary));
+  /* ══════════════════════════════════════════════════════════
+     BADGES & CHIPS
+     ────────────────────────────────────────────────────────── */
+  --st-badge-bg:        var(--ion-color-badge, var(--ion-color-tertiary));
+  --st-badge-text:      var(--ion-color-tertiary-contrast, #ffffff);
+  --st-chip-bg:         var(--ion-color-chip, var(--ion-color-secondary));
+  --st-chip-text:       var(--ion-color-secondary-contrast, #ffffff);
+  --st-chip-outline:    var(--ion-color-chip-outline, var(--ion-color-primary));
 
-  /* ── Links & Focus ── */
-  --st-link-color: var(--ion-color-link, var(--ion-color-secondary));
-  --st-focus-ring: var(--ion-color-focus-ring, var(--ion-color-secondary));
+  /* ══════════════════════════════════════════════════════════
+     LINKS & FOCUS
+     ────────────────────────────────────────────────────────── */
+  --st-link-color:  var(--ion-color-link, var(--ion-color-secondary));
+  --st-focus-ring:  var(--ion-color-focus-ring, var(--ion-color-secondary));
 
-  /* ── Containers ── */
-  --st-container-soft-bg: var(--ion-color-secondary-soft, rgba(var(--ion-color-secondary-rgb, 144, 190, 171), 0.3));
+  /* ══════════════════════════════════════════════════════════
+     CONTAINERS / SURFACES
+     ────────────────────────────────────────────────────────── */
+  --st-container-soft-bg:  var(--ion-color-secondary-soft, rgba(var(--ion-color-secondary-rgb, 144, 190, 171), 0.3));
+  --st-surface:            var(--ion-color-surface, #ffffff);
+  --st-surface-elevated:   var(--ion-color-surface-elevated, #ffffff);
 
-  /* ── Surfaces ── */
-  --st-surface: var(--ion-color-surface, #ffffff);
-  --st-surface-elevated: var(--ion-color-surface-elevated, #ffffff);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE TOKEN OVERRIDES
+   ─────────────────────────────────────────────────────────────────────────
+   Only tokens whose SEMANTIC MEANING changes in dark mode need to be here.
+   Raw color adaptation is handled by the theme files (themes/*.css) via
+   their own @media (prefers-color-scheme: dark) blocks — those set the
+   --ion-color-* variables, and our --st-* tokens above pick them up
+   automatically.
+
+   This block is for situations where the token itself needs to shift — for
+   example, shadows are deeper in dark mode, and cancel buttons need a
+   lighter surface (not darker) to remain visible against dark backgrounds.
+   ═══════════════════════════════════════════════════════════════════════════ */
 @media (prefers-color-scheme: dark) {
   :root {
+    /* Cards: deeper shadow in dark mode */
     --st-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+    /* Cancel buttons: need a white-tinted surface in dark mode,
+       because the modal background is now dark. */
+    --st-cancel-btn-bg:     rgba(255, 255, 255, 0.10);
+    --st-cancel-btn-text:   var(--ion-text-color);
+    --st-cancel-btn-border: rgba(255, 255, 255, 0.20);
+
+    /* Dropdown hover: brighter in dark */
+    --st-dropdown-hover-bg: rgba(255, 255, 255, 0.06);
+
+    /* Inputs: use the card background surface in dark mode so they
+       appear recessed but opaque. */
+    --st-input-bg: rgba(255, 255, 255, 0.05);
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORCED DARK MODE TOKEN OVERRIDES
+   ─────────────────────────────────────────────────────────────────────────
+   Applied when the user picks 🌙 Oscuro in Settings → Modo de Color.
+   ThemeContext sets data-force-dark="true" on <html>.
+
+   These rules mirror the @media block above EXACTLY.
+   If you update the @media block, update this block too.
+   ═══════════════════════════════════════════════════════════════════════════ */
+html[data-force-dark] :root {
+  --st-card-shadow:       0 4px 12px rgba(0, 0, 0, 0.3);
+  --st-cancel-btn-bg:     rgba(255, 255, 255, 0.10);
+  --st-cancel-btn-text:   var(--ion-text-color);
+  --st-cancel-btn-border: rgba(255, 255, 255, 0.20);
+  --st-dropdown-hover-bg: rgba(255, 255, 255, 0.06);
+  --st-input-bg:          rgba(255, 255, 255, 0.05);
 }

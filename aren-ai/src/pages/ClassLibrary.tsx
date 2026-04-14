@@ -69,7 +69,9 @@ const ClassLibrary: React.FC = () => {
                 Name: c.name_template || "Untitled Template",
                 Grade: isNaN(parseInt(c.grade)) ? 7 : parseInt(c.grade),
                 Description: c.description || "",
-                Topics: [], // Topics will be fetched when needed or we can update API to include them
+                Topics: c.topic_names 
+                  ? c.topic_names.split(',').map((name: string) => ({ name }))
+                  : [],
                 Settings: c.settings ? (typeof c.settings === 'string' ? JSON.parse(c.settings) : c.settings) : {},
                 subjectId: c.id_subject
             }));
@@ -221,6 +223,14 @@ const ClassLibrary: React.FC = () => {
                       key={temp.ClassTemplateID}
                       className="class-menu-card"
                     >
+                      <div className="class-menu-card-topics">
+                        {temp.Topics.slice(0, 3).map((topic, i: number) => (
+                          <span key={i} className="class-menu-topic-chip">
+                            {topic.name}
+                          </span>
+                        ))}
+                      </div>
+
                       <div className="class-menu-card-header">
                         <div>
                           <span className="class-menu-card-name">
@@ -236,14 +246,6 @@ const ClassLibrary: React.FC = () => {
                         >
                           <IonIcon icon={trashOutline} />
                         </button>
-                      </div>
-
-                      <div className="class-menu-card-topics">
-                        {temp.Topics.slice(0, 2).map((topic, i: number) => (
-                          <span key={i} className="class-menu-topic-chip">
-                            {topic.name}
-                          </span>
-                        ))}
                       </div>
 
                       <div className="class-menu-card-actions">

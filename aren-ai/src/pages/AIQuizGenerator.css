@@ -1,5 +1,26 @@
-/* AIQuizGenerator.css - Custom Design with Smooth Curves */
+/* ═══════════════════════════════════════════════════════════════════════════
+   AIQuizGenerator.css
+   ─────────────────────────────────────────────────────────────────────────
+   Design: Premium quiz creation page with floating card sections,
+           floating subject notch, and a wide semicircle footer CTA.
 
+   THEMING RULES — PLEASE READ BEFORE EDITING:
+   ┌──────────────────────────────────────────────────────────────────────┐
+   │ • NEVER hardcode hex colors (#ffffff, #E0E0E0, #5D4037, etc.)        │
+   │ • NEVER hardcode rgba() with fixed channel values for text/bg        │
+   │ • ALWAYS use --st-* tokens from src/theme/_tokens.css                │
+   │ • ALWAYS use --ion-color-* variables from the active theme           │
+   │ • Dark mode is handled by theme files + token overrides — do NOT     │
+   │   add a manual @media (prefers-color-scheme: dark) block here unless │
+   │   you have a layout-only (non-color) reason to do so.                │
+   │ • If you need a new semantic color, ADD it to _tokens.css first,     │
+   │   then reference it here.                                            │
+   └──────────────────────────────────────────────────────────────────────┘
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════
+   PAGE SHELL
+   ────────────────────────────────────────────────────────── */
 .ai-quiz-page {
   background-color: var(--ion-background-color) !important;
 }
@@ -8,7 +29,13 @@
   --background: var(--ion-background-color) !important;
 }
 
-/* Fix header line issue - more aggressive */
+/* ══════════════════════════════════════════════════════════
+   HEADER BORDER SUPPRESSION
+   The quiz page uses a custom floating notch header design.
+   Ionic adds a bottom border/shadow line to ion-header by default —
+   these rules remove it so the notch floats cleanly over content.
+   Do NOT remove these — the visual effect breaks without them.
+   ────────────────────────────────────────────────────────── */
 .ai-quiz-page .student-header-container ion-toolbar::after,
 .ai-quiz-page ion-header::after,
 .ai-quiz-page .student-toolbar::after,
@@ -25,7 +52,25 @@
   --border-style: none !important;
 }
 
-/* Content Container - minimal top padding */
+/* ══════════════════════════════════════════════════════════
+   POINTER EVENT ROUTING
+   The floating subject notch sits in the header area. We disable pointer
+   events on the header so clicks pass through to content below, then
+   re-enable them selectively on interactive children.
+   ────────────────────────────────────────────────────────── */
+.ai-quiz-page ion-header {
+  pointer-events: none;
+  z-index: 100 !important;
+}
+
+.ai-quiz-page .student-toolbar  { pointer-events: auto; }
+.sh-notch-container             { pointer-events: none; z-index: 101 !important; }
+.sh-notch                       { pointer-events: auto !important; cursor: pointer; z-index: 102 !important; }
+.sh-subject-display             { pointer-events: auto !important; }
+
+/* ══════════════════════════════════════════════════════════
+   MAIN CONTENT CONTAINER
+   ────────────────────────────────────────────────────────── */
 .quiz-container {
   padding: 25px 20px 20px 20px;
   display: flex;
@@ -33,18 +78,23 @@
   gap: 16px;
 }
 
-/* Spacer element at end of content to push above footer */
+/* Spacer pushes scrollable content above the fixed footer button */
 .quiz-footer-spacer {
   height: 85px;
   flex-shrink: 0;
 }
 
-/* ========== QUIZ NAME SECTION ========== */
+/* ══════════════════════════════════════════════════════════
+   QUIZ NAME SECTION
+   The editable quiz title shown at the top of the form.
+   Uses --ion-color-primary for the text — this is intentional because
+   the primary color is designed to be legible on the page background
+   in all themes (both light and dark). Do not change to a hardcoded color.
+   ────────────────────────────────────────────────────────── */
 .quiz-name-section {
   text-align: center;
   padding: 10px 0;
   margin-top: 50px;
-  /* Increased to ensure no overlap */
   position: relative;
   z-index: 50;
   pointer-events: auto;
@@ -53,6 +103,7 @@
 .quiz-name-display {
   font-size: 28px;
   font-weight: 400;
+  /* Uses primary color — adapts per theme AND per light/dark mode */
   color: var(--ion-color-primary);
   font-family: 'Georgia', serif;
   letter-spacing: 1px;
@@ -73,7 +124,7 @@
   opacity: 0.6;
 }
 
-/* Floral Separator */
+/* ── Floral Separator ── */
 .floral-separator {
   display: flex;
   align-items: center;
@@ -94,7 +145,13 @@
   opacity: 0.6;
 }
 
-/* ========== CARD STYLE SECTIONS ========== */
+/* ══════════════════════════════════════════════════════════
+   CARD SECTIONS
+   Each form section (topics, settings, details) is a card with a
+   title pill that sits half-in / half-out of the top edge.
+   Background uses --ion-color-secondary-soft (semi-transparent tint)
+   which is defined per-theme and works on both light and dark pages.
+   ────────────────────────────────────────────────────────── */
 .quiz-card {
   background-color: var(--ion-color-secondary-soft);
   border-radius: 15px;
@@ -103,14 +160,15 @@
   margin-top: 40px;
 }
 
-/* Title Pill - Half in / Half out */
+/* Title pill — floats above the card edge */
 .quiz-card-title {
   position: absolute;
   top: -16px;
   left: 50%;
   transform: translateX(-50%);
   background-color: var(--ion-color-primary);
-  color: white;
+  /* white is safe here because primary-contrast is always white in all themes */
+  color: var(--ion-color-primary-contrast, #ffffff);
   padding: 8px 24px;
   border-radius: 20px;
   font-size: 14px;
@@ -119,7 +177,9 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* ========== TOPICS GRID ========== */
+/* ══════════════════════════════════════════════════════════
+   TOPICS GRID
+   ────────────────────────────────────────────────────────── */
 .quiz-topics-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -131,7 +191,8 @@
   display: flex;
   align-items: center;
   padding: 12px 14px;
-  background-color: rgba(255, 255, 255, 0.05);
+  /* Semi-transparent white overlay works on both light and dark card backgrounds */
+  background-color: rgba(255, 255, 255, 0.08);
   border-radius: 25px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -139,7 +200,7 @@
 }
 
 .quiz-topic-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.14);
 }
 
 .quiz-topic-item.selected {
@@ -147,6 +208,7 @@
   border-color: var(--ion-color-secondary);
 }
 
+/* Checkbox circle — uses --ion-color-surface which is opaque and themed */
 .quiz-topic-checkbox {
   width: 20px;
   height: 20px;
@@ -156,14 +218,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: white;
+  /* --ion-color-surface is defined per-theme as an opaque surface color.
+     Do NOT change to white — it breaks on dark-mode themes. */
+  background: var(--ion-color-surface);
   flex-shrink: 0;
   transition: all 0.2s;
 }
 
 .quiz-topic-item.selected .quiz-topic-checkbox {
-  border-color: white;
-  background: white;
+  /* On a selected (secondary-colored) background, use white for the ring */
+  border-color: var(--ion-color-secondary-contrast, #ffffff);
+  background: var(--ion-color-secondary-contrast, #ffffff);
 }
 
 .quiz-topic-checkmark {
@@ -173,6 +238,7 @@
   border-radius: 50%;
 }
 
+/* Topic label text */
 .quiz-topic-name {
   font-weight: 500;
   color: var(--ion-text-color);
@@ -180,10 +246,27 @@
 }
 
 .quiz-topic-item.selected .quiz-topic-name {
-  color: white;
+  /* secondary-contrast is always legible on secondary background */
+  color: var(--ion-color-secondary-contrast, #ffffff);
 }
 
-/* Add More Button - Half in / Half out at bottom */
+.quiz-topic-subject {
+  font-size: 10px;
+  color: var(--ion-text-color-step-400);
+  font-weight: 400;
+}
+
+.quiz-topic-item.selected .quiz-topic-subject {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.quiz-topic-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ── Add More Button (half-out at bottom of topics card) ── */
 .quiz-add-more-container {
   display: flex;
   justify-content: center;
@@ -198,7 +281,7 @@
   justify-content: center;
   gap: 6px;
   padding: 10px 20px;
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--st-input-bg);
   border: 2px dashed var(--ion-color-secondary);
   border-radius: 20px;
   cursor: pointer;
@@ -210,7 +293,7 @@
 }
 
 .quiz-add-more-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.12);
   transform: translateY(-1px);
 }
 
@@ -218,7 +301,9 @@
   font-size: 18px;
 }
 
-/* ========== ADVANCED SETTINGS ========== */
+/* ══════════════════════════════════════════════════════════
+   QUESTION COUNT STEPPER
+   ────────────────────────────────────────────────────────── */
 .quiz-questions-row {
   display: flex;
   align-items: center;
@@ -227,7 +312,6 @@
   cursor: pointer;
 }
 
-/* Question Circle - Fixed centering */
 .quiz-question-circle {
   width: 50px;
   height: 50px;
@@ -249,11 +333,11 @@
 .quiz-question-number {
   font-size: 22px;
   font-weight: 600;
-  color: white;
+  /* secondary-contrast is safe on the secondary-colored circle */
+  color: var(--ion-color-secondary-contrast, #ffffff);
   font-family: 'Georgia', serif;
 }
 
-/* Fixed number input - truly centered */
 .quiz-question-number-input {
   width: 50px;
   height: 50px;
@@ -261,7 +345,7 @@
   border: none;
   font-size: 22px;
   font-weight: 600;
-  color: white;
+  color: var(--ion-color-secondary-contrast, #ffffff);
   font-family: 'Georgia', serif;
   text-align: center;
   outline: none;
@@ -289,6 +373,7 @@
   font-family: 'Georgia', serif;
 }
 
+/* ── Slider ── */
 .quiz-slider-container {
   padding: 5px 0 15px 0;
 }
@@ -305,7 +390,9 @@
   min-width: 20px;
 }
 
-/* Additional Details */
+/* ══════════════════════════════════════════════════════════
+   ADDITIONAL DETAILS (Textarea section)
+   ────────────────────────────────────────────────────────── */
 .quiz-details-section {
   margin-top: 10px;
 }
@@ -320,17 +407,24 @@
 }
 
 .quiz-details-textarea {
-  --background: rgba(255, 255, 255, 0.05);
+  --background: var(--st-input-bg);
+  --color: var(--ion-text-color);
+  --placeholder-color: var(--st-input-placeholder);
   --border-radius: 12px;
   --padding-start: 14px;
   --padding-end: 14px;
   --padding-top: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--st-input-border);
   border-radius: 12px;
   font-size: 14px;
 }
 
-/* ========== FOOTER - Wide Semicircle (Half Ellipse) ========== */
+/* ══════════════════════════════════════════════════════════
+   FOOTER — Wide Semicircle CTA
+   Fixed at the bottom with a half-ellipse shape. The background
+   uses --ion-color-primary; the nested button uses --ion-color-secondary.
+   These are intentional design choices — do not flatten or change the shape.
+   ────────────────────────────────────────────────────────── */
 .quiz-footer {
   position: fixed;
   bottom: 0;
@@ -348,12 +442,11 @@
   padding-bottom: 8px;
 }
 
-/* Hide the notch - not needed anymore */
+/* Notch container — display:contents means it doesn't affect layout */
 .quiz-footer-notch {
   display: contents;
 }
 
-/* Button - Same wide semicircle shape as footer but smaller */
 .quiz-generate-btn {
   width: 280px;
   height: 48px;
@@ -362,7 +455,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  color: white;
+  color: var(--ion-color-secondary-contrast, #ffffff);
   font-size: 24px;
   font-weight: 500;
   font-family: serif;
@@ -374,93 +467,58 @@
   bottom: 0;
 }
 
-.quiz-generate-btn:hover {
-  transform: scale(1.03);
-}
-
+.quiz-generate-btn:hover  { transform: scale(1.03); }
 .quiz-generate-btn:active {
   transform: scale(0.95);
   background: var(--ion-color-secondary-tint);
 }
 
-/* ========== SUBJECT DROPDOWN ========== */
-.quiz-subject-dropdown {
-  position: absolute;
-  top: 90px;
-  /* Adjusted to be closer to notch */
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 99999;
-  /* Super high Z-index */
-  background: white;
-  /* Ensure non-transparent */
-  border-radius: 14px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-  min-width: 180px;
-  overflow: hidden;
-  pointer-events: auto;
-  /* Ensure clickable */
-}
-
-.ai-quiz-page ion-header {
-  pointer-events: none;
-  /* Let clicks pass through header area */
-  z-index: 100 !important;
-}
-
-.ai-quiz-page .student-toolbar {
-  pointer-events: auto;
-  /* Re-enable for menu button */
-}
-
-.sh-notch-container {
-  pointer-events: none;
-  z-index: 101 !important;
-  /* Above toolbar */
-}
-
-.sh-notch {
-  pointer-events: auto !important;
-  /* Force clickable */
-  cursor: pointer;
-  z-index: 102 !important;
-}
-
-.sh-subject-display {
-  pointer-events: auto !important;
-}
-
+/* ══════════════════════════════════════════════════════════
+   SUBJECT DROPDOWN
+   Floats below the notch. MUST be opaque — use --st-dropdown-bg
+   which always resolves to an opaque card background.
+   The old rule "background: white" was removed — white is invisible
+   against light-beige backgrounds and wrong in all non-original themes.
+   ────────────────────────────────────────────────────────── */
 .quiz-subject-dropdown {
   position: absolute;
   top: 120px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
-  background: var(--ion-card-background);
+  /* --st-dropdown-bg is an opaque card-level background — NEVER use white/rgba here */
+  background: var(--st-dropdown-bg);
   border-radius: 14px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
   min-width: 180px;
   overflow: hidden;
+  pointer-events: auto;
 }
 
 .quiz-subject-option {
   padding: 14px 20px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--st-dropdown-border);
   font-weight: 500;
+  color: var(--st-dropdown-text);
   transition: background 0.2s;
 }
 
 .quiz-subject-option:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--st-dropdown-hover-bg);
 }
 
 .quiz-subject-option.selected {
   background: var(--ion-color-secondary);
-  color: white;
+  color: var(--ion-color-secondary-contrast, #ffffff);
 }
 
-/* ========== NAME MODAL - Like ArenEntity ========== */
+/* ══════════════════════════════════════════════════════════
+   QUIZ NAME MODAL
+   A centered overlay for editing the quiz's display name.
+   Uses a decorative border + inner dashed ring aesthetic.
+   Colors use --st-modal-* tokens so they adapt to all themes.
+   ────────────────────────────────────────────────────────── */
 .quiz-name-modal {
   --width: 90%;
   --max-width: 400px;
@@ -469,47 +527,44 @@
   --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
+/* CRITICAL: background belongs on ::part(content), not on a child div.
+   The transparent-shell + inner-div pattern causes the page to bleed through. */
 .quiz-name-modal::part(content) {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  overflow: visible;
+  background: var(--st-modal-card-bg);
+  border: 4px solid var(--st-modal-border);
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
 }
 
 .quiz-modal-inner {
-  background: var(--ion-background-color);
-  border: 4px solid var(--ion-color-primary);
-  border-radius: 24px;
+  /* No background here — it sits on ::part(content) above */
   padding: 24px;
   position: relative;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(12px);
 }
 
+/* Decorative inner dashed ring — uses token alpha so it adapts to dark mode */
 .quiz-modal-inner::before {
   content: '';
   position: absolute;
-  top: 6px;
-  left: 6px;
-  right: 6px;
-  bottom: 6px;
-  border: 2px dashed rgba(93, 64, 55, 0.2);
+  top: 6px; left: 6px; right: 6px; bottom: 6px;
+  border: 2px dashed var(--st-card-border);
   border-radius: 18px;
   pointer-events: none;
 }
 
 .quiz-modal-title {
   font-family: 'Georgia', serif;
-  color: var(--ion-color-primary);
+  color: var(--st-modal-border);     /* same as modal border = primary tone */
   font-size: 1.8rem;
   margin: 0 0 24px 0;
   font-weight: 600;
 }
 
 .quiz-input-wrapper {
-  background: rgba(255, 255, 255, 0.05);
-  border: 2px solid var(--ion-color-primary);
+  background: var(--st-input-bg);
+  border: 2px solid var(--st-modal-border);
   border-radius: 12px;
   padding: 12px;
   margin-bottom: 24px;
@@ -523,29 +578,28 @@
   font-family: 'Georgia', serif;
   font-size: 1.2rem;
   text-align: center;
-  color: var(--ion-color-primary);
+  /* Use modal text token — adapts to light/dark automatically */
+  color: var(--st-modal-text);
   font-weight: 600;
 }
 
-.quiz-modal-input-field[type="number"] {
-  -moz-appearance: textfield;
-  appearance: textfield;
+.quiz-modal-input-field::placeholder {
+  color: var(--st-modal-text-muted);
 }
 
+/* Suppress number spinners */
+.quiz-modal-input-field[type="number"]                         { -moz-appearance: textfield; appearance: textfield; }
 .quiz-modal-input-field[type="number"]::-webkit-outer-spin-button,
-.quiz-modal-input-field[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  appearance: none;
-  margin: 0;
-}
+.quiz-modal-input-field[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; margin: 0; }
 
 .quiz-modal-hint {
   font-size: 12px;
-  color: var(--ion-text-color-step-400);
+  color: var(--st-modal-text-muted);
   text-align: center;
   margin: -16px 0 20px 0;
 }
 
+/* ── Modal Action Buttons ── */
 .quiz-modal-buttons {
   display: flex;
   gap: 16px;
@@ -564,37 +618,41 @@
   font-weight: 600;
 }
 
-.quiz-modal-btn:active {
-  transform: scale(0.95);
-}
+.quiz-modal-btn:active { transform: scale(0.95); }
 
 .quiz-modal-btn.cancel {
-  background: #E0E0E0;
-  color: #757575;
-  border: 2px solid #BDBDBD;
+  /* --st-cancel-btn-* tokens flip appropriately in dark mode (see _tokens.css) */
+  background: var(--st-cancel-btn-bg);
+  color: var(--st-cancel-btn-text);
+  border: 2px solid var(--st-cancel-btn-border);
 }
 
 .quiz-modal-btn.save {
   background: var(--ion-color-secondary);
-  color: #FFF;
+  color: var(--ion-color-secondary-contrast, #ffffff);
   border: 2px solid var(--ion-color-secondary-shade);
   box-shadow: 0 4px 0 var(--ion-color-secondary-shade);
   margin-bottom: 4px;
 }
 
 .quiz-modal-btn.save:active {
-  box-shadow: 0 0 0 var(--ion-color-secondary-shade);
+  box-shadow: none;
   transform: translateY(4px);
 }
 
-/* Topic Modal */
+/* ══════════════════════════════════════════════════════════
+   TOPIC PICKER MODAL
+   Floating sheet for browsing and selecting quiz topics.
+   The ::part(content) rule ensures Ionic renders an opaque background.
+   ────────────────────────────────────────────────────────── */
 .quiz-topic-modal {
   --border-radius: 20px;
   --max-height: 80vh;
 }
 
 .quiz-topic-modal::part(content) {
-  background: var(--ion-background-color);
+  /* Opaque — ALWAYS use a filled background here, never transparent */
+  background: var(--st-modal-bg);
   border-radius: 20px;
   overflow: hidden;
 }
@@ -604,12 +662,13 @@
   opacity: 1;
 }
 
+/* Modal header band */
 .quiz-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--st-card-border);
   background: var(--ion-color-secondary-soft);
 }
 
@@ -617,26 +676,30 @@
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  color: var(--ion-color-primary);
+  /* --st-modal-text resolves to the correct text color in all themes/modes */
+  color: var(--st-modal-text);
 }
 
+/* Search bar area */
 .quiz-modal-search {
   padding: 12px 16px;
   background: var(--ion-color-secondary-soft);
 }
 
 .quiz-searchbar {
-  --background: white;
+  --background: var(--ion-color-surface);
+  --color: var(--ion-text-color);
   --border-radius: 12px;
   --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --placeholder-color: var(--ion-text-color-step-400);
+  --placeholder-color: var(--st-input-placeholder);
 }
 
+/* Scrollable topic list */
 .quiz-modal-content {
   padding: 16px;
   max-height: 45vh;
   overflow-y: auto;
-  background: var(--ion-background-color);
+  background: var(--st-modal-bg);
 }
 
 .quiz-modal-grid {
@@ -645,26 +708,11 @@
   gap: 10px;
 }
 
-.quiz-topic-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.quiz-topic-subject {
-  font-size: 10px;
-  color: var(--ion-text-color-step-400);
-  font-weight: 400;
-}
-
-.quiz-topic-item.selected .quiz-topic-subject {
-  color: rgba(255, 255, 255, 0.7);
-}
-
+/* Modal footer with confirm button */
 .quiz-modal-footer {
   padding: 16px 20px;
   background: var(--ion-color-secondary-soft);
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-top: 1px solid var(--st-card-border);
 }
 
 .quiz-modal-add-btn {
@@ -674,7 +722,7 @@
   height: 50px;
   font-weight: 600;
   font-size: 16px;
-  --color: white;
+  --color: var(--ion-color-primary-contrast, #ffffff);
 }
 
 .quiz-modal-add-btn:disabled {
@@ -682,29 +730,13 @@
   opacity: 0.6;
 }
 
-/* ========== RESPONSIVE ========== */
-@media (max-width: 400px) {
-
-  .quiz-topics-grid,
-  .quiz-modal-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .quiz-topic-item {
-    padding: 10px 12px;
-  }
-
-  .quiz-name-display {
-    font-size: 24px;
-  }
-
-  .quiz-generate-btn {
-    padding: 8px 20px;
-    font-size: 13px;
-  }
-}
-
-/* ========== CUSTOM LOADING MODAL ========== */
+/* ══════════════════════════════════════════════════════════
+   LOADING MODAL (Quiz Generation in Progress)
+   Animated spinner while AI is building the quiz.
+   IMPORTANT: Do not hardcode the spinner gradient colors.
+   Use --ion-color-primary and --ion-color-secondary so the
+   spinner reflects the active theme's palette.
+   ────────────────────────────────────────────────────────── */
 .quiz-loading-modal {
   --width: 90%;
   --max-width: 320px;
@@ -713,21 +745,19 @@
   --box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
+/* Same fix as name modal — background on ::part(content) */
 .quiz-loading-modal::part(content) {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  overflow: visible;
+  background: var(--st-modal-card-bg);
+  border: 4px solid var(--ion-color-primary);
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
 }
 
 .quiz-loading-inner {
-  background: var(--ion-background-color);
-  border: 4px solid var(--ion-color-primary);
-  border-radius: 24px;
+  /* No background — it lives on ::part(content) above */
   padding: 40px 24px;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(12px);
 }
 
 .quiz-loading-spinner {
@@ -742,186 +772,101 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8B4513, #D4A574);
+  /* Themed gradient: uses primary→secondary so spinner matches every palette */
+  background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-secondary));
   animation: spinnerPulse 1.2s ease-in-out infinite;
 }
 
-.spinner-ring:nth-child(1) {
-  animation-delay: 0s;
-}
-
-.spinner-ring:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.spinner-ring:nth-child(3) {
-  animation-delay: 0.4s;
-}
+.spinner-ring:nth-child(1) { animation-delay: 0s;   }
+.spinner-ring:nth-child(2) { animation-delay: 0.2s; }
+.spinner-ring:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes spinnerPulse {
-
-  0%,
-  100% {
-    transform: scale(0.5);
-    opacity: 0.4;
-  }
-
-  50% {
-    transform: scale(1.2);
-    opacity: 1;
-  }
+  0%, 100% { transform: scale(0.5); opacity: 0.4; }
+  50%       { transform: scale(1.2); opacity: 1;   }
 }
 
 .quiz-loading-title {
   font-family: 'Fredoka One', cursive;
   font-size: 22px;
-  color: #5D4037;
+  /* --st-modal-text adapts to dark/light mode — never hardcode a brown color here */
+  color: var(--st-modal-text);
   margin: 0 0 8px 0;
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
 }
 
 .quiz-loading-text {
   font-family: 'Comic Neue', sans-serif;
   font-size: 14px;
-  color: #8B7355;
+  /* Muted step provides softer secondary text */
+  color: var(--st-modal-text-muted);
   margin: 0;
 }
 
-/* ========== DARK MODE OVERRIDES ========== */
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE OVERRIDES
+   Layout adjustments only — no color changes here.
+   ────────────────────────────────────────────────────────── */
+@media (max-width: 400px) {
+  .quiz-topics-grid,
+  .quiz-modal-grid       { grid-template-columns: 1fr; }
+  .quiz-topic-item        { padding: 10px 12px; }
+  .quiz-name-display      { font-size: 24px; }
+  .quiz-generate-btn      { padding: 8px 20px; font-size: 13px; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES (OS + Force-Dark from Settings)
+   ──────────────────────────────────────────────────────────
+   All page colors adapt via tokens. These rules handle the few
+   ::part() targets that can't use CSS variables directly.
+   Keep the @media block and html[data-force-dark] block in sync.
+   ══════════════════════════════════════════════════════════ */
+
+/* ─ OS dark mode ─ */
 @media (prefers-color-scheme: dark) {
-
-  /* --- General text --- */
-  .quiz-name-display,
-  .quiz-topic-name,
-  .quiz-questions-label,
-  .quiz-slider-label,
-  .quiz-details-label {
-    color: var(--ion-text-color) !important;
+  .quiz-name-modal::part(content),
+  .quiz-loading-modal::part(content) {
+    background: var(--st-modal-card-bg) !important;
+    border-color: var(--ion-color-primary) !important;
   }
 
-  .quiz-name-edit-icon,
-  .floral-center {
-    color: var(--ion-color-secondary) !important;
+  .quiz-topic-modal::part(content) {
+    background: var(--st-modal-bg) !important;
   }
 
-  .floral-line {
-    background: linear-gradient(to right, transparent, var(--ion-color-secondary), transparent) !important;
+  .quiz-topic-modal::part(backdrop),
+  .quiz-name-modal::part(backdrop),
+  .quiz-loading-modal::part(backdrop) {
+    background: rgba(0, 0, 0, 0.80) !important;
+    opacity: 1 !important;
   }
 
-  /* --- Topic Search Modal --- */
-  .quiz-topic-modal {
-    --background: var(--ion-background-color) !important;
-  }
-
-  .quiz-modal-header {
-    background: var(--ion-card-background) !important;
-    border-bottom-color: rgba(255, 255, 255, 0.1) !important;
-  }
-
-  .quiz-modal-header h3 {
-    color: var(--ion-text-color) !important;
-  }
-
-  .quiz-modal-search {
-    background: var(--ion-card-background) !important;
-  }
-
-  .quiz-searchbar {
-    --background: rgba(255, 255, 255, 0.08) !important;
-    --color: var(--ion-text-color) !important;
-    --placeholder-color: rgba(255, 255, 255, 0.4) !important;
-  }
-
-  .quiz-modal-content {
-    background: var(--ion-background-color) !important;
-  }
-
-  .quiz-topic-checkbox {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border-color: var(--ion-color-secondary) !important;
-  }
-
-  .quiz-modal-footer {
-    background: var(--ion-card-background) !important;
-    border-top-color: rgba(255, 255, 255, 0.1) !important;
-  }
-
-  /* --- Loading Modal (Generating Quiz) --- */
-  .quiz-loading-inner {
-    background: var(--ion-card-background) !important;
-    border-color: var(--ion-color-secondary) !important;
-    backdrop-filter: none !important;
-  }
-
-  .quiz-loading-title {
-    color: var(--ion-text-color) !important;
-    text-shadow: none !important;
-  }
-
-  .quiz-loading-text {
-    color: rgba(255, 255, 255, 0.6) !important;
-  }
-
-  .spinner-ring {
-    background: linear-gradient(135deg, var(--ion-color-secondary), var(--ion-color-secondary-tint)) !important;
-  }
-
-  /* --- Name Modal (Quiz Name) --- */
-  .quiz-modal-inner {
-    background: var(--ion-card-background) !important;
-    border-color: var(--ion-color-secondary) !important;
-    backdrop-filter: none !important;
-  }
-
-  .quiz-modal-inner::before {
-    border-color: rgba(255, 255, 255, 0.1) !important;
-  }
-
-  .quiz-modal-title {
-    color: var(--ion-text-color) !important;
-  }
-
-  .quiz-input-wrapper {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-color: var(--ion-color-secondary) !important;
-  }
-
-  .quiz-modal-input-field {
-    color: var(--ion-text-color) !important;
-  }
-
-  .quiz-modal-input-field::placeholder {
-    color: rgba(255, 255, 255, 0.4) !important;
-  }
-
-  .quiz-modal-hint {
-    color: rgba(255, 255, 255, 0.5) !important;
-  }
-
-  .quiz-modal-btn.cancel {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: var(--ion-text-color) !important;
-    border-color: rgba(255, 255, 255, 0.2) !important;
-  }
-
-  /* --- Subject dropdown --- */
-  .quiz-subject-dropdown {
-    background: var(--ion-card-background) !important;
-  }
-
+  /* Subject dropdown — belt-and-suspenders for Ionic shadow DOM */
   .quiz-subject-option {
-    color: var(--ion-text-color) !important;
-    border-bottom-color: rgba(255, 255, 255, 0.05) !important;
+    color: var(--st-dropdown-text) !important;
+    border-bottom-color: var(--st-dropdown-border) !important;
   }
+}
 
-  .quiz-subject-option:hover {
-    background: rgba(255, 255, 255, 0.08) !important;
-  }
+/* ─ Forced dark mode (Settings → Modo de Color: 🌙 Oscuro) ─ */
+html[data-force-dark] .quiz-name-modal::part(content),
+html[data-force-dark] .quiz-loading-modal::part(content) {
+  background: var(--st-modal-card-bg) !important;
+  border-color: var(--ion-color-primary) !important;
+}
 
-  /* --- Details textarea --- */
-  .quiz-details-textarea {
-    --background: rgba(255, 255, 255, 0.05) !important;
-    --color: var(--ion-text-color) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
-  }
+html[data-force-dark] .quiz-topic-modal::part(content) {
+  background: var(--st-modal-bg) !important;
+}
+
+html[data-force-dark] .quiz-topic-modal::part(backdrop),
+html[data-force-dark] .quiz-name-modal::part(backdrop),
+html[data-force-dark] .quiz-loading-modal::part(backdrop) {
+  background: rgba(0, 0, 0, 0.80) !important;
+  opacity: 1 !important;
+}
+
+html[data-force-dark] .quiz-subject-option {
+  color: var(--st-dropdown-text) !important;
+  border-bottom-color: var(--st-dropdown-border) !important;
 }

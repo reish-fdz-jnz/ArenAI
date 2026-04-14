@@ -3,11 +3,16 @@ import { db } from '../db/pool.js';
 import type { ClassTemplate, ClassTemplateTopic } from '../types.js';
 
 export async function listTemplatesByProfessor(professorId: number) {
-  const result = await db.query<ClassTemplate>(
-    `SELECT id_class_template, id_professor, id_subject, name_template, grade, description, settings, created_at
-     FROM class_template
-     WHERE id_professor = ?
-     ORDER BY created_at DESC`,
+  const result = await db.query<ClassTemplate & { topic_names: string }>(
+    `SELECT 
+        ct.*,
+        (SELECT GROUP_CONCAT(t.name) 
+         FROM topic t 
+         INNER JOIN class_template_topic ctt ON ctt.id_topic = t.id_topic 
+         WHERE ctt.id_class_template = ct.id_class_template) as topic_names
+     FROM class_template ct
+     WHERE ct.id_professor = ?
+     ORDER BY ct.created_at DESC`,
     [professorId]
   );
   return result.rows;
@@ -36,7 +41,7 @@ export async function createTemplate(payload: {
   try {
     await client.beginTransaction();
 
-    const [insertResult] = await client.query<ResultSetHeader>(
+    const { rows } = await client.query<ResultSetHeader>(
       `INSERT INTO class_template (id_professor, id_subject, name_template, grade, description, settings)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
@@ -49,7 +54,7 @@ export async function createTemplate(payload: {
       ]
     );
 
-    const templateId = insertResult.insertId;
+    const templateId = rows[0].insertId;
 
     if (payload.topicIds.length > 0) {
       const values = payload.topicIds.map(id => [templateId, id]);

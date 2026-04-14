@@ -47,6 +47,7 @@ export async function listClasses(filters: { professorId?: number; sectionId?: n
   const result = await db.query<any>(
     `SELECT
         c.id_class,
+        c.name_session,
         c.id_class_template,
         c.id_professor,
         c.id_section,
@@ -71,6 +72,7 @@ export async function listClasses(filters: { professorId?: number; sectionId?: n
 }
 
 export async function createClass(payload: {
+  name_session?: string | null;
   templateId?: number | null;
   sectionId: number;
   professorId: number;
@@ -78,9 +80,10 @@ export async function createClass(payload: {
   status?: string;
 }) {
   const insertResult = await db.query<ResultSetHeader>(
-    `INSERT INTO class (id_class_template, id_section, id_professor, id_institution, status)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO class (name_session, id_class_template, id_section, id_professor, id_institution, status)
+     VALUES (?, ?, ?, ?, ?, ?)`,
     [
+      payload.name_session ?? null,
       payload.templateId ?? null,
       payload.sectionId,
       payload.professorId,
@@ -89,29 +92,29 @@ export async function createClass(payload: {
     ]
   );
 
-  const created = await db.query<ClassRecord>(
-    `SELECT id_class, id_class_template, id_professor, id_section, id_institution, start_time, end_time, score_average, ai_summary, status
+  const { rows } = await db.query<ClassRecord>(
+    `SELECT id_class, name_session, id_class_template, id_professor, id_section, id_institution, start_time, end_time, score_average, ai_summary, status
      FROM class
      WHERE id_class = ?`,
     [insertResult.rows[0].insertId]
   );
 
-  return created.rows[0];
+  return rows[0];
 }
 
-export async function updateClassStatus(classId: number, status: string, endTime?: string | null) {
-  const query = endTime 
-    ? `UPDATE class SET status = ?, end_time = ? WHERE id_class = ?`
+export async function updateClassStatus(classId: number, status: string, setEndTime: boolean = false) {
+  const query = setEndTime 
+    ? `UPDATE class SET status = ?, end_time = NOW() WHERE id_class = ?`
     : `UPDATE class SET status = ? WHERE id_class = ?`;
   
-  const params = endTime ? [status, endTime, classId] : [status, classId];
+  const params = setEndTime ? [status, classId] : [status, classId];
   
   await db.query(query, params);
 }
 
 export async function updateClassSummary(classId: number, summary: string, scoreAverage?: number) {
   const fields = ['ai_summary = ?'];
-  const params = [summary];
+  const params: any[] = [summary];
 
   if (scoreAverage !== undefined) {
     fields.push('score_average = ?');
@@ -197,4 +200,22 @@ export async function recordClassStudentTopics(classId: number, entries: ClassSt
   } finally {
     client.release();
   }
+}
+
+export async function listAttendance(classId: number) {
+  const result = await db.query<any>(
+    `SELECT 
+        u.id_user, 
+        u.username, 
+        u.email, 
+        cs.attendance, 
+        cs.score_average, 
+        cs.ai_summary
+     FROM class_student cs
+     INNER JOIN user u ON u.id_user = cs.id_user
+     WHERE cs.id_class = ?
+     ORDER BY u.name, u.username`,
+    [classId]
+  );
+  return result.rows;
 }

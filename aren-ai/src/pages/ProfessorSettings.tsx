@@ -22,7 +22,7 @@ import PageTransition from "../components/PageTransition";
 import "./StudentSettings.css"; // Reuse student settings styles for now as they are generic
 
 const ProfessorSettings: React.FC = () => {
-  const { theme, setTheme, availableThemes } = useTheme();
+  const { theme, setTheme, availableThemes, colorScheme, setColorScheme } = useTheme();
   const { t, i18n } = useTranslation();
   const { isMuted, toggleMute } = useSound();
 
@@ -68,6 +68,27 @@ const ProfessorSettings: React.FC = () => {
             <IonItem>
               <IonLabel>{t("settings.sounds") || "Efectos de Sonido"}</IonLabel>
               <IonToggle checked={!isMuted} onIonChange={toggleMute} />
+            </IonItem>
+
+            {/* ── Dark / Light Mode Toggle ── */}
+            <IonItem>
+              <IonLabel>
+                <h2>🌓 {t("settings.colorScheme") || "Modo de Color"}</h2>
+                <p style={{ fontSize: '12px', color: 'var(--ion-text-color-step-400)' }}>
+                  {colorScheme === 'dark'  ? (t("settings.forcedDark")  || "Oscuro forzado (ignora OS)") :
+                   colorScheme === 'light' ? (t("settings.forcedLight") || "Claro forzado (ignora OS)") :
+                                             (t("settings.autoMode")   || "Automático (sigue el OS)")}
+                </p>
+              </IonLabel>
+              <IonSelect
+                value={colorScheme}
+                onIonChange={(e) => setColorScheme(e.detail.value)}
+                interface="popover"
+              >
+                <IonSelectOption value="auto">🔄 Auto (OS)</IonSelectOption>
+                <IonSelectOption value="light">☀️ Claro</IonSelectOption>
+                <IonSelectOption value="dark">🌙 Oscuro</IonSelectOption>
+              </IonSelect>
             </IonItem>
           </IonList>
 

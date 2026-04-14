@@ -1,4 +1,21 @@
-/* Shared Student App Styles */
+/* ═══════════════════════════════════════════════════════════════════════════
+   shared.css — Global Shared Styles (Student + Professor)
+   ─────────────────────────────────────────────────────────────────────────
+   PURPOSE: Layout utilities, nav components, and cross-page dark-mode text
+            visibility fixes that cannot live in individual page CSS files.
+
+   THEMING RULES — PLEASE READ BEFORE EDITING:
+   ┌──────────────────────────────────────────────────────────────────────┐
+   │ • NEVER hardcode hex colors (#E0E0E0, #666, etc.) here              │
+   │ • Use --ion-text-color, --ion-text-color-step-400 for text          │
+   │ • Use --ion-color-secondary for interactive/accent elements          │
+   │ • Dark mode overrides are grouped at the bottom — add new ones      │
+   │   ONLY in the @media (prefers-color-scheme: dark) block             │
+   │ • The dark-mode block is a LAST RESORT. Prefer fixing colors at the │
+   │   source using --st-* tokens in the component's own CSS file.       │
+   └──────────────────────────────────────────────────────────────────────┘
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 
 /* --- Bottom Navigation --- */
 .student-bottom-nav {
@@ -99,14 +116,6 @@
   object-fit: contain;
   border-radius: 50%;
   overflow: hidden;
-}
-
-/* --- Card Utilities --- */
-.student-card {
-  background: var(--ion-card-background);
-  border-radius: var(--card-border-radius);
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 /* --- Page Content Defaults --- */
@@ -339,14 +348,27 @@ ion-textarea.has-error,
 
 /* ═══════════════════════════════════════════════════════════════════════════
    GLOBAL DARK MODE TEXT VISIBILITY
-   Ensures all text remains readable on dark backgrounds across all pages.
-   Many components use var(--ion-color-primary) or var(--ion-color-dark) as
-   text color, which resolves to dark values (e.g. #2A4A78 navy) that are
-   invisible on dark backgrounds.
+   ─────────────────────────────────────────────────────────────────────────
+   PURPOSE: Catch-all dark mode overrides for components that couldn't be
+   fixed at the source (e.g. Ionic components that ignore CSS variables).
+
+   MAINTENANCE RULES:
+   • Each sub-section is labeled with the page/component it targets.
+   • Only put overrides here if fixing the source file is not possible.
+   • Prefer using --st-* tokens and --ion-text-color over rgba(255,255,255,N).
+   • rgba(255,255,255,0.6) style muted text is acceptable ONLY for UI      
+     elements that appear over dark surfaces across ALL themes.
+   • Do NOT add per-theme overrides here — put those in themes/*.css.
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (prefers-color-scheme: dark) {
 
-  /* ═══ ROOT FIX #1: All modals must be opaque ═══ */
+  /* ══════════════════════════════════════════════════════════
+     IONIC MODAL GLOBAL DEFAULTS
+     Force all Ionic modals to be fully opaque and use the theme
+     background. Individual modals that need a different background
+     (e.g. the quiz name modal which uses --ion-card-background)
+     should override this via their own ::part(content) rule.
+     ────────────────────────────────────────────────────────── */
   ion-modal::part(content) {
     background: var(--ion-background-color) !important;
   }
@@ -356,28 +378,32 @@ ion-textarea.has-error,
     opacity: 1 !important;
   }
 
-  /* ═══ ROOT FIX #2: --ion-color-primary is DARK in dark themes ═══
-     Many components use `color: var(--ion-color-primary)` for text, 
-     but in dark themes --ion-color-primary is e.g. #2A4A78 (dark navy).
-     Override ALL common text elements that use primary as text color. */
-
-  /* --- General body text color --- */
+  /* ══════════════════════════════════════════════════════════
+     GLOBAL TEXT COLOR SAFETY NET
+     In dark themes, --ion-color-primary resolves to a DARK color
+     (e.g. navy #2A4A78 in Navy theme) that is illegible on dark backgrounds.
+     These rules ensure headings and body text always use --ion-text-color
+     which is defined as a LIGHT value in all theme dark mode blocks.
+     ────────────────────────────────────────────────────────── */
   body {
     color: var(--ion-text-color);
   }
 
-  /* --- Headings, labels, and text that use --ion-color-primary as text --- */
   h1, h2, h3, h4, h5, h6 {
     color: var(--ion-text-color);
   }
 
-  /* --- Elements using --ion-color-dark (undefined/black in dark mode) --- */
+  /* ══════════════════════════════════════════════════════════
+     SHARED STAT COMPONENTS (used across multiple pages)
+     ────────────────────────────────────────────────────────── */
   .stat-label,
   .stat-val {
     color: var(--ion-text-color) !important;
   }
 
-  /* --- Toggle/tab text --- */
+  /* ══════════════════════════════════════════════════════════
+     TOGGLE / TAB COMPONENTS
+     ────────────────────────────────────────────────────────── */
   .toggle-opt {
     color: rgba(255, 255, 255, 0.6) !important;
   }
@@ -391,7 +417,9 @@ ion-textarea.has-error,
     color: rgba(255, 255, 255, 0.3) !important;
   }
 
-  /* --- Lobby table (BattleLobby) --- */
+  /* ══════════════════════════════════════════════════════════
+     BATTLE LOBBY PAGE
+     ────────────────────────────────────────────────────────── */
   .lobby-table-header {
     color: var(--ion-color-secondary) !important;
   }
@@ -400,21 +428,22 @@ ion-textarea.has-error,
     color: var(--ion-text-color) !important;
   }
 
+  /* Secondary columns: use muted dark-mode text (rgba is acceptable here
+     because this text always appears on a dark surface in all themes) */
   .col-subject,
   .col-school,
   .col-section {
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: var(--ion-text-color-step-400) !important;
   }
 
-  .lobby-empty-state {
-    color: rgba(255, 255, 255, 0.5) !important;
-  }
-
+  .lobby-empty-state,
   .lobby-waiting-state {
-    color: rgba(255, 255, 255, 0.5) !important;
+    color: var(--ion-text-color-step-400) !important;
   }
 
-  /* --- Speech bubble / cards --- */
+  /* ══════════════════════════════════════════════════════════
+     SPEECH BUBBLES / CARDS
+     ────────────────────────────────────────────────────────── */
   .speech-bubble {
     color: var(--ion-text-color) !important;
   }
@@ -435,31 +464,38 @@ ion-textarea.has-error,
     --color-checked: var(--ion-color-primary-contrast);
   }
 
-  /* --- Ion components text color inheritance --- */
+  /* ══════════════════════════════════════════════════════════
+     ION CARD COMPONENTS (Ionic shadow DOM)
+     These use ::part internals that ignore CSS variable inheritance,
+     so we must override at the selector level.
+     ────────────────────────────────────────────────────────── */
   ion-card-title,
   ion-card-subtitle,
-  ion-card-header {
-    color: var(--ion-text-color) !important;
-  }
-
+  ion-card-header,
   ion-card-content {
     color: var(--ion-text-color) !important;
   }
 
-  /* --- General labels and notes --- */
+  /* Ionic notes (helper text below inputs) */
   ion-note {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: var(--ion-text-color-step-400) !important;
   }
 
-  /* --- Inputs in dark mode --- */
+  /* ══════════════════════════════════════════════════════════
+     ION INPUT / TEXTAREA / SELECT — Dark Mode Text
+     These Ionic components don't inherit --ion-text-color correctly
+     in dark mode without explicit overrides.
+     ────────────────────────────────────────────────────────── */
   ion-input,
   ion-textarea,
   ion-select {
     --color: var(--ion-text-color) !important;
-    --placeholder-color: rgba(255, 255, 255, 0.4) !important;
+    --placeholder-color: var(--ion-text-color-step-400) !important;
   }
 
-  /* --- Section headers used across pages --- */
+  /* ══════════════════════════════════════════════════════════
+     SECTION HEADERS (used across professor and student pages)
+     ────────────────────────────────────────────────────────── */
   .section-title,
   .page-title,
   .card-title,
@@ -472,14 +508,18 @@ ion-textarea.has-error,
     color: var(--ion-color-secondary);
   }
 
-  /* --- Empty/placeholder states --- */
+  /* ══════════════════════════════════════════════════════════
+     EMPTY / PLACEHOLDER STATES
+     ────────────────────────────────────────────────────────── */
   .empty-state,
   .no-data,
   .placeholder-text {
-    color: rgba(255, 255, 255, 0.5) !important;
+    color: var(--ion-text-color-step-400) !important;
   }
 
-  /* ═══ StudentAssignments Page ═══ */
+  /* ══════════════════════════════════════════════════════════
+     STUDENT ASSIGNMENTS PAGE
+     ────────────────────────────────────────────────────────── */
   .page-title {
     color: var(--ion-color-secondary) !important;
     text-shadow: none !important;
@@ -535,7 +575,9 @@ ion-textarea.has-error,
     color: var(--ion-color-secondary) !important;
   }
 
-  /* ═══ PersonalityQuiz Page ═══ */
+  /* ══════════════════════════════════════════════════════════
+     PERSONALITY QUIZ PAGE
+     ────────────────────────────────────────────────────────── */
   .pq-results-card {
     background: var(--ion-card-background) !important;
   }
@@ -562,8 +604,9 @@ ion-textarea.has-error,
   }
 
   .pq-option-btn {
+    /* Subtle white overlay — acceptable here as PQ always runs on dark bg */
     background: rgba(255, 255, 255, 0.05) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: var(--st-card-border) !important;
   }
 
   .pq-opt-text {
@@ -571,20 +614,24 @@ ion-textarea.has-error,
   }
 
   .pq-exit-button {
-    color: rgba(255, 255, 255, 0.6) !important;
-    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: var(--ion-text-color-step-400) !important;
+    border-color: var(--st-card-border) !important;
   }
 
   .pq-nav-back {
-    color: rgba(255, 255, 255, 0.5) !important;
+    color: var(--ion-text-color-step-400) !important;
   }
 
-  /* ═══ BattleLobby Page ═══ */
+  /* ══════════════════════════════════════════════════════════
+     BATTLE LOBBY PAGE (continued)
+     ────────────────────────────────────────────────────────── */
   .battle-lobby-page,
   .battle-content {
     color: var(--ion-text-color);
   }
 
+  /* Table row zebra/hover — fixed-alpha rgba is acceptable here
+     because these always appear on the dark page background */
   .lobby-table-row {
     background: rgba(255, 255, 255, 0.03) !important;
   }
@@ -593,13 +640,129 @@ ion-textarea.has-error,
     background: rgba(255, 255, 255, 0.08) !important;
   }
 
-  /* ═══ StudentSettings Page ═══ */
+  /* ══════════════════════════════════════════════════════════
+     STUDENT SETTINGS PAGE
+     ────────────────────────────────────────────────────────── */
   .settings-section-title {
     color: var(--ion-text-color) !important;
   }
 
-  /* ═══ Ion List/Item global overrides ═══ */
+  /* ══════════════════════════════════════════════════════════
+     ION LIST HEADERS (global)
+     ion-list-header renders in primary color by default,
+     which is dark in dark themes — override to secondary.
+     ────────────────────────────────────────────────────────── */
   ion-list-header {
     color: var(--ion-color-secondary) !important;
   }
+
+} /* end @media (prefers-color-scheme: dark) */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORCED DARK MODE — COMPONENT OVERRIDES
+   ─────────────────────────────────────────────────────────────────────────
+   Mirrors the @media (prefers-color-scheme: dark) block above.
+   Applied when the user picks 🌙 Oscuro in Settings → Modo de Color.
+   ThemeContext sets html[data-force-dark] via ThemeContext.setColorScheme().
+
+   MAINTENANCE: Keep in sync with the @media block above.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html[data-force-dark] ion-modal::part(content) {
+  background: var(--ion-background-color) !important;
 }
+
+html[data-force-dark] ion-modal::part(backdrop) {
+  background: rgba(0, 0, 0, 0.7) !important;
+  opacity: 1 !important;
+}
+
+html[data-force-dark] body {
+  color: var(--ion-text-color);
+}
+
+html[data-force-dark] :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--ion-text-color);
+}
+
+html[data-force-dark] :is(.stat-label, .stat-val) {
+  color: var(--ion-text-color) !important;
+}
+
+html[data-force-dark] :is(ion-card-title, ion-card-subtitle, ion-card-header, ion-card-content) {
+  color: var(--ion-text-color) !important;
+}
+
+html[data-force-dark] ion-note {
+  color: var(--ion-text-color-step-400) !important;
+}
+
+html[data-force-dark] :is(ion-input, ion-textarea, ion-select) {
+  --color: var(--ion-text-color) !important;
+  --placeholder-color: var(--ion-text-color-step-400) !important;
+}
+
+html[data-force-dark] :is(.section-title, .page-title, .card-title, .menu-section-title) {
+  color: var(--ion-text-color) !important;
+}
+
+html[data-force-dark] :is(.empty-state, .no-data, .placeholder-text) {
+  color: var(--ion-text-color-step-400) !important;
+}
+
+html[data-force-dark] .lobby-table-header {
+  color: var(--ion-color-secondary) !important;
+}
+
+html[data-force-dark] .col-host {
+  color: var(--ion-text-color) !important;
+}
+
+html[data-force-dark] :is(.col-subject, .col-school, .col-section) {
+  color: var(--ion-text-color-step-400) !important;
+}
+
+html[data-force-dark] :is(.lobby-empty-state, .lobby-waiting-state) {
+  color: var(--ion-text-color-step-400) !important;
+}
+
+html[data-force-dark] .speech-bubble {
+  color: var(--ion-text-color) !important;
+}
+
+html[data-force-dark] :is(.pq-results-card, .pq-opt-text, .pq-results-description, .pq-trait-item) {
+  color: var(--ion-text-color) !important;
+}
+
+html[data-force-dark] :is(.pq-results-title, .pq-traits-title) {
+  color: var(--ion-color-secondary) !important;
+}
+
+html[data-force-dark] .pq-option-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: var(--st-card-border) !important;
+}
+
+html[data-force-dark] :is(.pq-exit-button, .pq-nav-back) {
+  color: var(--ion-text-color-step-400) !important;
+}
+
+html[data-force-dark] :is(.battle-lobby-page, .battle-content) {
+  color: var(--ion-text-color);
+}
+
+html[data-force-dark] .lobby-table-row {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+html[data-force-dark] .lobby-table-row:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-force-dark] .settings-section-title {
+  color: var(--ion-text-color) !important;
+}
+
+html[data-force-dark] ion-list-header {
+  color: var(--ion-color-secondary) !important;
+}

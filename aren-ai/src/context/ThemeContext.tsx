@@ -55,6 +55,12 @@ interface ThemeContextType {
   availableThemes: Theme[];
   themeRegistry: ThemeInfo[];
   getThemeInfo: (id: Theme) => ThemeInfo | undefined;
+  // ── Color Scheme (forced light/dark, independent of OS setting) ──
+  // 'auto' = follow OS prefers-color-scheme (default)
+  // 'light' = force light regardless of OS
+  // 'dark'  = force dark regardless of OS
+  colorScheme: 'auto' | 'light' | 'dark';
+  setColorScheme: (scheme: 'auto' | 'light' | 'dark') => void;
 }
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -62,12 +68,41 @@ export const ThemeContext = createContext<ThemeContextType | undefined>(undefine
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>('original');
 
+  // ── Forced color scheme state (persisted across sessions) ──
+  const [colorScheme, setColorSchemeState] = useState<'auto' | 'light' | 'dark'>('auto');
+
+  // ── Apply forced color scheme to <html> element ──
+  // We use data attributes rather than media query manipulation.
+  // CSS files respond to these via:
+  //   html[data-force-dark]  { ...same as @media (prefers-color-scheme: dark) }
+  //   html[data-force-light] { ...overrides that strip dark variables }
+  const applyColorScheme = (scheme: 'auto' | 'light' | 'dark') => {
+    const html = document.documentElement;
+    html.removeAttribute('data-force-dark');
+    html.removeAttribute('data-force-light');
+    if (scheme === 'dark')  html.setAttribute('data-force-dark',  'true');
+    if (scheme === 'light') html.setAttribute('data-force-light', 'true');
+  };
+
+  const setColorScheme = (scheme: 'auto' | 'light' | 'dark') => {
+    setColorSchemeState(scheme);
+    localStorage.setItem('arenai-color-scheme', scheme);
+    applyColorScheme(scheme);
+  };
+
   useEffect(() => {
+    // Restore theme
     const savedTheme = localStorage.getItem('arenai-theme') as Theme;
     if (savedTheme && THEME_REGISTRY.some(t => t.id === savedTheme)) {
       setTheme(savedTheme);
     } else {
       setTheme('original');
+    }
+    // Restore color scheme
+    const savedScheme = localStorage.getItem('arenai-color-scheme') as 'auto' | 'light' | 'dark';
+    if (savedScheme && ['auto', 'light', 'dark'].includes(savedScheme)) {
+      setColorSchemeState(savedScheme);
+      applyColorScheme(savedScheme);
     }
   }, []);
 
@@ -92,7 +127,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const getThemeInfo = (id: Theme) => THEME_REGISTRY.find(t => t.id === id);
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, availableThemes, themeRegistry: THEME_REGISTRY, getThemeInfo }}>
+    <ThemeContext.Provider value={{
+      theme, setTheme,
+      availableThemes,
+      themeRegistry: THEME_REGISTRY,
+      getThemeInfo,
+      colorScheme, setColorScheme,
+    }}>
       {children}
     </ThemeContext.Provider>
   );

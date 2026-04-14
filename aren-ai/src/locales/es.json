@@ -73,7 +73,10 @@
             "account": "Cuenta",
             "chat": "Menú de Chat",
             "profile": "Perfil",
-            "topicStats": "Estadísticas de Temas"
+            "topicStats": "Estadísticas de Temas",
+            "aiChat": "Chat con IA",
+            "liveLibrary": "Biblioteca de Sesiones",
+            "planSession": "Planear Sesión en Vivo"
         },
         "topicStats": {
             "headerTitle": "Estadísticas de Temas",

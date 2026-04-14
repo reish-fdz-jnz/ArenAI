@@ -45,8 +45,49 @@ const StartClassSession: React.FC = () => {
 
   const [templates, setTemplates] = useState<ClassTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<ClassTemplate | null>(null);
+  const [activeSession, setActiveSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isLaunching, setIsLaunching] = useState(false);
+  const [sessionName, setSessionName] = useState("");
+
+  const formatSectionLabel = () => `${selectedGrade}-${selectedSection} ${selectedSubject}`;
+
+  // Fetch active session
+  useEffect(() => {
+    const checkActiveSession = async () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        const sectionId = parseInt(selectedSection);
+        if (!sectionId) return;
+
+        const response = await fetch(getApiUrl(`api/class-templates/active?sectionId=${sectionId}`), {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const active = await response.json();
+          setActiveSession(active);
+          if (active) {
+            setSessionName(active.name_session);
+          }
+        } else {
+          setActiveSession(null);
+        }
+      } catch (err) {
+        console.error("Error checking active session:", err);
+      }
+    };
+    checkActiveSession();
+  }, [selectedSection, selectedGrade, selectedSubject]);
+
+  useEffect(() => {
+    if (activeSession) return; // Don't override existing session name
+
+    if (selectedTemplate) {
+      setSessionName(`${selectedTemplate.Name}: ${formatSectionLabel()}`);
+    } else {
+      setSessionName(`Clase Nueva: ${formatSectionLabel()}`);
+    }
+  }, [selectedTemplate, selectedGrade, selectedSection, selectedSubject, activeSession]);
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -59,7 +100,6 @@ const StartClassSession: React.FC = () => {
 
         if (response.ok) {
           const allTemplates = await response.json();
-          
           const targetSubjectId = selectedSubject === 'Math' ? 1 
                                 : selectedSubject === 'Science' ? 2 
                                 : selectedSubject === 'Social Studies' ? 3 
@@ -72,7 +112,9 @@ const StartClassSession: React.FC = () => {
             Name: t.name_template || "Untitled",
             Grade: parseInt(t.grade),
             Description: t.description || "",
-            Topics: [], // In the real app, we might fetch topics or have them in the join
+            Topics: t.topic_names 
+              ? t.topic_names.split(',').map((name: string) => ({ name }))
+              : [],
             Settings: t.settings ? (typeof t.settings === 'string' ? JSON.parse(t.settings) : t.settings) : { aiDifficulty: 50 },
             subjectId: t.id_subject
           }));
@@ -107,6 +149,7 @@ const StartClassSession: React.FC = () => {
       const user = userStr ? JSON.parse(userStr) : null;
 
       const payload = {
+        name_session: sessionName,
         templateId: parseInt(selectedTemplate.ClassTemplateID),
         sectionId: parseInt(selectedSection),
         institutionId: user?.id_institution || null
@@ -132,11 +175,43 @@ const StartClassSession: React.FC = () => {
       });
 
       // Redirect to the active teaching interface
-      // history.push(`/live-session/${session.id_class}`);
+      history.push(`/prof-attendance`);
       
     } catch (err) {
       present({
         message: "Error starting session.",
+        duration: 2000,
+        color: "danger"
+      });
+    } finally {
+      setIsLaunching(false);
+    }
+  };
+
+  const handleEndSession = async () => {
+    if (!activeSession) return;
+    setIsLaunching(true);
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(getApiUrl(`api/class-templates/end/${activeSession.id_class}`), {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error("Failed to end session");
+
+      present({
+        message: "Clase finalizada correctamente",
+        duration: 2000,
+        color: "success"
+      });
+
+      setActiveSession(null);
+      setSelectedTemplate(null);
+    } catch (err) {
+      present({
+        message: "Error al finalizar la clase.",
         duration: 2000,
         color: "danger"
       });
@@ -199,9 +274,18 @@ const StartClassSession: React.FC = () => {
         <PageTransition variant="fade">
           <div className="ss-container">
             
-            {/* Page Title */}
+            {/* Page Header with Editable Title */}
             <div className="ss-page-header">
-              <div className="ss-page-title">{t("professor.liveClass.startLiveTitle", "Live Session")}</div>
+              <div className="ss-editable-container">
+                <input
+                  type="text"
+                  className="ss-editable-title"
+                  value={sessionName}
+                  onChange={(e) => setSessionName(e.target.value)}
+                  placeholder="Nombre de la sesión..."
+                />
+                <IonIcon icon={createOutline} className="ss-edit-indicator" />
+              </div>
               
               <div className="floral-separator">
                 <div className="floral-line"></div>
@@ -211,26 +295,39 @@ const StartClassSession: React.FC = () => {
             </div>
 
             {/* Target Card */}
-            <div className="ss-card">
-              <div className="ss-card-title">{t("professor.liveClass.targetTitle", "Target Section")}</div>
-              <div className="ss-section-display">
-                <div className="ss-section-main">
-                  <div className="ss-section-icon-box">
-                    <IonIcon icon={peopleOutline} />
-                  </div>
-                  <div className="ss-section-text">
-                    <h2>{t("professor.liveClass.sectionLabel", { section: selectedSection })}</h2>
-                    <p>{t("common.grade", "Grade")} {selectedGrade} • {selectedSubject}</p>
-                  </div>
+            <div className="ss-card section-card-mini">
+              <div className="ss-card-title">{t("professor.liveClass.targetTitle", "Focus Section")}</div>
+              <div className="ss-section-display-mini">
+                <div className="ss-section-icon-box-mini">
+                  <IonIcon icon={peopleOutline} />
                 </div>
-                <div className="ss-live-badge">READY</div>
+                <div className="ss-section-text-mini">
+                  <h2>{formatSectionLabel()}</h2>
+                </div>
+                <div className="ss-live-badge-mini">READY</div>
               </div>
             </div>
 
-            {/* Templates Card */}
-            <div className="ss-card">
-              <div className="ss-card-title">{t("professor.liveClass.chooseTemplate", "Choose Template")}</div>
-              <div className="ss-templates-grid">
+            {/* Overview Card */}
+            {selectedTemplate && (
+              <div className="ss-card overview-card animate-in">
+                <div className="ss-card-title">{t("professor.liveClass.overview", "Session Strategy")}</div>
+                <div className="ss-template-details">
+                  <p className="ss-template-desc">
+                    {selectedTemplate.Description || t("common.noDescription", "No description provided.")}
+                  </p>
+                  <div className="ss-strategy-chips">
+                    {selectedTemplate.Topics.slice(0, 3).map((t, idx) => (
+                      <span key={idx} className="strategy-chip topic">{t.name}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="ss-card mini-library-card">
+              <div className="ss-card-title">{t("professor.liveClass.chooseTemplate", "Template Library")}</div>
+              <div className="mini-library-grid">
                 {templates.length === 0 ? (
                   <div className="ss-empty-box">
                     <IonIcon icon={schoolOutline} style={{ fontSize: '32px', marginBottom: '8px' }} />
@@ -247,43 +344,19 @@ const StartClassSession: React.FC = () => {
                   templates.map((temp) => (
                     <div 
                       key={temp.ClassTemplateID} 
-                      className={`ss-template-card ${selectedTemplate?.ClassTemplateID === temp.ClassTemplateID ? 'selected' : ''}`}
+                      className={`mini-card ${selectedTemplate?.ClassTemplateID === temp.ClassTemplateID ? 'selected' : ''}`}
                       onClick={() => setSelectedTemplate(temp)}
                     >
-                      <div className="ss-template-radio">
-                        {selectedTemplate?.ClassTemplateID === temp.ClassTemplateID && <div className="radio-inner" />}
+                      <div className="mini-card-name">{temp.Name}</div>
+                      <div className="mini-card-topics">
+                        {temp.Topics.slice(0, 2).map(t => t.name).join(', ')}
                       </div>
-                      <div className="ss-template-info">
-                        <div className="ss-template-name">{temp.Name}</div>
-                        <div className="ss-template-topics">
-                          {temp.Topics.map(t => t.name).join(', ')}
-                        </div>
-                      </div>
+                      <div className="mini-card-meta">Grade {temp.Grade}</div>
                     </div>
                   ))
                 )}
               </div>
             </div>
-
-            {/* Overview Card */}
-            {selectedTemplate && (
-              <div className="ss-card animate-in">
-                <div className="ss-card-title">{t("professor.liveClass.overview", "Session Overview")}</div>
-                <div className="ss-template-details" style={{ padding: '5px 10px' }}>
-                  <p style={{ marginTop: 0, fontSize: '14px', opacity: 0.8 }}>
-                    {selectedTemplate.Description || t("common.noDescription", "No description provided.")}
-                  </p>
-                  <div className="floral-separator" style={{ margin: '15px 0' }}>
-                    <div className="floral-line" style={{ width: '40px' }}></div>
-                    <div className="floral-center" style={{ fontSize: '10px' }}>⚜</div>
-                    <div className="floral-line" style={{ width: '40px' }}></div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '20px', fontSize: '12px', fontWeight: 600 }}>
-                    <span>{t("professor.liveClass.aiDifficulty", "AI Level")}: {selectedTemplate.Settings.aiDifficulty}%</span>
-                  </div>
-                </div>
-              </div>
-            )}
 
             <div className="ss-footer-spacer"></div>
           </div>
@@ -291,14 +364,24 @@ const StartClassSession: React.FC = () => {
       </IonContent>
 
       <div className="ss-footer">
-        <button 
-          className="ss-start-btn" 
-          onClick={handleStartSession}
-          disabled={!selectedTemplate}
-        >
-          <IonIcon icon={playCircleOutline} />
-          {t("professor.liveClass.launchClass", "Launch Class")}
-        </button>
+        {activeSession ? (
+          <button 
+            className="ss-start-btn end-session-btn" 
+            onClick={handleEndSession}
+          >
+            <IonIcon icon={playCircleOutline} />
+            Finalizar Clase
+          </button>
+        ) : (
+          <button 
+            className="ss-start-btn" 
+            onClick={handleStartSession}
+            disabled={!selectedTemplate}
+          >
+            <IonIcon icon={playCircleOutline} />
+            {t("professor.liveClass.launchClass", "Launch Class")}
+          </button>
+        )}
       </div>
     </IonPage>
   );

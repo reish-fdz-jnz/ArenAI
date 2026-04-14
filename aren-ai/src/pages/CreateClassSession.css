@@ -1,5 +1,26 @@
-/* CreateClassSession.css - Premium Template Maker Style */
+/* ═══════════════════════════════════════════════════════════════════════════
+   CreateClassSession.css
+   ─────────────────────────────────────────────────────────────────────────
+   Design: Premium class template creation page — mirrors the AIQuizGenerator
+           layout: floating subject notch, card sections with pill titles,
+           and a wide semicircle footer CTA.
 
+   THEMING RULES — PLEASE READ BEFORE EDITING:
+   ┌──────────────────────────────────────────────────────────────────────┐
+   │ • NEVER hardcode hex colors (#eee, #666, rgba with fixed channels)   │
+   │ • ALWAYS use --st-* tokens from src/theme/_tokens.css                │
+   │ • ALWAYS use --ion-color-* variables that the active theme defines   │
+   │ • Dark mode is handled by the @media block at the BOTTOM of this     │
+   │   file. All dark-mode rules are grouped there for easy maintenance.  │
+   │ • If a token doesn't exist yet for your color need, add it in        │
+   │   src/theme/_tokens.css first, then use it here.                     │
+   └──────────────────────────────────────────────────────────────────────┘
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+
+/* ══════════════════════════════════════════════════════════
+   PAGE SHELL
+   ────────────────────────────────────────────────────────── */
 .create-class-page {
   background-color: var(--ion-background-color) !important;
 }
@@ -8,6 +29,9 @@
   --background: var(--ion-background-color) !important;
 }
 
+/* ══════════════════════════════════════════════════════════
+   MAIN CONTENT CONTAINER
+   ────────────────────────────────────────────────────────── */
 .template-container {
   padding: 25px 20px 20px 20px;
   display: flex;
@@ -15,11 +39,17 @@
   gap: 16px;
 }
 
+/* Spacer pushes scrollable content above the fixed footer button */
 .template-footer-spacer {
   height: 100px;
 }
 
-/* ========== TEMPLATE NAME SECTION ========== */
+/* ══════════════════════════════════════════════════════════
+   TEMPLATE NAME SECTION
+   Same aesthetic as quiz name — editable title at the top.
+   Uses --ion-color-primary which is readable on the page background
+   in every theme (light and dark). Do not hardcode an alternative.
+   ────────────────────────────────────────────────────────── */
 .template-name-section {
   text-align: center;
   padding: 10px 0;
@@ -36,8 +66,12 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  transition: opacity 0.2s;
 }
 
+.template-name-display:hover { opacity: 0.8; }
+
+/* ── Floral separator (shared visual language with AIQuizGenerator) ── */
 .floral-separator {
   display: flex;
   align-items: center;
@@ -57,7 +91,11 @@
   opacity: 0.6;
 }
 
-/* ========== CARD STYLE ========== */
+/* ══════════════════════════════════════════════════════════
+   CARD SECTIONS
+   Same half-in/half-out pill title as quiz cards.
+   Background: --ion-color-secondary-soft is per-theme, semi-transparent.
+   ────────────────────────────────────────────────────────── */
 .template-card {
   background-color: var(--ion-color-secondary-soft);
   border-radius: 15px;
@@ -72,15 +110,18 @@
   left: 50%;
   transform: translateX(-50%);
   background-color: var(--ion-color-primary);
-  color: white;
+  color: var(--ion-color-primary-contrast, #ffffff);
   padding: 8px 24px;
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
 }
 
-/* ========== GRADE SELECTOR ========== */
+/* ══════════════════════════════════════════════════════════
+   GRADE SELECTOR GRID
+   ────────────────────────────────────────────────────────── */
 .grade-selector-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -88,8 +129,9 @@
 }
 
 .grade-item {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  /* Semi-transparent overlay works on light and dark card backgrounds */
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid var(--st-card-border);
   border-radius: 12px;
   padding: 12px;
   text-align: center;
@@ -101,12 +143,14 @@
 
 .grade-item.selected {
   background: var(--ion-color-secondary);
-  color: white;
+  color: var(--ion-color-secondary-contrast, #ffffff);
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* ========== TOPICS GRID ========== */
+/* ══════════════════════════════════════════════════════════
+   TOPICS GRID
+   ────────────────────────────────────────────────────────── */
 .template-topics-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -118,54 +162,108 @@
   align-items: center;
   gap: 8px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
 }
 
+.template-topic-item:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.template-topic-item.selected {
+  background-color: var(--ion-color-secondary);
+  border-color: var(--ion-color-secondary);
+}
+
+/* Checkbox circle — --ion-color-surface is opaque and themed */
 .template-topic-check {
   width: 18px;
   height: 18px;
+  border-radius: 50%;
   border: 2px solid var(--ion-color-secondary);
-  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--ion-color-surface);
+  flex-shrink: 0;
+  transition: all 0.2s;
 }
 
 .template-topic-item.selected .template-topic-check {
-  background: var(--ion-color-secondary);
+  border-color: var(--ion-color-secondary-contrast, #ffffff);
+  background: var(--ion-color-secondary-contrast, #ffffff);
+}
+
+/* Topic label text — must inherit themed text color */
+.template-topic-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ion-text-color);
+}
+
+.template-topic-item.selected .template-topic-label {
+  color: var(--ion-color-secondary-contrast, #ffffff);
 }
 
 .check-inner {
   width: 8px;
   height: 8px;
-  background: white;
-  border-radius: 1px;
+  background: var(--ion-color-secondary);
+  border-radius: 50%;
 }
 
-.template-add-more {
+/* ── Add More Button ── */
+.template-add-more-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: -35px;
+  position: relative;
+  z-index: 5;
+}
+
+.template-add-more-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  margin-top: 20px;
-  color: var(--ion-color-secondary);
-  font-weight: 500;
+  padding: 10px 20px;
+  background-color: var(--st-input-bg);
+  border: 2px dashed var(--ion-color-secondary);
+  border-radius: 20px;
   cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--ion-color-secondary);
+  font-weight: 600;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* ========== TEXTAREA ========== */
+.template-add-more-btn:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+/* ══════════════════════════════════════════════════════════
+   ADDITIONAL DETAILS TEXTAREA
+   ────────────────────────────────────────────────────────── */
 .template-textarea {
-  --background: rgba(255, 255, 255, 0.05);
+  --background: var(--st-input-bg);
+  --color: var(--ion-text-color);
+  --placeholder-color: var(--st-input-placeholder);
   --padding-start: 12px;
   --padding-top: 12px;
   border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--st-input-border);
   font-size: 14px;
 }
 
-/* ========== ACTION FOOTER ========== */
+/* ══════════════════════════════════════════════════════════
+   ACTION FOOTER — Wide Semicircle CTA
+   Fixed at the bottom, mirrors the AIQuizGenerator footer.
+   ────────────────────────────────────────────────────────── */
 .template-action-footer {
   position: fixed;
   bottom: 0;
@@ -188,7 +286,7 @@
   position: absolute;
   bottom: 0;
   border: none;
-  color: white;
+  color: var(--ion-color-secondary-contrast, #ffffff);
   font-family: 'Georgia', serif;
   font-size: 18px;
   display: flex;
@@ -197,17 +295,26 @@
   gap: 10px;
   cursor: pointer;
   box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, filter 0.2s;
 }
 
-/* ========== SUBJECT DROPDOWN ========== */
+.template-save-btn:hover  { filter: brightness(1.08); }
+.template-save-btn:active { transform: scale(0.97); }
+
+/* ══════════════════════════════════════════════════════════
+   SUBJECT DROPDOWN
+   Floats below the notch. MUST be fully opaque.
+   Uses --st-dropdown-bg — do NOT use rgba or white here.
+   ────────────────────────────────────────────────────────── */
 .template-subject-dropdown {
   position: absolute;
   top: 120px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--ion-background-color);
+  /* --st-dropdown-bg is always opaque — safe on all themes */
+  background: var(--st-dropdown-bg);
   border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.20);
   min-width: 180px;
   z-index: 1000;
   overflow: hidden;
@@ -215,57 +322,76 @@
 
 .template-subject-option {
   padding: 15px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--st-dropdown-border);
   font-weight: 500;
   cursor: pointer;
+  /* Explicit text color — do NOT leave this unset or it inherits incorrectly */
+  color: var(--st-dropdown-text);
+  transition: background 0.2s;
 }
 
 .template-subject-option:hover {
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--st-dropdown-hover-bg);
 }
 
-/* ========== BEAUTIFUL NAME MODAL (Matching AIQuizGenerator) ========== */
+.template-subject-option.selected {
+  background: var(--ion-color-secondary);
+  color: var(--ion-color-secondary-contrast, #ffffff);
+}
+
+/* ══════════════════════════════════════════════════════════
+   QUIZ NAME MODAL  (class template name edit)
+   Reuses quiz modal classes from AIQuizGenerator for visual consistency.
+   Tokens are the same — see AIQuizGenerator.css for rationale.
+   ────────────────────────────────────────────────────────── */
 .quiz-name-modal {
   --width: 90%;
   --max-width: 400px;
   --height: auto;
   --border-radius: 24px;
+  /* NOTE: border-radius is applied via --border-radius on the modal, not ::part */
 }
 
-.quiz-modal-inner {
-  background: var(--ion-background-color);
-  border: 4px solid var(--ion-color-primary);
+/* ── CRITICAL: background lives on ::part(content), NOT in a child div ──
+   The old pattern (transparent shell + inner div background) caused the
+   page content to bleed through in all themes. The correct approach is to
+   style ::part(content) directly with the opaque card background. */
+.quiz-name-modal::part(content) {
+  background: var(--st-modal-card-bg);
+  border: 4px solid var(--st-modal-border);
   border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+/* The decorative inner wrapper — now purely for layout, not background */
+.quiz-modal-inner {
+  background: transparent; /* background is on ::part(content) above */
   padding: 24px;
   position: relative;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-/* Inner dashed border */
 .quiz-modal-inner::before {
   content: '';
   position: absolute;
-  top: 6px;
-  left: 6px;
-  right: 6px;
-  bottom: 6px;
-  border: 2px dashed rgba(93, 64, 55, 0.2);
+  top: 6px; left: 6px; right: 6px; bottom: 6px;
+  border: 2px dashed var(--st-card-border);
   border-radius: 18px;
   pointer-events: none;
 }
 
 .quiz-modal-title {
   font-family: 'Georgia', serif;
-  color: var(--ion-color-primary);
+  color: var(--st-modal-border);
   font-size: 1.6rem;
   margin: 0 0 20px 0;
   font-weight: 600;
 }
 
 .quiz-input-wrapper {
-  background: rgba(255, 255, 255, 0.03);
-  border: 2px solid var(--ion-color-primary);
+  background: var(--st-input-bg);
+  border: 2px solid var(--st-modal-border);
   border-radius: 12px;
   padding: 10px;
   margin-bottom: 20px;
@@ -279,8 +405,12 @@
   font-size: 1.1rem;
   text-align: center;
   font-family: 'Georgia', serif;
-  color: var(--ion-color-primary);
+  color: var(--st-modal-text);
   font-weight: 500;
+}
+
+.quiz-modal-input-field::placeholder {
+  color: var(--st-modal-text-muted);
 }
 
 .quiz-modal-buttons {
@@ -296,55 +426,171 @@
   font-weight: 600;
   cursor: pointer;
   font-family: 'Georgia', serif;
+  transition: transform 0.1s, filter 0.1s;
 }
 
+.quiz-modal-btn:active { transform: scale(0.95); }
+
 .quiz-modal-btn.cancel {
-  background: #eee;
-  color: #666;
+  /* Token-driven — adapts light/dark automatically (see _tokens.css) */
+  background: var(--st-cancel-btn-bg);
+  color: var(--st-cancel-btn-text);
+  border: 2px solid var(--st-cancel-btn-border);
 }
 
 .quiz-modal-btn.save {
   background: var(--ion-color-secondary);
-  color: white;
+  color: var(--ion-color-secondary-contrast, #ffffff);
 }
 
-/* ========== TOPIC SEARCH MODAL ========== */
-.topic-search-modal {
-  --border-radius: 20px;
+/* ══════════════════════════════════════════════════════════
+   TOPIC PICKER MODAL — Premium Framed Style
+   Uses a custom framed inner div (not Ionic's default card).
+   ::part(content) must be transparent so the custom frame shows.
+   The actual background lives inside .quiz-modal-inner.
+   ────────────────────────────────────────────────────────── */
+.quiz-topic-modal-premium {
+  --width: 95%;
+  --max-width: 520px;
+  --height: auto;
+  --border-radius: 24px;
 }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 20px;
-  background: var(--ion-color-secondary-soft);
-}
-
-.modal-content {
-  max-height: 50vh;
-  overflow-y: auto;
-  padding: 10px;
-}
-
-.modal-topic-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.topic-info {
+/* Same fix as name modal: background on ::part(content), not a child div */
+.quiz-topic-modal-premium::part(content) {
+  background: var(--st-modal-card-bg);
+  border: 4px solid var(--st-modal-border);
+  border-radius: 24px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-.topic-info .name {
-  font-weight: 600;
+.quiz-topic-modal-premium::part(backdrop) {
+  background: rgba(0, 0, 0, 0.7);
+  opacity: 1;
 }
 
-.topic-info .sub {
-  font-size: 11px;
-  opacity: 0.6;
+/* The wide layout container — now purely for scrollable layout, not bg */
+.topic-modal-wide {
+  max-width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+}
+
+.quiz-modal-header-premium {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 5px;
+}
+
+.quiz-modal-header-premium h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--st-modal-text);
+}
+
+.modal-close-icon-premium {
+  font-size: 28px;
+  color: var(--ion-color-primary);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.modal-close-icon-premium:hover { transform: rotate(90deg); }
+
+/* Searchbar inside topic modal */
+.premium-searchbar {
+  --background: var(--st-input-bg);
+  --color: var(--ion-text-color);
+  --placeholder-color: var(--st-input-placeholder);
+  --border-radius: 12px;
+  --box-shadow: none;
+  border: 1px solid var(--st-input-border);
+  border-radius: 12px;
+}
+
+/* Scrollable topic list area */
+.quiz-modal-content-premium {
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding: 5px;
+  flex: 1;     /* fills available height inside the flex column */
+  min-height: 0; /* prevents flex item from overflowing */
+  max-height: 50vh;
+}
+
+/* Topic items within the premium modal grid */
+.quiz-modal-grid .quiz-topic-item {
+  border: 1px solid var(--st-card-border);
+}
+
+/* ══════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   ─────────────────────────────────────────────────────────
+   Most colors adapt automatically via tokens.
+   This block handles ::part() targets that can't use CSS custom
+   properties directly, and adds html[data-force-dark] equivalents
+   for the forced dark mode toggle in Settings → Modo de Color.
+
+   MAINTENANCE:
+   • Keep the @media block and html[data-force-dark] block in sync.
+   • Only use !important for ::part() overrides.
+   ────────────────────────────────────────────────────────── */
+
+/* ── OS-based dark mode ── */
+@media (prefers-color-scheme: dark) {
+
+  /* Modal shells: enforce theme card bg (tokens adapt to dark automatically) */
+  .quiz-name-modal::part(content),
+  .quiz-topic-modal-premium::part(content) {
+    background: var(--st-modal-card-bg) !important;
+    border-color: var(--st-modal-border) !important;
+  }
+
+  /* Backdrops always go darker in dark mode */
+  .quiz-topic-modal-premium::part(backdrop) {
+    background: rgba(0, 0, 0, 0.80) !important;
+    opacity: 1 !important;
+  }
+
+  /* Subject dropdown */
+  .template-subject-option {
+    color: var(--st-dropdown-text) !important;
+    border-bottom-color: var(--st-dropdown-border) !important;
+  }
+
+  /* Grade items */
+  .grade-item {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+} /* end @media (prefers-color-scheme: dark) */
+
+/* ── Forced dark mode (Settings → Modo de Color: 🌙 Oscuro) ── */
+html[data-force-dark] .quiz-name-modal::part(content),
+html[data-force-dark] .quiz-topic-modal-premium::part(content) {
+  background: var(--st-modal-card-bg) !important;
+  border-color: var(--st-modal-border) !important;
+}
+
+html[data-force-dark] .quiz-topic-modal-premium::part(backdrop) {
+  background: rgba(0, 0, 0, 0.80) !important;
+  opacity: 1 !important;
+}
+
+html[data-force-dark] .template-subject-option {
+  color: var(--st-dropdown-text) !important;
+  border-bottom-color: var(--st-dropdown-border) !important;
+}
+
+html[data-force-dark] .grade-item {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }

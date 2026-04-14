@@ -1,12 +1,39 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { getStudentTopicProgress, upsertStudentTopicScore, getStudentStats, getStudentSubjectScores } from '../repositories/studentRepository.js';
+import { getStudentTopicProgress, upsertStudentTopicScore, getStudentStats, getStudentSubjectScores, listStudentsBySection } from '../repositories/studentRepository.js';
+import * as sectionRepo from '../repositories/sectionRepository.js';
 import { parseNumeric } from '../utils/transformers.js';
 
 import { updateUser } from '../repositories/userRepository.js';
 import { ApiError } from '../middleware/errorHandler.js';
 
 const router = Router();
+
+router.get('/', async (req, res, next) => {
+  try {
+    const sectionIdQuery = req.query.sectionId ? parseInt(req.query.sectionId as string, 10) : null;
+    const grade = req.query.grade as string;
+    const sectionNumber = req.query.sectionNumber as string;
+    const institutionId = (req as any).user?.id_institution;
+
+    let finalSectionId = sectionIdQuery;
+
+    // If sectionId is not a real ID (e.g. standard "1" label) or missing, resolve it
+    if (grade && sectionNumber && institutionId) {
+      const section = await sectionRepo.findSectionByGradeAndNumber(grade, sectionNumber, institutionId);
+      if (section) {
+        finalSectionId = section.id_section;
+      }
+    }
+
+    if (!finalSectionId) throw new ApiError(400, 'Missing or invalid sectionId');
+
+    const students = await listStudentsBySection(finalSectionId, institutionId);
+    res.json(students);
+  } catch (error) {
+    next(error);
+  }
+});
 
 router.put('/:userId/onboarding', async (req, res, next) => {
   const paramsSchema = z.object({ userId: z.coerce.number().int().positive() });

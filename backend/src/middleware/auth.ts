@@ -7,12 +7,14 @@ type AccessTokenPayload = jwt.JwtPayload & {
   sub: string;
   username: string;
   role?: string | null;
+  inst?: number | null;
 };
 
 export interface AuthenticatedUser {
   id: number;
   username: string;
   role: string | null;
+  id_institution: number | null;
 }
 
 declare module 'express-serve-static-core' {
@@ -47,6 +49,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
       id: subject,
       username: payload.username,
       role: payload.role ?? null,
+      id_institution: payload.inst ?? null,
     };
 
     return next();

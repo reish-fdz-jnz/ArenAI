@@ -8,6 +8,7 @@ import {
     IonToolbar,
     IonMenuButton,
     IonSearchbar,
+    useIonRouter,
 } from '@ionic/react';
 import {
     menu,
@@ -21,6 +22,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { CalendarSelector } from '../components/CalendarSelector';
 import PageTransition from '../components/PageTransition';
+import { useProfessorFilters } from '../hooks/useProfessorFilters';
+import { getApiUrl } from '../config/api';
 import '../components/StudentHeader.css';
 import './ProfessorAttendance.css';
 
@@ -34,40 +37,9 @@ interface Student {
 
 type AttendanceStatus = 'present' | 'late' | 'absent';
 
-const getLocalStudents = (): Student[] => {
-    const stored = localStorage.getItem('professorStudentsList');
-    if (stored) {
-        return JSON.parse(stored);
-    }
-    const defaultStudents: Student[] = [
-        { id: 1, username: 'Yereth Soto', email: 'yereth@arenai.edu' },
-        { id: 2, username: 'Leonardo Escobar', email: 'leonardo@arenai.edu' },
-        { id: 3, username: 'Sofia Mendez', email: 'sofia@arenai.edu' },
-        { id: 4, username: 'Carlos Rivera', email: 'carlos@arenai.edu' },
-        { id: 5, username: 'Maria Lopez', email: 'maria@arenai.edu' },
-        { id: 6, username: 'Diego Castro', email: 'diego@arenai.edu' },
-        { id: 7, username: 'Ana Garcia', email: 'ana@arenai.edu' },
-        { id: 8, username: 'Pablo Sanchez', email: 'pablo@arenai.edu' },
-    ];
-    localStorage.setItem('professorStudentsList', JSON.stringify(defaultStudents));
-    return defaultStudents;
-};
-
 interface AttendanceRecord {
-    [dateKey: string]: {
-        [studentId: number]: AttendanceStatus;
-    };
+    [studentId: number]: AttendanceStatus;
 }
-
-const getAttendanceData = (): AttendanceRecord => {
-    const stored = localStorage.getItem('attendanceRecords');
-    if (stored) return JSON.parse(stored);
-    return {};
-};
-
-const saveAttendanceData = (data: AttendanceRecord) => {
-    localStorage.setItem('attendanceRecords', JSON.stringify(data));
-};
 
 const GRADES = ['7', '8', '9', '10', '11', '12'];
 const SECTIONS = ['1', '2', '3', '4'];
@@ -75,53 +47,143 @@ const SUBJECTS = ['Math', 'Science', 'Social Studies', 'Spanish'];
 
 const ProfessorAttendance: React.FC = () => {
     const { t } = useTranslation();
+    const ionRouter = useIonRouter();
+    const { 
+        selectedGrade, setSelectedGrade, 
+        selectedSection, setSelectedSection, 
+        selectedSubject, setSelectedSubject 
+    } = useProfessorFilters();
 
-    const [selectedGrade, setSelectedGrade] = useState('7');
-    const [selectedSection, setSelectedSection] = useState('1');
-    const [selectedSubject, setSelectedSubject] = useState('Math');
     const [showDropdown, setShowDropdown] = useState(false);
-
     const [students, setStudents] = useState<Student[]>([]);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [attendance, setAttendance] = useState<AttendanceRecord>({});
+    const [activeSession, setActiveSession] = useState<any>(null);
     const [searchText, setSearchText] = useState('');
+    const [loading, setLoading] = useState(true);
 
+    // 1. Fetch Active Session
     useEffect(() => {
-        setStudents(getLocalStudents());
-        setAttendance(getAttendanceData());
-    }, []);
+        const fetchState = async () => {
+            setLoading(true);
+            try {
+                const token = localStorage.getItem('authToken');
+                // Use labels for lookup on backend if IDs aren't established yet
+                const url = getApiUrl(`api/students?grade=${selectedGrade}&sectionNumber=${selectedSection}`);
 
-    const getDateKey = (date: Date) => date.toISOString().split('T')[0];
+                // Check active session - hardening with grade and sectionNumber lookup
+                const sessionUrl = getApiUrl(`api/class-templates/active?grade=${selectedGrade}&sectionNumber=${selectedSection}`);
+                const sessionRes = await fetch(sessionUrl, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const session = await sessionRes.json();
+                setActiveSession(session);
+
+                if (session) {
+                    // Fetch Students for this section using the improved route
+                    const studentsRes = await fetch(url, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const studentsData = await studentsRes.json();
+                    setStudents(studentsData.map((s: any) => ({
+                        id: s.id_user,
+                        username: `${s.name} ${s.last_name || ''}`,
+                        email: s.email
+                    })));
+
+                    // Fetch Attendance for this specific class session
+                    const attendanceRes = await fetch(getApiUrl(`api/class-templates/attendance/${session.id_class}`), {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const attendanceData = await attendanceRes.json();
+                    
+                    const attendanceMap: AttendanceRecord = {};
+                    attendanceData.forEach((record: any) => {
+                        // DB 1 = Present, 0 = Absent, 2 = Late (mapping)
+                        let status: AttendanceStatus = 'present';
+                        if (record.attendance === 0) status = 'absent';
+                        else if (record.attendance === 2) status = 'late';
+                        attendanceMap[record.id_user] = status;
+                    });
+                    setAttendance(attendanceMap);
+                } else {
+                    setStudents([]);
+                    setAttendance({});
+                }
+            } catch (err) {
+                console.error("Error fetching attendance data:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchState();
+    }, [selectedSection, selectedGrade, selectedSubject]);
+
+    const syncWithBackend = async (studentId: number, status: AttendanceStatus) => {
+        if (!activeSession) return;
+        try {
+            const token = localStorage.getItem('authToken');
+            // Mapping UI status to DB status
+            const dbStatus = status === 'present' ? 1 : (status === 'absent' ? 0 : 2);
+            
+            await fetch(getApiUrl(`api/class-templates/attendance/${activeSession.id_class}`), {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    students: [{ userId: studentId, attendance: dbStatus }]
+                })
+            });
+        } catch (err) {
+            console.error("Error syncing attendance:", err);
+        }
+    };
 
     const cycleAttendance = (studentId: number) => {
-        const dateKey = getDateKey(selectedDate);
-        const currentStatus: AttendanceStatus = attendance[dateKey]?.[studentId] ?? 'absent';
+        if (!activeSession) return;
+        const currentStatus: AttendanceStatus = attendance[studentId] ?? 'absent';
 
         let nextStatus: AttendanceStatus;
         if (currentStatus === 'absent') nextStatus = 'present';
         else if (currentStatus === 'present') nextStatus = 'late';
         else nextStatus = 'absent';
 
-        const newAttendance = {
-            ...attendance,
-            [dateKey]: { ...attendance[dateKey], [studentId]: nextStatus }
-        };
-        setAttendance(newAttendance);
-        saveAttendanceData(newAttendance);
+        setAttendance(prev => ({ ...prev, [studentId]: nextStatus }));
+        syncWithBackend(studentId, nextStatus);
     };
 
     const getStatus = (studentId: number): AttendanceStatus => {
-        const dateKey = getDateKey(selectedDate);
-        return attendance[dateKey]?.[studentId] ?? 'absent';
+        return attendance[studentId] ?? 'absent';
     };
 
-    const markAll = (status: AttendanceStatus) => {
-        const dateKey = getDateKey(selectedDate);
-        const allStatus: { [id: number]: AttendanceStatus } = {};
-        students.forEach(s => { allStatus[s.id] = status; });
-        const newAttendance = { ...attendance, [dateKey]: allStatus };
+    const markAll = async (status: AttendanceStatus) => {
+        if (!activeSession) return;
+        const dbStatus = status === 'present' ? 1 : (status === 'absent' ? 0 : 2);
+        
+        const newAttendance = { ...attendance };
+        const syncData = students.map(s => {
+            newAttendance[s.id] = status;
+            return { userId: s.id, attendance: dbStatus };
+        });
+
         setAttendance(newAttendance);
-        saveAttendanceData(newAttendance);
+
+        try {
+            const token = localStorage.getItem('authToken');
+            await fetch(getApiUrl(`api/class-templates/attendance/${activeSession.id_class}`), {
+                method: 'POST',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ students: syncData })
+            });
+        } catch (err) {
+            console.error("Error syncing bulk attendance:", err);
+        }
     };
 
     const getInitials = (name: string) => {
@@ -131,13 +193,11 @@ const ProfessorAttendance: React.FC = () => {
     };
 
     const getPresentCount = () => {
-        const dateKey = getDateKey(selectedDate);
-        return Object.values(attendance[dateKey] || {}).filter(s => s === 'present').length;
+        return Object.values(attendance).filter(s => s === 'present').length;
     };
 
     const getLateCount = () => {
-        const dateKey = getDateKey(selectedDate);
-        return Object.values(attendance[dateKey] || {}).filter(s => s === 'late').length;
+        return Object.values(attendance).filter(s => s === 'late').length;
     };
 
     const filteredStudents = students.filter(s =>
@@ -201,8 +261,8 @@ const ProfessorAttendance: React.FC = () => {
                             {GRADES.map(g => (
                                 <div
                                     key={g}
-                                    className={`pa-dropdown-chip ${selectedGrade === g ? 'selected' : ''}`}
-                                    onClick={() => setSelectedGrade(g)}
+                                    className={`pa-dropdown-chip ${selectedGrade.toString() === g ? 'selected' : ''}`}
+                                    onClick={() => setSelectedGrade(parseInt(g, 10))}
                                 >
                                     {g}
                                 </div>
@@ -295,29 +355,46 @@ const ProfessorAttendance: React.FC = () => {
                         </div>
 
                         <div className="pa-card">
-                            <div className="pa-card-title">Student List</div>
+                            <div className="pa-card-title">
+                                {activeSession ? `Student List (${activeSession.name_session})` : 'Student List'}
+                            </div>
                             <div className="pa-students-list">
-                                {filteredStudents.map(student => {
-                                    const status = getStatus(student.id);
-                                    return (
-                                        <div
-                                            key={student.id}
-                                            className={`pa-student-item ${status}`}
-                                            onClick={() => cycleAttendance(student.id)}
+                                {!activeSession ? (
+                                    <div className="pa-no-session-warning">
+                                        <IonIcon icon={closeCircle} />
+                                        <p>No active session found for this section.</p>
+                                        <button 
+                                            className="pa-go-btn"
+                                            onClick={() => ionRouter.push('/start-class-session')}
                                         >
-                                            <div className="pa-student-avatar">
-                                                {getInitials(student.username)}
+                                            Go to Class Launcher
+                                        </button>
+                                    </div>
+                                ) : filteredStudents.length === 0 ? (
+                                    <div className="pa-empty-state">No students found in this section.</div>
+                                ) : (
+                                    filteredStudents.map(student => {
+                                        const status = getStatus(student.id);
+                                        return (
+                                            <div
+                                                key={student.id}
+                                                className={`pa-student-item ${status}`}
+                                                onClick={() => cycleAttendance(student.id)}
+                                            >
+                                                <div className="pa-student-avatar">
+                                                    {getInitials(student.username)}
+                                                </div>
+                                                <div className="pa-student-info">
+                                                    <span className="pa-student-name">{student.username}</span>
+                                                    <span className="pa-student-email">{student.email}</span>
+                                                </div>
+                                                <div className={`pa-status-icon ${status}`}>
+                                                    <IonIcon icon={getStatusIcon(status)} />
+                                                </div>
                                             </div>
-                                            <div className="pa-student-info">
-                                                <span className="pa-student-name">{student.username}</span>
-                                                <span className="pa-student-email">{student.email}</span>
-                                            </div>
-                                            <div className={`pa-status-icon ${status}`}>
-                                                <IonIcon icon={getStatusIcon(status)} />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })
+                                )}
                             </div>
                         </div>
 

@@ -25,6 +25,7 @@ export interface Topic {
 
 export interface ClassRecord {
   id_class: number;
+  name_session: string | null;
   id_class_template: number | null;
   id_professor: number;
   id_section: number;

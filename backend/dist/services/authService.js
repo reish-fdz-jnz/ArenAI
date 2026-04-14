@@ -1,11 +1,12 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { appConfig } from '../config/env.js';
-export function signAccessToken({ userId, username, role }) {
+export function signAccessToken({ userId, username, role, idInstitution }) {
     const payload = {
         sub: String(userId),
         username,
         role,
+        inst: idInstitution ?? null,
     };
     const signOptions = {
         expiresIn: appConfig.auth.jwtExpiresIn,

@@ -6,6 +6,7 @@
     userId: number;
     username: string;
     role: string | null;
+    idInstitution?: number | null;
   }
 
   export interface TokenResponse {
@@ -13,11 +14,12 @@
     expiresIn: string;
   }
 
-  export function signAccessToken({ userId, username, role }: SignTokenPayload): TokenResponse {
+  export function signAccessToken({ userId, username, role, idInstitution }: SignTokenPayload): TokenResponse {
     const payload = {
       sub: String(userId),
       username,
       role,
+      inst: idInstitution ?? null,
     };
 
     const signOptions: SignOptions = {

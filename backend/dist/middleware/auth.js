@@ -20,6 +20,7 @@ export function requireAuth(req, _res, next) {
             id: subject,
             username: payload.username,
             role: payload.role ?? null,
+            id_institution: payload.inst ?? null,
         };
         return next();
     }
