@@ -241,11 +241,11 @@ export async function getStudentClassTopics(classId, userId) {
     return result.rows;
 }
 export async function findActiveClassForStudent(studentId) {
-    // Finds a class that is 'live' and belongs to a section the student is enrolled in
+    // Finds a class that is 'running' and belongs to a section the student is enrolled in
     const result = await db.query(`SELECT c.id_class 
      FROM class c
      INNER JOIN user_section us ON us.id_section = c.id_section
-     WHERE us.id_user = ? AND c.status = 'live'
+     WHERE us.id_user = ? AND c.status = 'running'
      ORDER BY c.start_time DESC
      LIMIT 1`, [studentId]);
     return result.rows[0]?.id_class || null;

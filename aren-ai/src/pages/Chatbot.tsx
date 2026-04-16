@@ -46,6 +46,13 @@ interface Message {
   isTyping?: boolean;
 }
 
+const SUBJECT_MAP: Record<string, number> = {
+  Math: 1,
+  Science: 2,
+  "Social Studies": 3,
+  Spanish: 4,
+};
+
 const Chat: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { getAvatarAssets, currentAvatar } = useAvatar();
@@ -66,8 +73,9 @@ const Chat: React.FC = () => {
   useEffect(() => {
     const fetchTopics = async () => {
       try {
+        const subjectId = SUBJECT_MAP[selectedSubject] || 1;
         const subjectData =
-          await studentService.getSubjectDetails(selectedSubject);
+          await studentService.getSubjectDetails(subjectId, selectedSubject);
         if (subjectData && subjectData.topics) {
           const topicNames = subjectData.topics.map((t) => t.nameKey);
           setCurrentTopics(topicNames);
@@ -291,6 +299,7 @@ const Chat: React.FC = () => {
           prompt: inputMessage,
           history: history,
           userData: {
+            id: userContext.id,
             name: userContext.name,
             role: effectiveRole,
           },

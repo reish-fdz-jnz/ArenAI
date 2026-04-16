@@ -1406,6 +1406,17 @@
         "save": "Guardar",
         "generate": "Generar"
     },
+    "studentAssignments": {
+        "pending": "Tareas Pendientes",
+        "completedQuizzes": "Cuestionarios Completados",
+        "noPending": "No hay tareas pendientes",
+        "noCompleted": "No hay cuestionarios completados",
+        "searchCompleted": "Buscar en completados...",
+        "questions": "Preguntas",
+        "start": "Comenzar",
+        "overdue": "Atrasado",
+        "score": "Puntuación"
+    },
     "auth": {
         "brandTitle": "Aren AI",
         "brandSubtitle": "Menos Monólogos, más Diálogos",

@@ -18,6 +18,7 @@ export interface SubjectData {
     name: string;
     key: string; // Translation key prefix, e.g., "Math"
     topics: TopicProgress[];
+    overallAverage: number;
 }
 
 export interface Achievement {

@@ -35,6 +35,7 @@ interface Question {
   id: string;
   text: string;
   topic: string;
+  topicId?: number | null;
   points: number;
   allowMultipleSelection: boolean;
   answers: Answer[];
@@ -44,6 +45,7 @@ interface Question {
 interface AIQuestion {
   question_text: string;
   topic: string;
+  topicId?: number | null;
   points: number;
   allow_multiple_selection: boolean;
   option_1: string;
@@ -170,15 +172,22 @@ const QuizPreview: React.FC = () => {
             );
         } else if (parsed.questions && Array.isArray(parsed.questions)) {
           const transformedQuestions: Question[] = parsed.questions.map(
-            (q: AIQuestion, index: number) => {
+            (q: any, index: number) => {
               const correctOptions = q.correct_options || [1];
               return {
                 id: `q${index + 1}`,
-                text: q.question_text,
+                text: q.text || q.question_text || "",
                 topic: q.topic || "General",
+                topicId: q.topicId || null,
                 points: q.points || 1.0,
-                allowMultipleSelection: q.allow_multiple_selection || false,
-                answers: [
+                allowMultipleSelection: q.allowMultipleSelection !== undefined 
+                  ? q.allowMultipleSelection 
+                  : (q.allow_multiple_selection || false),
+                answers: q.answers ? q.answers.map((a: any, aIdx: number) => ({
+                    id: `q${index + 1}-a${aIdx + 1}`,
+                    text: a.text,
+                    isCorrect: !!a.isCorrect
+                })) : [
                   {
                     id: `q${index + 1}-a1`,
                     text: q.option_1,
@@ -236,15 +245,22 @@ const QuizPreview: React.FC = () => {
         // Transform AI questions to component format
         if (parsed.questions && Array.isArray(parsed.questions)) {
           const transformedQuestions: Question[] = parsed.questions.map(
-            (q: AIQuestion, index: number) => {
+            (q: any, index: number) => {
               const correctOptions = q.correct_options || [1];
               return {
                 id: `q${index + 1}`,
-                text: q.question_text,
+                text: q.text || q.question_text || "",
                 topic: q.topic || "General",
+                topicId: q.topicId || null,
                 points: q.points || 1.0,
-                allowMultipleSelection: q.allow_multiple_selection || false,
-                answers: [
+                allowMultipleSelection: q.allowMultipleSelection !== undefined 
+                  ? q.allowMultipleSelection 
+                  : (q.allow_multiple_selection || false),
+                answers: q.answers ? q.answers.map((a: any, aIdx: number) => ({
+                    id: `q${index + 1}-a${aIdx + 1}`,
+                    text: a.text,
+                    isCorrect: !!a.isCorrect
+                })) : [
                   {
                     id: `q${index + 1}-a1`,
                     text: q.option_1,
@@ -460,8 +476,8 @@ const QuizPreview: React.FC = () => {
 
         return {
           questionText: q.text,
-          topicId: null, // Legacy selection
-          topicName: q.topic, // Pass the AI generated topic string
+          topicId: q.topicId || null,
+          topicName: q.topic, // Optional fallback
           points: q.points,
           allowMultiple: q.allowMultipleSelection,
           option1: q.answers[0]?.text || "",

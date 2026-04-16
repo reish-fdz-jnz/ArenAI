@@ -38,6 +38,12 @@ import { getApiUrl } from "../config/api";
 import { socketService } from "../services/socket";
 import { DailyScheduleView, DailySession } from '../components/DailyScheduleView';
 
+const SUBJECT_MAP: Record<string, number> = {
+  Math: 1,
+  Science: 2,
+  "Social Studies": 3,
+  Spanish: 4,
+};
 // ============================================================================
 // COMPONENT
 // ============================================================================
@@ -202,9 +208,10 @@ const Main_Student: React.FC = () => {
 
       // Fallback: Fetch regular subject data if NOT looking at a specific session
       if (!activeSessionData) {
-          const subjectData = await studentService.getSubjectDetails(selectedSubject);
+          const sId = SUBJECT_MAP[selectedSubject] || 1;
+          const subjectData = await studentService.getSubjectDetails(sId, selectedSubject);
           setTopics(subjectData.topics);
-          setOverallPerformance(calculateOverallPerformance(subjectData.topics));
+          setOverallPerformance(subjectData.overallAverage);
       }
 
     } catch (err) {
@@ -597,7 +604,7 @@ const Main_Student: React.FC = () => {
                               </div>
                             </div>
                             <span className="ms-topic-label">
-                              {t(topic.nameKey)}
+                              {topic.name}
                             </span>
                           </div>
                         ))}

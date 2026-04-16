@@ -132,15 +132,14 @@ router.get('/:userId/stats', async (req, res, next) => {
 
   try {
     const { userId } = paramsSchema.parse(req.params);
-    const stats = await getStudentStats(userId);
+    
+    // Use safeParse to avoid 500 error if someone sends ?subjectId=Math
+    const querySchema = z.object({ subjectId: z.coerce.number().int().positive().optional() });
+    const queryResult = querySchema.safeParse(req.query);
+    const subjectId = queryResult.success ? queryResult.data.subjectId : undefined;
 
-    res.json({
-      quizzesCompleted: stats.quizzes_completed,
-      quizAvgScore: stats.quiz_avg_score,
-      battlesWon: stats.battles_won,
-      totalBattles: stats.total_battles,
-      classRank: stats.class_rank,
-    });
+    const stats = await getStudentStats(userId, subjectId);
+    res.json(stats);
   } catch (error) {
     next(error);
   }

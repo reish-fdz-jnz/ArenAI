@@ -1375,6 +1375,17 @@
         "save": "Save",
         "generate": "Generate"
     },
+    "studentAssignments": {
+        "pending": "Pending Quizzes",
+        "completedQuizzes": "Completed Quizzes",
+        "noPending": "No pending assignments",
+        "noCompleted": "No completed quizzes",
+        "searchCompleted": "Search completed...",
+        "questions": "Questions",
+        "start": "Start",
+        "overdue": "Overdue",
+        "score": "Score"
+    },
     "auth": {
         "brandTitle": "Aren AI",
         "brandSubtitle": "Less Monologues, more Dialogs",

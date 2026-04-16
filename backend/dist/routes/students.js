@@ -109,16 +109,12 @@ router.post('/:userId/topics/:topicId/score', async (req, res, next) => {
  */
 router.get('/:userId/stats', async (req, res, next) => {
     const paramsSchema = z.object({ userId: z.coerce.number().int().positive() });
+    const querySchema = z.object({ subjectId: z.coerce.number().int().positive().optional() });
     try {
         const { userId } = paramsSchema.parse(req.params);
-        const stats = await getStudentStats(userId);
-        res.json({
-            quizzesCompleted: stats.quizzes_completed,
-            quizAvgScore: stats.quiz_avg_score,
-            battlesWon: stats.battles_won,
-            totalBattles: stats.total_battles,
-            classRank: stats.class_rank,
-        });
+        const { subjectId } = querySchema.parse(req.query);
+        const stats = await getStudentStats(userId, subjectId);
+        res.json(stats);
     }
     catch (error) {
         next(error);

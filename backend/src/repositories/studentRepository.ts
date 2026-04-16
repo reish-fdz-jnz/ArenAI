@@ -97,18 +97,22 @@ export interface StudentStats {
   class_rank: number | null;
 }
 
-export async function getStudentStats(userId: number): Promise<StudentStats> {
-  // Get quiz stats
+export async function getStudentStats(userId: number, subjectId?: number): Promise<StudentStats> {
+  // Get quiz stats (filtered by subject if provided)
+  const quizFilter = subjectId ? 'AND q.id_subject = ?' : '';
+  const quizParams = subjectId ? [userId, subjectId] : [userId];
+
   const quizResult = await db.query<{ quiz_count: number; avg_score: number }>(
     `SELECT 
         COUNT(*) as quiz_count,
-        COALESCE(AVG(total_score), 0) as avg_score
-     FROM quiz_attempt
-     WHERE id_student = ? AND finished_at IS NOT NULL`,
-    [userId]
+        COALESCE(AVG(qa.total_score), 0) as avg_score
+     FROM quiz_attempt qa
+     INNER JOIN quiz q ON q.id_quiz = qa.id_quiz
+     WHERE qa.id_student = ? AND qa.finished_at IS NOT NULL ${quizFilter}`,
+    quizParams
   );
 
-  // Get battle stats
+  // Get battle stats (global)
   const battleResult = await db.query<{ wins: number; total: number }>(
     `SELECT 
         SUM(CASE 
@@ -121,7 +125,8 @@ export async function getStudentStats(userId: number): Promise<StudentStats> {
     [userId, userId, userId, userId]
   );
 
-  // Get class rank (based on quiz average)
+  // Get class rank (based on global quiz average or subject average?)
+  // User context usually implies global rank, so we keep global rank logic
   const rankResult = await db.query<{ class_rank: number }>(
     `SELECT COUNT(*) + 1 as \`class_rank\`
      FROM (

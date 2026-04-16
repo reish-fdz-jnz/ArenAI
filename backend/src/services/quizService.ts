@@ -203,6 +203,11 @@ export const quizService = {
         let finalClassId = payload.classId;
         if (!finalClassId) {
             finalClassId = (await classRepo.findActiveClassForStudent(studentId)) || undefined;
+            if (finalClassId) {
+                console.log(`[QuizService] Auto-linked quiz to active class: ${finalClassId} for student: ${studentId}`);
+            } else {
+                console.log(`[QuizService] No active class session found for student: ${studentId}. Skipping class analytics.`);
+            }
         }
 
         // 6. UPDATE PERFORMANCE TABLES
@@ -211,24 +216,29 @@ export const quizService = {
 
         // A) Update Class-specific analytics
         if (finalClassId) {
+            console.log(`[QuizService] Recording class-specific analytics for class: ${finalClassId}`);
             // Update individual topic scores for this student in this class
             for (const [topicId, stats] of Object.entries(topicScores)) {
-                if (Number(topicId) === 0) continue; // General topic has no DB entry
+                if (Number(topicId) === 0) {
+                    console.log(`[QuizService] Skipping 'General' topic (ID 0) for class analytics.`);
+                    continue; 
+                }
+                const topicScore = (stats.points / stats.maxPoints) * 100;
+                console.log(`[QuizService] Recording class topic score: Topic ${topicId} = ${topicScore}%`);
                 await classRepo.recordClassStudentTopics(finalClassId, [{
                     userId: studentId,
                     topicId: Number(topicId),
-                    score: (stats.points / stats.maxPoints) * 100
+                    score: topicScore
                 }]);
             }
 
             // Update student's overall class average score only
-            // NOTE: attendance is teacher-managed and must NOT be set here.
             await classRepo.updateClassStudentScore(finalClassId, studentId, scorePercentage);
         }
 
         // B) Update Global Student Topic Mastery
         for (const [topicId, stats] of Object.entries(topicScores)) {
-            if (Number(topicId) === 0) continue; // General topic has no DB entry
+            if (Number(topicId) === 0) continue; 
             await studentRepo.upsertStudentTopicScore({
                 userId: studentId,
                 topicId: Number(topicId),

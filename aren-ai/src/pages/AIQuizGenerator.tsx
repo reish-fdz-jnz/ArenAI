@@ -102,7 +102,8 @@ const AIQuizGenerator: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           const mapped = data.map((t: any) => ({
-            key: t.name, // Using name as key for consistency with AI generator expectations
+            id: t.id_topic,
+            key: t.name,
             name: t.name,
             subject: selectedSubject,
           }));
@@ -144,6 +145,7 @@ const AIQuizGenerator: React.FC = () => {
             // Add topics from the class we are on!
             if (session.topics && session.topics.length > 0) {
               const sessionTopics = session.topics.map((t: any) => ({
+                id: t.id_topic,
                 key: t.name,
                 name: t.name,
                 subject: selectedSubject,
@@ -278,7 +280,13 @@ const AIQuizGenerator: React.FC = () => {
         body: JSON.stringify({
           subject: selectedSubject,
           level: gradeLevel,
-          topics: selectedTopics,
+          topics: selectedTopics.map(key => {
+            const fullTopic = [...availableTopics, ...addedTopics].find(t => t.key === key);
+            return {
+              id: fullTopic?.id || null,
+              name: key
+            };
+          }),
           questionCount,
           language,
           customPrompt: customPrompt || undefined,

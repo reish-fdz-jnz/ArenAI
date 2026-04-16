@@ -52,14 +52,17 @@ export async function listStudentsBySection(sectionId, institutionId) {
      ORDER BY u.name, u.last_name, u.username`, params);
     return result.rows;
 }
-export async function getStudentStats(userId) {
-    // Get quiz stats
+export async function getStudentStats(userId, subjectId) {
+    // Get quiz stats (filtered by subject if provided)
+    const quizFilter = subjectId ? 'AND q.id_subject = ?' : '';
+    const quizParams = subjectId ? [userId, subjectId] : [userId];
     const quizResult = await db.query(`SELECT 
         COUNT(*) as quiz_count,
-        COALESCE(AVG(total_score), 0) as avg_score
-     FROM quiz_attempt
-     WHERE id_student = ? AND finished_at IS NOT NULL`, [userId]);
-    // Get battle stats
+        COALESCE(AVG(qa.total_score), 0) as avg_score
+     FROM quiz_attempt qa
+     INNER JOIN quiz q ON q.id_quiz = qa.id_quiz
+     WHERE qa.id_student = ? AND qa.finished_at IS NOT NULL ${quizFilter}`, quizParams);
+    // Get battle stats (global)
     const battleResult = await db.query(`SELECT 
         SUM(CASE 
           WHEN (id_user_1 = ? AND winner = 1) OR (id_user_2 = ? AND winner = 0) 
@@ -68,7 +71,8 @@ export async function getStudentStats(userId) {
         COUNT(*) as total
      FROM battle_minigame
      WHERE id_user_1 = ? OR id_user_2 = ?`, [userId, userId, userId, userId]);
-    // Get class rank (based on quiz average)
+    // Get class rank (based on global quiz average or subject average?)
+    // User context usually implies global rank, so we keep global rank logic
     const rankResult = await db.query(`SELECT COUNT(*) + 1 as \`class_rank\`
      FROM (
        SELECT id_student, AVG(total_score) as avg_score

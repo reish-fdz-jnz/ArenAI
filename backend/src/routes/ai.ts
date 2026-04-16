@@ -11,6 +11,7 @@ import {
 } from '../repositories/chatLogRepository.js';
 import { runInsightGeneration, runClassReportGeneration } from '../services/insightService.js';
 import { db } from '../db/pool.js';
+import { getStudentTopicProgress } from '../repositories/studentRepository.js';
 
 const router = Router();
 
@@ -187,20 +188,35 @@ router.post('/chat', async (req, res, next) => {
         .replace('{NAME}', name)
         .replace(/{NAME}/g, name)
         .replace(/{LANGUAGE}/g, language);
-    } else {
-       console.log("--> Usando Prompt de ESTUDIANTE");
-       systemInstruction = STUDENT_SYSTEM_PROMPT
-        .replace('{AGENT_NAME}', agentName)
-        .replace('{ANIMAL_TYPE}', animalType) 
-        .replace(/{ANIMAL_TYPE}/g, animalType) 
-        .replace('{NAME}', name)
-        .replace(/{NAME}/g, name)
-        .replace('{LEVEL}', level)
-        .replace('{SUBJECT}', subject)
-        .replace('{CURRENT_TOPICS}', currentTopics)
-        .replace('{LEARNING_STYLE}', learningStyle)
-        .replace(/{LANGUAGE}/g, language);
-    }
+     } else {
+        console.log("--> Usando Prompt de ESTUDIANTE");
+
+        // 4. Buscar Mastery Data si es estudiante
+        let masteryContext = "Sin datos de desempeño previos.";
+        if (userData?.id) {
+          try {
+            const scores = await getStudentTopicProgress(userData.id);
+            if (scores && scores.length > 0) {
+              masteryContext = scores.map(s => `${s.topic_name}: ${s.score}%`).join(", ");
+            }
+          } catch (err) {
+            console.error("[AI CHAT] Error fetching student scores:", err);
+          }
+        }
+
+        systemInstruction = STUDENT_SYSTEM_PROMPT
+          .replace('{AGENT_NAME}', agentName)
+          .replace('{ANIMAL_TYPE}', animalType)
+          .replace(/{ANIMAL_TYPE}/g, animalType)
+          .replace('{NAME}', name)
+          .replace(/{NAME}/g, name)
+          .replace('{LEVEL}', level)
+          .replace('{SUBJECT}', subject)
+          .replace('{CURRENT_TOPICS}', currentTopics)
+          .replace('{TOPIC_MASTERY}', masteryContext)
+          .replace('{LEARNING_STYLE}', learningStyle)
+          .replace(/{LANGUAGE}/g, language);
+     }
 
     // 4. Llamamos al servicio con la instrucción
     const aiResponse = await generateContentWithGemini(prompt, systemInstruction, history);
@@ -358,8 +374,10 @@ router.post('/generate-quiz', async (req, res, next) => {
       throw new ApiError(400, "Subject and topics are required.");
     }
 
-    // Build the prompt with replacements
-    const topicsList = Array.isArray(topics) ? topics.join(", ") : topics;
+    // Build the prompt with replacements (ID: Name mapping for deterministic results)
+    const topicsList = Array.isArray(topics) 
+      ? topics.map((t: any) => `ID ${t.id}: ${t.name}`).join(", ") 
+      : topics;
     
     const quizPrompt = QUIZ_GENERATOR_PROMPT
       .replace(/{SUBJECT}/g, subject)
@@ -371,7 +389,6 @@ router.post('/generate-quiz', async (req, res, next) => {
 
     console.log("[Quiz Generator] Generating quiz with prompt...");
     console.log(`  Subject: ${subject}, Level: ${level}, Topics: ${topicsList}`);
-    console.log(`  Questions: ${questionCount}, Language: ${language}`);
 
     // Call Gemini API
     const aiResponse = await generateContentWithGemini(
@@ -380,35 +397,47 @@ router.post('/generate-quiz', async (req, res, next) => {
     );
 
     // Try to parse JSON from response
-    let parsedQuiz;
+    let rawResult;
     try {
-      // Clean the response - remove markdown if present
       let cleanedResponse = aiResponse.trim();
-      
-      // Remove markdown code blocks if present
       if (cleanedResponse.startsWith("```json")) {
         cleanedResponse = cleanedResponse.replace(/^```json\s*/, "").replace(/```\s*$/, "");
       } else if (cleanedResponse.startsWith("```")) {
         cleanedResponse = cleanedResponse.replace(/^```\s*/, "").replace(/```\s*$/, "");
       }
-      
-      parsedQuiz = JSON.parse(cleanedResponse.trim());
+      rawResult = JSON.parse(cleanedResponse.trim());
     } catch (parseError) {
       console.error("Failed to parse AI response as JSON:", parseError);
-      console.error("Raw response:", aiResponse);
       throw new ApiError(500, "AI returned invalid JSON. Please try again.");
     }
 
-    // Validate the response structure
-    if (!parsedQuiz.questions || !Array.isArray(parsedQuiz.questions)) {
-      throw new ApiError(500, "AI response missing questions array.");
-    }
+    // Transform to frontend format including names
+    const questions = (rawResult.questions || []).map((q: any) => {
+      // Find the name for the given ID (fallback to original topic name if ID missing)
+      const topicInfo = Array.isArray(topics) 
+        ? topics.find((t: any) => Number(t.id) === Number(q.topic_id))
+        : null;
 
-    console.log(`[Quiz Generator] Successfully generated ${parsedQuiz.questions.length} questions`);
+      return {
+        text: q.question_text,
+        topic: topicInfo ? topicInfo.name : "General",
+        topicId: q.topic_id || null, // Preserve the numeric ID
+        points: q.points || 1.0,
+        allowMultipleSelection: q.allow_multiple_selection || false,
+        answers: [
+          { text: q.option_1, isCorrect: (q.correct_options || []).includes(1) },
+          { text: q.option_2, isCorrect: (q.correct_options || []).includes(2) },
+          { text: q.option_3, isCorrect: (q.correct_options || []).includes(3) },
+          { text: q.option_4, isCorrect: (q.correct_options || []).includes(4) }
+        ]
+      };
+    });
+
+    console.log(`[Quiz Generator] Successfully generated ${questions.length} questions`);
 
     res.json({
       success: true,
-      data: parsedQuiz
+      data: { questions }
     });
 
   } catch (error) {

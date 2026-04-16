@@ -32,25 +32,26 @@ class StudentService {
         return fallbacks[subjectName] || [];
     }
 
-    async getStudentStats(studentId?: string): Promise<StudentStats> {
+    async getStudentStats(subjectId?: number, studentId?: string): Promise<StudentStats> {
         try {
             const userId = studentId || getUserId();
             if (!userId) throw new Error("No user ID");
 
             const token = localStorage.getItem("authToken") || localStorage.getItem("token");
-            const res = await fetch(getApiUrl(`/api/students/${userId}/stats`), {
+            const url = getApiUrl(`/api/students/${userId}/stats${subjectId ? `?subjectId=${subjectId}` : ''}`);
+            const res = await fetch(url, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
 
             if (res.ok) {
                 const data = await res.json();
                 return {
-                    winRate: data.totalBattles > 0 ? Math.round((data.battlesWon / data.totalBattles) * 100) : 0,
+                    winRate: data.total_battles > 0 ? Math.round((data.battles_won / data.total_battles) * 100) : 0,
                     streak: 0,
                     happiness: 0.8,
-                    overallPerformance: data.quizAvgScore || 0,
-                    level: Math.floor(((data.quizzesCompleted || 0) * 50) / 100) + 1,
-                    points: (data.quizzesCompleted || 0) * 50
+                    overallPerformance: data.quiz_avg_score || 0,
+                    level: Math.floor(((data.quizzes_completed || 0) * 50) / 100) + 1,
+                    points: (data.quizzes_completed || 0) * 50
                 };
             }
         } catch (e) {
@@ -74,47 +75,54 @@ class StudentService {
         }));
     }
 
-    async getSubjectDetails(subjectName: string, studentId?: string): Promise<SubjectData> {
+    async getSubjectDetails(subjectId: number, subjectName: string, studentId?: string): Promise<SubjectData> {
         try {
             const userId = studentId || getUserId();
             if (!userId) throw new Error("No user ID");
 
             const token = localStorage.getItem("authToken") || localStorage.getItem("token");
-            const res = await fetch(getApiUrl(`/api/students/${userId}/progress`), {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
+            
+            // Get both progress (topics) and specific stats (average score)
+            const [progressRes, stats] = await Promise.all([
+                fetch(getApiUrl(`/api/students/${userId}/progress`), {
+                    headers: { "Authorization": `Bearer ${token}` }
+                }),
+                this.getStudentStats(subjectId, String(userId))
+            ]);
 
-            if (res.ok) {
-                const data: any[] = await res.json();
+            if (progressRes.ok) {
+                const data: any[] = await progressRes.json();
                 
                 const filtered = data.filter(d => 
-                    d.subject_name.toLowerCase() === subjectName.toLowerCase() ||
-                    d.subject_name.toLowerCase().replace(/\s+/g, '') === subjectName.toLowerCase().replace(/\s+/g, '')
+                    d.subject_name && subjectName && (
+                        d.subject_name.toLowerCase() === subjectName.toLowerCase() ||
+                        d.subject_name.toLowerCase().replace(/\s+/g, '') === subjectName.toLowerCase().replace(/\s+/g, '')
+                    )
                 );
 
-                if (filtered.length > 0) {
-                    const topics: TopicProgress[] = filtered.map(t => ({
-                        name: t.topic_name,
-                        nameKey: t.topic_name, 
-                        percentage: Number(t.score) || 0,
-                        icon: this.getIconForTopic(t.topic_name)
-                    }));
+                const topics: TopicProgress[] = filtered.map(t => ({
+                    name: t.topic_name,
+                    nameKey: t.topic_name, 
+                    percentage: Number(t.score) || 0,
+                    icon: this.getIconForTopic(t.topic_name)
+                }));
 
-                    return {
-                        name: subjectName,
-                        key: subjectName.replace(/\s+/g, ''),
-                        topics
-                    };
-                }
+                return {
+                    name: subjectName,
+                    key: subjectName.replace(/\s+/g, ''),
+                    topics: topics.length > 0 ? topics : this.getFallbackTopics(subjectName),
+                    overallAverage: stats.overallPerformance
+                };
             }
         } catch (e) {
-            console.error(`Failed to fetch topic details for subject ${subjectName}`, e);
+            console.error("Failed to fetch subject details", e);
         }
 
         return {
-            name: subjectName,
-            key: subjectName.replace(/\s+/g, ''),
-            topics: this.getFallbackTopics(subjectName)
+            name: subjectName || "General",
+            key: (subjectName || "General").replace(/\s+/g, ''),
+            topics: this.getFallbackTopics(subjectName || "General"),
+            overallAverage: 0
         };
     }
 
