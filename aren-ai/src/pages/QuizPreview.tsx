@@ -460,7 +460,8 @@ const QuizPreview: React.FC = () => {
 
         return {
           questionText: q.text,
-          topicId: null, // Would need topic selection
+          topicId: null, // Legacy selection
+          topicName: q.topic, // Pass the AI generated topic string
           points: q.points,
           allowMultiple: q.allowMultipleSelection,
           option1: q.answers[0]?.text || "",

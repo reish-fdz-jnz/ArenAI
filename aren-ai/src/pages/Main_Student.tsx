@@ -8,6 +8,7 @@ import {
   IonText,
   useIonRouter,
   IonSkeletonText,
+  useIonViewWillEnter,
 } from "@ionic/react";
 import {
   calculator,
@@ -106,22 +107,28 @@ const Main_Student: React.FC = () => {
     }
   };
 
-  // Initial Data Fetch
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [fetchedWeeks, fetchedStats] = await Promise.all([
-          studentService.getWeeks(),
-          studentService.getStudentStats(),
-        ]);
-        setWeeks(fetchedWeeks);
-      } catch (error) {
-        console.error("Failed to fetch initial data", error);
-      }
-    };
-    fetchData();
+  const loadDashboardData = async () => {
+    try {
+      const [fetchedWeeks, fetchedStats] = await Promise.all([
+        studentService.getWeeks(),
+        studentService.getStudentStats(),
+      ]);
+      setWeeks(fetchedWeeks);
+      // Wait to set stats if we end up adding them to state, right now overallPerformance handles score, but stats handles rank/wins/etc. if mapped 
+    } catch (error) {
+      console.error("Failed to fetch dashboard data", error);
+    }
     fetchHistory();
+    fetchSessionState();
+  };
+
+  useEffect(() => {
+    loadDashboardData();
   }, []);
+
+  useIonViewWillEnter(() => {
+    loadDashboardData();
+  });
 
   // Fetch Session State
   const fetchSessionState = async () => {

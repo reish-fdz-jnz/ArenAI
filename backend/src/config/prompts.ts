@@ -101,6 +101,7 @@ Aproximadamente 70% selección única, 30% selección múltiple.
 2. **IDIOMA:** Todo el contenido en {LANGUAGE}.
 3. **4 OPCIONES:** Siempre incluye exactamente 4 opciones.
 4. **correct_options:** Array de números 1-4 indicando respuestas correctas.
+5. **TEMAS:** Utiliza ÚNICAMENTE los temas proporcionados en {TOPICS_LIST}. Cada pregunta debe pertenecer a uno de estos temas. El campo "topic" debe ser el nombre exacto del tema de esa lista. No inventes nuevos temas.
 </strict_constraints>
 
 <json_schema>

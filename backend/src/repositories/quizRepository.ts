@@ -412,3 +412,58 @@ export async function getStudentQuizDetail(quizId: number, studentId: number) {
         metrics,
     };
 }
+
+// --- STUDENT QUIZ ATTEMPTS ---
+
+export async function createQuizAttempt(data: {
+    quizId: number;
+    studentId: number;
+    startedAt: string;
+}): Promise<number> {
+    const result = await db.query<ResultSetHeader>(
+        `INSERT INTO quiz_attempt (id_quiz, id_student, started_at)
+         VALUES (?, ?, ?)`,
+        [data.quizId, data.studentId, data.startedAt]
+    );
+    return (result.rows as any).insertId || (result.rows[0] as any).insertId;
+}
+
+export async function saveQuizResponse(data: {
+    attemptId: number;
+    questionId: number;
+    selectedOptions: string;
+    isCorrect: boolean;
+    pointsAwarded: number;
+    timeTakenSeconds: number;
+}): Promise<void> {
+    await db.query(
+        `INSERT INTO quiz_response (id_attempt, id_question, selected_options, is_correct, points_awarded, time_taken_seconds)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [data.attemptId, data.questionId, data.selectedOptions, data.isCorrect ? 1 : 0, data.pointsAwarded, data.timeTakenSeconds]
+    );
+}
+
+export async function updateQuizAttemptScore(
+    attemptId: number,
+    totalScore: number,
+    finishedAt: string,
+    focusLostCount: number = 0
+): Promise<void> {
+    await db.query(
+        `UPDATE quiz_attempt 
+         SET total_score = ?, finished_at = ?, focus_lost_count = ?
+         WHERE id_attempt = ?`,
+        [totalScore, finishedAt, focusLostCount, attemptId]
+    );
+}
+
+export async function getDetailedAnswers(quizId: number) {
+    const result = await db.query<any>(
+        `SELECT qq.id_question, qq.correct_options, qq.points, qq.id_topic, t.name as topic_name
+         FROM quiz_question qq
+         LEFT JOIN topic t ON t.id_topic = qq.id_topic
+         WHERE qq.id_quiz = ?`,
+        [quizId]
+    );
+    return result.rows;
+}

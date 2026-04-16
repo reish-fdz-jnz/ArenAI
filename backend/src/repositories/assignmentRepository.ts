@@ -241,3 +241,18 @@ export async function getAssignmentSubmissions(assignmentId: number) {
         topicStats: Object.values(topicMap),
     };
 }
+
+// Mark a student's assignment submission as completed with a grade
+export async function markSubmissionComplete(assignmentId: number, studentId: number, grade: number): Promise<void> {
+    // Upsert the submission: if one already exists, mark it SUBMITTED with the grade.
+    // If not (student played outside assignment context but still has an assignment), create it.
+    await db.query(
+        `INSERT INTO assignment_submission (id_assignment, id_student, status, grade, submitted_at)
+         VALUES (?, ?, 'SUBMITTED', ?, NOW())
+         ON DUPLICATE KEY UPDATE
+           status = 'SUBMITTED',
+           grade = VALUES(grade),
+           submitted_at = NOW()`,
+        [assignmentId, studentId, grade]
+    );
+}

@@ -13,7 +13,7 @@ interface ClassStudentPayload {
   userId: number;
   scoreAverage?: number | null;
   aiSummary?: string | null;
-  attendance?: boolean | null;
+  attendance?: number | boolean | null;
 }
 
 interface ClassStudentTopicPayload {
@@ -203,6 +203,17 @@ export async function recordClassStudents(classId: number, students: ClassStuden
   }
 }
 
+// Updates ONLY the score_average for a student in a class.
+// Attendance is teacher-managed and must NOT be touched here.
+export async function updateClassStudentScore(classId: number, userId: number, scorePercentage: number) {
+  await db.query(
+    `INSERT INTO class_student (id_class, id_user, score_average)
+     VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE score_average = VALUES(score_average)`,
+    [classId, userId, scorePercentage]
+  );
+}
+
 export async function recordClassStudentTopics(classId: number, entries: ClassStudentTopicPayload[]) {
   if (!entries.length) return;
   const client = await db.getClient();
@@ -329,4 +340,18 @@ export async function getStudentClassTopics(classId: number, userId: number) {
     [classId, userId]
   );
   return result.rows;
+}
+
+export async function findActiveClassForStudent(studentId: number): Promise<number | null> {
+  // Finds a class that is 'live' and belongs to a section the student is enrolled in
+  const result = await db.query<any>(
+    `SELECT c.id_class 
+     FROM class c
+     INNER JOIN user_section us ON us.id_section = c.id_section
+     WHERE us.id_user = ? AND c.status = 'live'
+     ORDER BY c.start_time DESC
+     LIMIT 1`,
+    [studentId]
+  );
+  return result.rows[0]?.id_class || null;
 }

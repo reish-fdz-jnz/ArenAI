@@ -145,10 +145,10 @@ const StudentAssignments: React.FC = () => {
   const completedAssignments = assignments.filter(
     (a) =>
       a.status === "completed" &&
-      (a.assignmentTitle
+      (((a.assignmentTitle || "")
         .toLowerCase()
-        .includes(completedSearch.toLowerCase()) ||
-        a.quizTitle.toLowerCase().includes(completedSearch.toLowerCase())),
+        .includes(completedSearch.toLowerCase())) ||
+        ((a.quizTitle || "").toLowerCase().includes(completedSearch.toLowerCase()))),
   );
 
   const startAssignment = (id: string, dueDate: string, quizId?: string) => {

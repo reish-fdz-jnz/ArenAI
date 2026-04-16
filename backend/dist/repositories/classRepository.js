@@ -130,6 +130,13 @@ export async function recordClassStudents(classId, students) {
         client.release();
     }
 }
+// Updates ONLY the score_average for a student in a class.
+// Attendance is teacher-managed and must NOT be touched here.
+export async function updateClassStudentScore(classId, userId, scorePercentage) {
+    await db.query(`INSERT INTO class_student (id_class, id_user, score_average)
+     VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE score_average = VALUES(score_average)`, [classId, userId, scorePercentage]);
+}
 export async function recordClassStudentTopics(classId, entries) {
     if (!entries.length)
         return;
@@ -232,4 +239,14 @@ export async function getStudentClassTopics(classId, userId) {
      INNER JOIN topic t ON t.id_topic = cst.id_topic
      WHERE cst.id_class = ? AND cst.id_user = ?`, [classId, userId]);
     return result.rows;
+}
+export async function findActiveClassForStudent(studentId) {
+    // Finds a class that is 'live' and belongs to a section the student is enrolled in
+    const result = await db.query(`SELECT c.id_class 
+     FROM class c
+     INNER JOIN user_section us ON us.id_section = c.id_section
+     WHERE us.id_user = ? AND c.status = 'live'
+     ORDER BY c.start_time DESC
+     LIMIT 1`, [studentId]);
+    return result.rows[0]?.id_class || null;
 }

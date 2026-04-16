@@ -22,6 +22,39 @@ export async function listTopicsBySubject(subjectId: number) {
   return result.rows;
 }
 
+export async function findTopicIdByName(name: string, subjectId: number): Promise<number | null> {
+  const normalizedName = name.trim();
+  console.log(`[TopicLookup] Searching for: "${normalizedName}" in subjectId: ${subjectId}`);
+  
+  const result = await db.query<{ id_topic: number }>(
+    `SELECT id_topic FROM topic WHERE id_subject = ? AND name = ? LIMIT 1`,
+    [subjectId, normalizedName]
+  );
+  
+  if (result.rows.length > 0) {
+    console.log(`[TopicLookup] Found match: ID ${result.rows[0].id_topic}`);
+    return result.rows[0].id_topic;
+  }
+  
+  console.log(`[TopicLookup] NO MATCH found for: "${normalizedName}"`);
+  return null;
+}
+
+export async function findOrCreateTopic(name: string, subjectId: number): Promise<number> {
+  const normalizedName = name.trim();
+  const searchResult = await db.query<{ id_topic: number }>(
+    `SELECT id_topic FROM topic WHERE id_subject = ? AND name = ? LIMIT 1`,
+    [subjectId, normalizedName]
+  );
+  
+  if (searchResult.rows.length > 0) {
+    return searchResult.rows[0].id_topic;
+  }
+  
+  const created = await createTopic({ name: normalizedName, subjectId });
+  return (created as any).id_topic;
+}
+
 export async function createTopic(payload: { name: string; subjectId: number; description?: string | null }) {
   const insertResult = await db.query<ResultSetHeader>(
     `INSERT INTO topic (name, id_subject, description)

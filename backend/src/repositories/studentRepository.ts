@@ -102,9 +102,9 @@ export async function getStudentStats(userId: number): Promise<StudentStats> {
   const quizResult = await db.query<{ quiz_count: number; avg_score: number }>(
     `SELECT 
         COUNT(*) as quiz_count,
-        COALESCE(AVG(score), 0) as avg_score
-     FROM quiz_student
-     WHERE id_student = ?`,
+        COALESCE(AVG(total_score), 0) as avg_score
+     FROM quiz_attempt
+     WHERE id_student = ? AND finished_at IS NOT NULL`,
     [userId]
   );
 
@@ -122,25 +122,25 @@ export async function getStudentStats(userId: number): Promise<StudentStats> {
   );
 
   // Get class rank (based on quiz average)
-  const rankResult = await db.query<{ rank: number }>(
-    `SELECT COUNT(*) + 1 as rank
+  const rankResult = await db.query<{ class_rank: number }>(
+    `SELECT COUNT(*) + 1 as \`class_rank\`
      FROM (
-       SELECT id_student, AVG(score) as avg_score
-       FROM quiz_student
-       WHERE score IS NOT NULL
+       SELECT id_student, AVG(total_score) as avg_score
+       FROM quiz_attempt
+       WHERE finished_at IS NOT NULL
        GROUP BY id_student
      ) scores
      WHERE avg_score > (
-       SELECT COALESCE(AVG(score), 0)
-       FROM quiz_student
-       WHERE id_student = ?
+       SELECT COALESCE(AVG(total_score), 0)
+       FROM quiz_attempt
+       WHERE id_student = ? AND finished_at IS NOT NULL
      )`,
     [userId]
   );
 
   const quizStats = quizResult.rows[0] || { quiz_count: 0, avg_score: 0 };
   const battleStats = battleResult.rows[0] || { wins: 0, total: 0 };
-  const rank = rankResult.rows[0]?.rank || null;
+  const rank = rankResult.rows[0]?.class_rank || null;
 
   return {
     quizzes_completed: quizStats.quiz_count,

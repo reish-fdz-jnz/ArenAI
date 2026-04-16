@@ -22,6 +22,7 @@ router.post('/', async (req, res, next) => {
             language,
             questions: questions.map((q: any) => ({
                 topicId: q.topicId || null,
+                topicName: q.topicName || q.topic || q.topic_name || null,
                 questionText: q.questionText || q.question,
                 points: q.points || 1,
                 allowMultiple: q.allowMultiple || false,
@@ -188,6 +189,33 @@ router.get('/:id/student/:studentId/detail', async (req, res, next) => {
             return;
         }
         res.json(data);
+    } catch (err) {
+        next(err);
+    }
+});
+
+// Submit a quiz attempt
+router.post('/submit', async (req, res, next) => {
+    try {
+        const { studentId, quizId, classId, assignmentId, startedAt, finishedAt, focusLostCount, responses } = req.body;
+
+        if (!studentId || !quizId || !startedAt || !finishedAt || !responses) {
+            res.status(400).json({ error: 'Missing required fields for submission' });
+            return;
+        }
+
+        const result = await quizService.submitQuizResult({
+            studentId,
+            quizId,
+            classId,
+            assignmentId,
+            startedAt,
+            finishedAt,
+            focusLostCount,
+            responses
+        });
+
+        res.json(result);
     } catch (err) {
         next(err);
     }
