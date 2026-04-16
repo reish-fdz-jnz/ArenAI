@@ -97,11 +97,12 @@ const TaskAssignment: React.FC = () => {
   const [studentSearch, setStudentSearch] = useState("");
 
   // Assignment state - defaults: points=0, dueDate=today
-  const today = new Date().toISOString().split("T")[0];
+  // Assignment state - defaults: points=0, dueDate=tomorrow
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
   const [assignmentName, setAssignmentName] = useState(
     t("taskAssignment.defaultTitle"),
   );
-  const [dueDate, setDueDate] = useState(today);
+  const [dueDate, setDueDate] = useState(tomorrow);
   const [assignedSections, setAssignedSections] = useState<string[]>([]);
   const [points, setPoints] = useState(0);
   const [instructions, setInstructions] = useState("");
@@ -667,74 +668,6 @@ const TaskAssignment: React.FC = () => {
               </div>
             </div>
 
-            {/* Additional Assignments Card */}
-            <div className="task-card">
-              <div className="task-card-title">
-                {t("taskAssignment.additionalAssignments")}
-              </div>
-
-              <div className="task-slider-section">
-                {/* Two column grid for parallel display */}
-                <div className="task-slider-grid">
-                  {/* Battles Column */}
-                  <div className="task-slider-column">
-                    <span className="task-slider-label">
-                      {t("taskAssignment.battlesRequired")}
-                    </span>
-                    <div
-                      className="task-value-circle"
-                      onClick={openBattlesModal}
-                    >
-                      {battlesCount}
-                    </div>
-                    <div className="task-slider-row">
-                      <div className="task-slider-range">
-                        <span className="task-range-label">0</span>
-                        <IonRange
-                          min={0}
-                          max={20}
-                          step={1}
-                          value={battlesCount}
-                          onIonChange={(e) =>
-                            setBattlesCount(e.detail.value as number)
-                          }
-                          color="secondary"
-                          style={{ flex: 1 }}
-                        />
-                        <span className="task-range-label">20</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Agent Time Column */}
-                  <div className="task-slider-column">
-                    <span className="task-slider-label">
-                      {t("taskAssignment.studyWithAgentTime")}
-                    </span>
-                    <div className="task-value-circle" onClick={openAgentModal}>
-                      {agentTime}
-                    </div>
-                    <div className="task-slider-row">
-                      <div className="task-slider-range">
-                        <span className="task-range-label">0</span>
-                        <IonRange
-                          min={0}
-                          max={60}
-                          step={5}
-                          value={agentTime}
-                          onIonChange={(e) =>
-                            setAgentTime(e.detail.value as number)
-                          }
-                          color="secondary"
-                          style={{ flex: 1 }}
-                        />
-                        <span className="task-range-label">60</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Your Quizzes Card */}
             <div className="task-card">

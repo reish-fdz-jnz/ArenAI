@@ -27,31 +27,14 @@ import "../components/StudentHeader.css";
 import PageTransition from "../components/PageTransition";
 import { useProfessorFilters } from "../hooks/useProfessorFilters";
 
-// All Available Topics
-const ALL_TOPICS: { key: string; name: string; subject: string }[] = [
-  { key: "Algebra", name: "Algebra", subject: "Math" },
-  { key: "Geometry", name: "Geometry", subject: "Math" },
-  { key: "Calculus", name: "Calculus", subject: "Math" },
-  { key: "Statistics", name: "Statistics", subject: "Math" },
-  { key: "Trigonometry", name: "Trigonometry", subject: "Math" },
-  { key: "Probability", name: "Probability", subject: "Math" },
-  { key: "LinearEquations", name: "Linear Equations", subject: "Math" },
-  { key: "Fractions", name: "Fractions", subject: "Math" },
-  { key: "Biology", name: "Biology", subject: "Science" },
-  { key: "Chemistry", name: "Chemistry", subject: "Science" },
-  { key: "Physics", name: "Physics", subject: "Science" },
-  { key: "EarthScience", name: "Earth Science", subject: "Science" },
-  { key: "Astronomy", name: "Astronomy", subject: "Science" },
-  { key: "Genetics", name: "Genetics", subject: "Science" },
-  { key: "History", name: "History", subject: "Social Studies" },
-  { key: "Geography", name: "Geography", subject: "Social Studies" },
-  { key: "Civics", name: "Civics", subject: "Social Studies" },
-  { key: "Economics", name: "Economics", subject: "Social Studies" },
-  { key: "Vocabulary", name: "Vocabulary", subject: "Spanish" },
-  { key: "Grammar", name: "Grammar", subject: "Spanish" },
-  { key: "Reading", name: "Reading", subject: "Spanish" },
-  { key: "Writing", name: "Writing", subject: "Spanish" },
-];
+// Subject Mapping
+const SUBJECT_MAP: { [key: string]: number } = {
+  "Math": 1,
+  "Science": 2,
+  "Social Studies": 3,
+  "SocialStudies": 3,
+  "Spanish": 4
+};
 
 const SUBJECTS = ["Math", "Science", "Social Studies", "Spanish"];
 
@@ -63,8 +46,11 @@ const AIQuizGenerator: React.FC = () => {
   // Loading state for AI generation
   const [isLoading, setIsLoading] = useState(false);
 
-  const { selectedGrade: filterGrade, selectedSubject: filterSubject } =
-    useProfessorFilters();
+  const { 
+    selectedGrade: filterGrade, 
+    selectedSubject: filterSubject,
+    selectedSection: filterSection 
+  } = useProfessorFilters();
 
   const [selectedSubject, setSelectedSubject] = useState(
     SUBJECTS.includes(filterSubject) ? filterSubject : "Math",
@@ -74,6 +60,10 @@ const AIQuizGenerator: React.FC = () => {
   const [addedTopics, setAddedTopics] = useState<
     { key: string; name: string; subject: string }[]
   >([]);
+  const [availableTopics, setAvailableTopics] = useState<
+    { key: string; name: string; subject: string }[]
+  >([]);
+
   const [questionCount, setQuestionCount] = useState(5);
   const [customPrompt, setCustomPrompt] = useState("");
   const [showTopicModal, setShowTopicModal] = useState(false);
@@ -97,17 +87,45 @@ const AIQuizGenerator: React.FC = () => {
 
   const [activeSession, setActiveSession] = useState<any>(null);
 
-  // Sync with Professor Filters & Fetch Active Session Topics
+  // 1. Fetch ALL available topics for the selected subject from DB
+  React.useEffect(() => {
+    const fetchDbTopics = async () => {
+      try {
+        const subjectId = SUBJECT_MAP[selectedSubject];
+        if (!subjectId) return;
+
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(getApiUrl(`api/subjects/${subjectId}/topics`), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const mapped = data.map((t: any) => ({
+            key: t.name, // Using name as key for consistency with AI generator expectations
+            name: t.name,
+            subject: selectedSubject,
+          }));
+          setAvailableTopics(mapped);
+        }
+      } catch (err) {
+        console.error("Error fetching subject topics from DB:", err);
+      }
+    };
+    fetchDbTopics();
+  }, [selectedSubject]);
+
+  // 2. Fetch Active Session Topics and Sync
   React.useEffect(() => {
     const fetchActiveSessionData = async () => {
       try {
         const token = localStorage.getItem("authToken");
         if (!token) return;
 
-        // Using labels from professor filters for the hardened active session check
         const params = new URLSearchParams();
         if (filterGrade) params.append("grade", String(filterGrade));
-        if (filterSubject) params.append("sectionNumber", "1"); // Defaulting to 1 for detection
+        // Use the actual selected section if available, else 1
+        params.append("sectionNumber", filterSection || "1");
 
         const response = await fetch(
           getApiUrl(`api/class-templates/active?${params.toString()}`),
@@ -118,21 +136,26 @@ const AIQuizGenerator: React.FC = () => {
 
         if (response.ok) {
           const result = await response.json();
-          if (result.success && result.data) {
-            const session = result.data;
+          // The API returns the session object directly or null
+          if (result && result.id_class) {
+            const session = result;
             setActiveSession(session);
 
+            // Add topics from the class we are on!
             if (session.topics && session.topics.length > 0) {
               const sessionTopics = session.topics.map((t: any) => ({
                 key: t.name,
                 name: t.name,
                 subject: selectedSubject,
               }));
+              
+              // Only pick topics that match current subject to avoid cross-pollination 
+              // unless we want to show all class topics regardless of subject
               setAddedTopics(sessionTopics);
               setSelectedTopics(sessionTopics.map((t: any) => t.key));
             }
           } else {
-            // No active session, ensure we start empty as requested
+            // No active session in this section/grade
             setActiveSession(null);
             setSelectedTopics([]);
             setAddedTopics([]);
@@ -144,7 +167,7 @@ const AIQuizGenerator: React.FC = () => {
     };
 
     fetchActiveSessionData();
-  }, [filterGrade, filterSubject, selectedSubject]);
+  }, [filterGrade, filterSection, selectedSubject]);
 
   // Sync Subject from Filters
   React.useEffect(() => {
@@ -154,10 +177,10 @@ const AIQuizGenerator: React.FC = () => {
   }, [filterSubject]);
 
   const defaultTopics = useMemo<{ key: string; name: string; subject: string }[]>(() => {
-    return [];
-  }, []);
+    return availableTopics.slice(0, 4);
+  }, [availableTopics]);
 
-  // All displayed topics
+  // All displayed topics - combines defaults with topics from active session or manually added
   const displayedTopics = useMemo(() => {
     const result = [...defaultTopics];
     addedTopics.forEach((topic) => {
@@ -170,13 +193,13 @@ const AIQuizGenerator: React.FC = () => {
 
   // Search filtered topics - Restrict to selected subject
   const searchResults = useMemo(() => {
-    let filtered = ALL_TOPICS.filter((t) => t.subject === selectedSubject);
+    let filtered = availableTopics;
 
     if (!searchText.trim()) return filtered;
 
     const query = searchText.toLowerCase();
     return filtered.filter((t) => t.name.toLowerCase().includes(query));
-  }, [searchText, selectedSubject]);
+  }, [searchText, availableTopics]);
 
   const toggleTopic = (topicKey: string) => {
     setSelectedTopics((prev) =>
@@ -195,7 +218,7 @@ const AIQuizGenerator: React.FC = () => {
   };
 
   const handleAddTopicsFromModal = () => {
-    const newTopics = ALL_TOPICS.filter((t) =>
+    const newTopics = availableTopics.filter((t) =>
       modalSelectedTopics.includes(t.key),
     );
     setAddedTopics((prev) => {

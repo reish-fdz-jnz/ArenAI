@@ -604,31 +604,6 @@ const QuizPreview: React.FC = () => {
               </div>
             </div>
 
-            {/* Subject Selector */}
-            <div className="preview-subject-section">
-              <span className="preview-label">Subject:</span>
-              <select
-                className="preview-subject-select"
-                value={
-                  subjects.find((s) => s.name_subject === subject)
-                    ?.id_subject || ""
-                }
-                onChange={(e) => {
-                  const id = parseInt(e.target.value);
-                  const subj = subjects.find((s) => s.id_subject === id);
-                  if (subj) setSubject(subj.name_subject);
-                }}
-              >
-                <option value="" disabled>
-                  Select Subject
-                </option>
-                {subjects.map((s) => (
-                  <option key={s.id_subject} value={s.id_subject}>
-                    {s.name_subject}
-                  </option>
-                ))}
-              </select>
-            </div>
 
             {/* Questions */}
             {questions.map((question, qIndex) => (
