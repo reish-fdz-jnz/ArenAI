@@ -144,7 +144,18 @@
             "markAllAbsent": "Todos Ausentes",
             "searchPlaceholder": "Buscar estudiante...",
             "present": "Presente",
-            "absent": "Ausente"
+            "absent": "Ausente",
+            "total": "total",
+            "search": "Buscar estudiantes...",
+            "student_list": "Lista de Estudiantes",
+            "no_session": "No se encontró sesión activa para esta sección.",
+            "go_to_launcher": "Ir al Lanzador de Clases",
+            "no_students": "No se encontraron estudiantes en esta sección.",
+            "finish_return": "Finalizar y regresar al menú principal",
+            "finish_return_short": "Volver al Menú",
+            "edit_identifier": "Editar Identificación",
+            "first_name": "Nombre",
+            "last_name": "Apellido"
         },
         "menu": {
             "allClasses": "Todas las Clases",
@@ -367,7 +378,13 @@
             "aiDifficulty": "Nivel de IA",
             "launchClass": "Lanzar Clase",
             "selectTemplateFirst": "Por favor, selecciona una plantilla de clase primero.",
-            "startingClass": "Iniciando \"{{name}}\" para la Sección {{section}}..."
+            "startingClass": "Iniciando \"{{name}}\" para la Sección {{section}}...",
+            "startingClassTitle": "Iniciando Clase",
+            "startingClassDesc": "Preparando el entorno de aprendizaje en vivo y cargando diagnósticos...",
+            "finishingClass": "Finalizando Clase",
+            "finishingClassDesc": "Guardando asistencia y finalizando datos de la sesión...",
+            "endClass": "Finalizar Clase",
+            "classEnded": "Clase Finalizada con Éxito"
         }
     },
     "studentProfile": {

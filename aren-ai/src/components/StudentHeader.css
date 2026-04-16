@@ -15,10 +15,12 @@
     border-bottom-right-radius: 30px;
     position: relative;
     z-index: 100;
-    /* Base level */
+    /* Suppress Ionic's default bottom border shadow line.
+       This line becomes visible in dark mode as an unwanted outline. */
     --border-width: 0;
     --border-style: none;
     border-bottom: none;
+    box-shadow: none;
 }
 
 .sh-content {

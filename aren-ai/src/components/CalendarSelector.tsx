@@ -10,6 +10,7 @@ interface CalendarSelectorProps {
   title?: string;
   subjects?: string[];
   selectedSubject?: string;
+  sessionMarkers?: Record<string, number>;
 }
 
 const CalendarSelector: React.FC<CalendarSelectorProps> = ({
@@ -18,6 +19,7 @@ const CalendarSelector: React.FC<CalendarSelectorProps> = ({
   title = "Class Schedule",
   subjects = [],
   selectedSubject,
+  sessionMarkers = {},
 }) => {
   const { t, i18n } = useTranslation();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -184,19 +186,41 @@ const CalendarSelector: React.FC<CalendarSelectorProps> = ({
           ))}
         </div>
         <div className="cs-dates-row">
-          {weekDates.map((date, index) => (
-            <div
-              key={index}
-              className={`cs-date-cell ${isSelected(date) ? "selected" : ""} ${isToday(date) ? "today" : ""}`}
-              onClick={(e) => handleDateClick(date, e)}
-            >
-              {date.getDate()}
-              {isToday(date) && !isSelected(date) && (
-                <div className="cs-today-dot"></div>
-              )}
-              {isSelected(date) && <div className="cs-dot"></div>}
-            </div>
-          ))}
+          {weekDates.map((date, index) => {
+            const dateStr = [
+              date.getFullYear(),
+              String(date.getMonth() + 1).padStart(2, '0'),
+              String(date.getDate()).padStart(2, '0')
+            ].join('-');
+            const count = sessionMarkers[dateStr] || 0;
+            
+            return (
+              <div
+                key={index}
+                className={`cs-date-cell ${isSelected(date) ? "selected" : ""} ${isToday(date) ? "today" : ""}`}
+                onClick={(e) => handleDateClick(date, e)}
+              >
+                {date.getDate()}
+                
+                <div className="cs-marker-container">
+                    {/* Render standard selection dot */}
+                    {isSelected(date) && <div className="cs-dot"></div>}
+                    {/* Otherwise render today indicator if applicable */}
+                    {isToday(date) && !isSelected(date) && <div className="cs-today-dot"></div>}
+                    
+                    {/* Session dots shown right below */}
+                    {count > 0 && (
+                        <div style={{ display: 'flex', gap: '2px', marginTop: '2px', justifyContent: 'center' }}>
+                            {Array.from({ length: Math.min(count, 3) }).map((_, i) => (
+                                <div key={i} style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--ion-color-primary)' }}></div>
+                            ))}
+                            {count > 3 && <div style={{ fontSize: '6px', lineHeight: '4px', color: 'var(--ion-color-primary)' }}>+</div>}
+                        </div>
+                    )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 

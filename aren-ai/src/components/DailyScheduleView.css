@@ -1,0 +1,194 @@
+.daily-schedule-container {
+    background: var(--ion-color-step-50, #ffffff);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    margin: 10px 0 20px 0;
+    font-family: inherit;
+    border: 1px solid var(--ion-color-step-100, #eaeaea);
+}
+
+.ds-header {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ion-color-step-800, #333);
+    margin-bottom: 20px;
+    text-align: left;
+    text-transform: capitalize;
+}
+
+.ds-timeline-wrapper {
+    display: flex;
+    position: relative;
+    height: 600px;
+    overflow-y: auto;
+    border-top: 1px solid var(--ion-color-step-100, #eaeaea);
+    border-bottom: 1px solid var(--ion-color-step-100, #eaeaea);
+    background: #fafafa;
+}
+
+.ds-time-axis {
+    width: 60px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-right: 10px;
+    border-right: 1px solid var(--ion-color-step-200, #ddd);
+    z-index: 2;
+    background: #fafafa;
+    position: sticky;
+    left: 0;
+}
+
+.ds-hour-marker {
+    height: calc(100% / 24);
+    position: relative;
+}
+
+.ds-hour-marker span {
+    position: absolute;
+    top: -8px;
+    right: 10px;
+    font-size: 11px;
+    color: var(--ion-color-step-500, #888);
+}
+
+.ds-grid {
+    flex-grow: 1;
+    position: relative;
+    min-width: 250px;
+}
+
+.ds-grid-line {
+    height: calc(100% / 24);
+    border-bottom: 1px solid var(--ion-color-step-150, #eee);
+    box-sizing: border-box;
+}
+
+.ds-current-time-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--ion-color-dark, #222);
+    z-index: 5;
+    pointer-events: none;
+}
+
+.ds-current-time-indicator {
+    position: absolute;
+    left: -40px;
+    top: -10px;
+    background-color: var(--ion-color-dark, #222);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.ds-session-block {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    background-color: rgba(255, 64, 129, 0.1);
+    border: 1px solid rgba(255, 64, 129, 0.5);
+    border-left: 3px solid #ff4081;
+    border-radius: 4px;
+    padding: 6px 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 3;
+}
+
+.ds-session-block:hover {
+    background-color: rgba(255, 64, 129, 0.15);
+    transform: translateX(2px);
+}
+
+.ds-session-block.selected {
+    background-color: rgba(255, 64, 129, 0.25);
+    border-color: #ff4081;
+    box-shadow: 0 2px 8px rgba(255, 64, 129, 0.2);
+}
+
+.ds-session-block.running {
+    background-color: rgba(120, 184, 176, 0.15); /* Match theme secondary/teal */
+    border-color: #78B8B0;
+    border-left: 3px solid #78B8B0;
+}
+
+.ds-running-badge {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    background-color: #78B8B0;
+    color: white;
+    font-size: 8px;
+    font-weight: 900;
+    padding: 2px 5px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    animation: flash 2s infinite;
+}
+
+@keyframes flash {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.ds-session-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.ds-session-title {
+    margin: 0 0 4px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ion-color-step-800, #333);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ds-session-time {
+    font-size: 11px;
+    color: var(--ion-color-step-600, #666);
+}
+
+/* Dark mode overrides if needed */
+@media (prefers-color-scheme: dark) {
+    .daily-schedule-container {
+        background: #1e1e1e;
+        border-color: #333;
+    }
+    .ds-timeline-wrapper, .ds-time-axis {
+        background: #1e1e1e;
+    }
+    .ds-time-axis {
+        border-right-color: #444;
+    }
+    .ds-grid-line {
+        border-bottom-color: #333;
+    }
+    .ds-header {
+        color: #eee;
+    }
+    .ds-hour-marker span {
+        color: #aaa;
+    }
+    .ds-current-time-line, .ds-current-time-indicator {
+        background-color: #eee;
+        color: #222;
+    }
+    .ds-session-title {
+        color: #fff;
+    }
+    .ds-session-time {
+        color: #ccc;
+    }
+}

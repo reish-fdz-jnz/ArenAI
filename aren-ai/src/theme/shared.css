@@ -16,6 +16,28 @@
    └──────────────────────────────────────────────────────────────────────┘
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ══════════════════════════════════════════════════════════
+   GLOBAL IONIC TOOLBAR OUTLINE FIX
+   ──────────────────────────────────────────────────────────
+   Ionic renders a 1px separator line below ion-toolbar via a
+   ::after pseudo-element. On the StudentHeader / ProfessorHeader
+   design, the toolbar has rounded bottom corners and the separator
+   bleeds through as a visible outline in dark mode.
+
+   This rule suppresses the pseudo-element globally for our custom
+   header toolbars (.student-toolbar, .professor-toolbar).
+   It is SAFE to do this globally — all our headers use custom
+   borders via border-radius rather than Ionic's built-in separator.
+   ────────────────────────────────────────────────────────── */
+.student-toolbar::after,
+.professor-toolbar::after {
+  display: none !important;
+  background: transparent !important;
+  height: 0 !important;
+}
+
+
+
 
 /* --- Bottom Navigation --- */
 .student-bottom-nav {

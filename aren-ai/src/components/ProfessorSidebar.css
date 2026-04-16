@@ -101,10 +101,14 @@
   background: transparent;
 }
 
+/* Section headers (TEACHING / ACCOUNT)
+   Use --ion-color-secondary — it's always a vibrant accent that reads
+   well on BOTH light and dark sidebar backgrounds across all themes.
+   NEVER use --ion-color-primary here: in dark mode primary resolves
+   to a dark hue that disappears on the dark sidebar background. */
 ion-list-header {
   --background: transparent;
-  color: var(--ion-color-primary);
-  /* Brown */
+  color: var(--ion-color-secondary);
   font-weight: 700;
   font-size: 0.8rem;
   text-transform: uppercase;
@@ -274,9 +278,31 @@ ion-item.selected ion-icon {
     color: rgba(255, 255, 255, 0.85) !important;
   }
 
+  /* ── Sidebar outline fix: remove Ionic toolbar border line ──
+     In dark mode the Ionic toolbar bottom border/shadow creates a
+     visible line below the class-change notch button. Suppress it. */
+  #professor-menu .student-toolbar::after,
+  #professor-menu ion-toolbar::after {
+    display: none !important;
+    background: none !important;
+    height: 0 !important;
+  }
+
+  /* Suppress outline on the floating notch in the header area */
+  .sh-notch-container,
+  .sh-notch {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Section headers — secondary stays distinct on dark backgrounds */
+  ion-list-header {
+    color: var(--ion-color-secondary) !important;
+  }
+
   /* List headers */
   ion-list-header {
-    color: rgba(255, 255, 255, 0.7) !important;
+    color: var(--ion-color-secondary) !important;
   }
 
   /* Selected item - LIGHTER for contrast */
@@ -299,4 +325,53 @@ ion-item.selected ion-icon {
   .app-version {
     color: rgba(255, 255, 255, 0.7);
   }
+} /* end @media dark */
+
+/* ── Forced dark mode (Settings → Modo de Color: 🌙 Oscuro) ── */
+html[data-force-dark] ion-list-header {
+  color: var(--ion-color-secondary) !important;
+}
+
+html[data-force-dark] #professor-menu {
+  --background: var(--ion-background-color) !important;
+  background: var(--ion-background-color) !important;
+}
+
+html[data-force-dark] #professor-menu ion-content {
+  --background: var(--ion-background-color) !important;
+  background: var(--ion-background-color) !important;
+}
+
+html[data-force-dark] ion-item {
+  --color: var(--ion-text-color) !important;
+  color: var(--ion-text-color) !important;
+  --background: transparent;
+  --background-hover: rgba(255, 255, 255, 0.12);
+}
+
+html[data-force-dark] ion-item ion-label {
+  color: var(--ion-text-color) !important;
+}
+
+html[data-force-dark] ion-item ion-icon {
+  color: var(--ion-color-secondary) !important;
+}
+
+html[data-force-dark] ion-item.selected {
+  --background: rgba(255, 255, 255, 0.18);
+  --color: var(--ion-text-color) !important;
+  font-weight: 600;
+}
+
+html[data-force-dark] ion-item.selected ion-icon {
+  color: var(--ion-color-secondary) !important;
+}
+
+html[data-force-dark] .professor-menu-footer {
+  border-top-color: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+html[data-force-dark] .app-version {
+  color: rgba(255, 255, 255, 0.7);
 }

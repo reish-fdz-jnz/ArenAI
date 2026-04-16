@@ -1,37 +1,54 @@
-/* ProfessorChat.css - Based on Chatbot.css for consistency */
+/* ═══════════════════════════════════════════════════════════════════════════
+   ProfessorChat.css
+   ─────────────────────────────────────────────────────────────────────────
+   Design: Professor AI chat interface — themed messaging UI.
 
-/* 0. Theme Variables (Light/Dark Mode Handling) */
-:root {
-  --chat-bg-color: #f9f4e6;
-  /* Cream for Light Mode */
-  --chat-header-bg: #f9f4e6;
-  --chat-bot-bubble-bg: rgba(255, 255, 255, 0.95);
-  --chat-bot-text: #333;
-  --chat-input-bg: rgba(255, 255, 255, 0.65);
-  --chat-input-border: rgba(255, 255, 255, 0.8);
-  --chat-footer-gradient: linear-gradient(to top, #f9f4e6 85%, rgba(249, 244, 230, 0));
+   THEMING RULES — PLEASE READ BEFORE EDITING:
+   ┌──────────────────────────────────────────────────────────────────────┐
+   │ • NEVER hardcode hex colors (#f9f4e6, #333, etc.)                   │
+   │ • ALWAYS use --st-* tokens from src/theme/_tokens.css                │
+   │ • ALWAYS use --ion-color-* variables from the active theme           │
+   │ • Dark mode @media AND html[data-force-dark] equivalents must exist  │
+   │ • Chat background follows --ion-background-color to adapt all themes │
+   └──────────────────────────────────────────────────────────────────────┘
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════
+   PAGE SHELL
+   ────────────────────────────────────────────────────────── */
+.chatbot-page {
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Use theme variables for dark mode - tinted backgrounds */
-    --chat-bg-color: var(--ion-background-color, #1A1512);
-    --chat-header-bg: var(--ion-background-color, #1A1512);
-    --chat-bot-bubble-bg: var(--ion-color-surface, rgba(40, 40, 40, 0.85));
-    --chat-bot-text: var(--ion-text-color, #E8E0D8);
-    --chat-input-bg: var(--ion-color-surface, rgba(30, 30, 30, 0.7));
-    --chat-input-border: var(--ion-border-color, rgba(255, 255, 255, 0.15));
-    --chat-footer-gradient: linear-gradient(to top, var(--ion-background-color, #1A1512) 85%, transparent);
-  }
-}
-
-/* 1. Page Layout & Background */
+/* ══════════════════════════════════════════════════════════
+   CONTENT AREA
+   Uses the theme background — no cream hardcode.
+   ────────────────────────────────────────────────────────── */
 ion-content.chat-content {
-  --background: var(--chat-bg-color) !important;
   --padding-bottom: 0;
 }
 
-/* 2. Messages Area */
+/* ══════════════════════════════════════════════════════════
+   HEADER OVERRIDES
+   Suppress Ionic's default bottom border/gap on the toolbar.
+   The gap below the header was caused by ion-header::after shadow line.
+   ────────────────────────────────────────────────────────── */
+.chatbot-page ion-header {
+  --border-width: 0 !important;
+  --border-style: none !important;
+}
+
+.chatbot-page ion-header::after,
+.chatbot-page .student-header-container ion-toolbar::after,
+.chatbot-page ion-toolbar::after {
+  display: none !important;
+  background: none !important;
+  height: 0 !important;
+  opacity: 0 !important;
+}
+
+/* ══════════════════════════════════════════════════════════
+   MESSAGES AREA
+   ────────────────────────────────────────────────────────── */
 .chat-container {
   padding: 20px 16px 120px 16px;
   display: flex;
@@ -40,22 +57,21 @@ ion-content.chat-content {
   min-height: 100%;
 }
 
-/* 3. Message Rows (Layout) */
+/* ══════════════════════════════════════════════════════════
+   MESSAGE ROWS
+   ────────────────────────────────────────────────────────── */
 .message-row {
   display: flex;
   width: 100%;
   align-items: flex-end;
 }
 
-.message-row.user {
-  justify-content: flex-end;
-}
+.message-row.user { justify-content: flex-end; }
+.message-row.bot  { justify-content: flex-start; }
 
-.message-row.bot {
-  justify-content: flex-start;
-}
-
-/* 4. Avatars */
+/* ══════════════════════════════════════════════════════════
+   AVATARS
+   ────────────────────────────────────────────────────────── */
 .chat-avatar {
   width: 36px;
   height: 36px;
@@ -66,15 +82,17 @@ ion-content.chat-content {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.chat-avatar.bot {
-  margin-right: 8px;
-}
+.chat-avatar.bot  { margin-right: 8px; }
+.chat-avatar.user { margin-left: 8px; }
 
-.chat-avatar.user {
-  margin-left: 8px;
-}
-
-/* 5. Bubbles */
+/* ══════════════════════════════════════════════════════════
+   CHAT BUBBLES
+   ──────────────────────────────────────────────────────────
+   NOTE: We use --ion-card-background for the bot bubble so it
+   sits on a card-level surface (slightly elevated from page bg)
+   and adapts to every theme automatically. The border uses
+   --ion-color-secondary to tie into the current theme accent.
+   ────────────────────────────────────────────────────────── */
 .chat-bubble {
   max-width: 75%;
   padding: 12px 16px;
@@ -82,28 +100,32 @@ ion-content.chat-content {
   font-size: 1rem;
   line-height: 1.5;
   position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
 }
 
 .chat-bubble.bot {
-  background: var(--chat-bot-bubble-bg);
-  backdrop-filter: blur(10px);
-  color: var(--chat-bot-text);
+  /* Card-level opaque background — adapts to every theme's dark/light mode */
+  background: var(--ion-card-background);
+  color: var(--ion-text-color);
   border-bottom-left-radius: 4px;
-  border: 3px solid var(--ion-color-secondary) !important;
+  /* Secondary accent border ties into theme colors without looking jarring */
+  border: 2px solid var(--ion-color-secondary);
 }
 
 .chat-bubble.user {
-  background: var(--ion-color-primary) !important;
-  color: var(--ion-color-primary-contrast) !important;
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
   border-bottom-right-radius: 4px;
-  border: 3px solid var(--ion-color-secondary) !important;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  /* Subtle secondary accent on user bubble too */
+  border: 2px solid var(--ion-color-primary-shade, var(--ion-color-primary));
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
 }
 
-/* 6. Text Formatting */
+/* ══════════════════════════════════════════════════════════
+   TEXT FORMATTING
+   ────────────────────────────────────────────────────────── */
 .bubble-text {
   word-wrap: break-word;
   white-space: pre-wrap;
@@ -112,37 +134,51 @@ ion-content.chat-content {
 .bubble-time {
   font-size: 0.7rem;
   margin-top: 4px;
-  opacity: 0.7;
+  opacity: 0.6;
   align-self: flex-end;
+  /* inherit parent bubble text color */
+  color: inherit;
 }
 
-/* Cursor for typing animation */
+/* Typing cursor animation */
 .cursor {
   animation: blink 1s infinite;
   margin-left: 2px;
 }
 
 @keyframes blink {
-
-  0%,
-  50% {
-    opacity: 1;
-  }
-
-  51%,
-  100% {
-    opacity: 0;
-  }
+  0%, 50%  { opacity: 1; }
+  51%, 100% { opacity: 0; }
 }
 
-/* 7. Footer / Input Area */
+/* ══════════════════════════════════════════════════════════
+   CODE BLOCKS
+   ────────────────────────────────────────────────────────── */
+code {
+  background: rgba(127, 127, 127, 0.15);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+pre code {
+  display: block;
+  padding: 10px;
+  overflow-x: auto;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FOOTER / INPUT BAR
+   Uses --ion-color-primary as the footer band (same as the
+   StudentHeader toolbar) — consistent with the rest of the app.
+   ────────────────────────────────────────────────────────── */
 .chat-footer {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   padding: 16px 16px calc(16px + env(safe-area-inset-bottom)) 16px;
-  background: var(--ion-color-primary) !important;
+  background: var(--ion-color-primary);
   border-top-left-radius: 30px;
   border-top-right-radius: 30px;
   z-index: 100;
@@ -155,14 +191,14 @@ ion-content.chat-content {
 .input-pill {
   width: 100%;
   max-width: 600px;
-  background: var(--chat-input-bg) !important;
-  backdrop-filter: blur(12px);
+  /* Card-level surface for the input — opaque, themed */
+  background: var(--ion-card-background) !important;
   border-radius: 28px;
   display: flex;
   align-items: center;
   padding: 4px 6px 4px 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--chat-input-border);
+  border: 1px solid var(--ion-border-color, rgba(0,0,0,0.12));
   min-height: 56px;
 }
 
@@ -180,7 +216,7 @@ ion-content.chat-content {
   --padding-bottom: 10px;
   --padding-start: 0;
   --padding-end: 0;
-  --placeholder-color: var(--ion-color-medium) !important;
+  --placeholder-color: var(--ion-text-color-step-400, var(--ion-color-medium)) !important;
   --placeholder-opacity: 0.7;
 }
 
@@ -190,6 +226,8 @@ ion-content.chat-content {
   --padding-end: 8px;
   height: 44px;
   width: 44px;
+  /* Icon picks up primary-contrast so it reads on the pill */
+  --color: var(--ion-color-primary);
 }
 
 /* Hide Scrollbar on Input */
@@ -205,59 +243,27 @@ ion-content.chat-content {
   display: none;
 }
 
-/* 8. Header Overrides */
-.chatbot-page {
-  background: var(--chat-bg-color) !important;
+/* ══════════════════════════════════════════════════════════
+   DARK MODE — ::part() overrides for Ionic shadow DOM
+   Dark token values are already applied via --ion-* variables
+   in the theme files. This block only handles structural/
+   shadow-DOM targets that can't use CSS variables directly.
+   ────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+  /* Ensure bot bubble border stays visible in dark */
+  .chat-bubble.bot {
+    border-color: var(--ion-color-secondary);
+  }
 }
 
-.professor-header-container {
-  background: transparent !important;
-  --background: transparent !important;
-  box-shadow: none !important;
-  pointer-events: none;
+/* Forced dark (Settings → Modo de Color: 🌙 Oscuro) */
+html[data-force-dark] .chat-bubble.bot {
+  border-color: var(--ion-color-secondary);
 }
 
-.professor-toolbar {
-  --background: var(--ion-color-primary) !important;
-  background: var(--ion-color-primary) !important;
-  pointer-events: auto;
-  box-shadow: none !important;
-  border-bottom: none !important;
-}
-
-.ph-brand-name {
-  color: var(--ion-color-primary-contrast) !important;
-}
-
-.ph-brand-sub {
-  color: rgba(255, 255, 255, 0.8) !important;
-}
-
-.ph-menu-btn {
-  --color: var(--ion-color-primary-contrast) !important;
-}
-
-.ph-notch {
-  background-color: var(--ion-color-primary) !important;
-}
-
-/* 9. Code Styles */
-code {
-  background: rgba(127, 127, 127, 0.15);
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-family: monospace;
-}
-
-pre code {
-  display: block;
-  padding: 10px;
-  overflow-x: auto;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   DESKTOP RESPONSIVE — Tablet (768px+)
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — Tablet (768px+)
+   ────────────────────────────────────────────────────────── */
 @media (min-width: 768px) {
   .chat-container {
     max-width: 900px;
@@ -286,9 +292,7 @@ pre code {
     min-height: 58px;
   }
 
-  .chat-input {
-    font-size: 1.05rem;
-  }
+  .chat-input { font-size: 1.05rem; }
 
   .send-btn {
     height: 48px;
@@ -296,9 +300,9 @@ pre code {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   DESKTOP RESPONSIVE — Large Desktop (1200px+)
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════
+   RESPONSIVE — Large Desktop (1200px+)
+   ────────────────────────────────────────────────────────── */
 @media (min-width: 1200px) {
   .chat-container {
     max-width: 1000px;
@@ -321,7 +325,5 @@ pre code {
     min-height: 60px;
   }
 
-  .chat-input {
-    font-size: 1.08rem;
-  }
+  .chat-input { font-size: 1.08rem; }
 }

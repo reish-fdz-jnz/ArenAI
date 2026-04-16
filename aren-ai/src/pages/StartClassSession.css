@@ -24,7 +24,7 @@
 }
 
 .ss-footer-spacer {
-  height: 100px;
+  height: 120px;
 }
 
 /* ========== SECTION TITLE / HEADER ========== */
@@ -175,18 +175,166 @@
   gap: 8px;
 }
 
+.ss-strategy-chips.column {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
 .strategy-chip {
   background: rgba(var(--ion-color-primary-rgb), 0.1);
   color: var(--ion-color-primary);
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 12px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 }
 
 .strategy-chip.topic {
   background: rgba(var(--ion-color-secondary-rgb), 0.15);
   color: var(--ion-color-secondary-shade);
+}
+
+.ss-topic-summary-row {
+    margin-bottom: 6px;
+    width: 100%;
+}
+
+/* ========== LIVE PANEL - CLOCK & TIMER ========== */
+.ss-clock-center-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 0;
+    gap: 20px;
+}
+
+.ss-timer-display {
+    z-index: 10;
+}
+
+.ss-timer-pill {
+    background: var(--ion-color-secondary-soft);
+    border: 3px solid var(--ion-color-primary);
+    color: var(--ion-color-primary);
+    padding: 8px 30px;
+    border-radius: 25px;
+    font-family: 'Georgia', serif;
+    font-size: 26px;
+    font-weight: 700;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    letter-spacing: 2px;
+}
+
+.ss-analog-container {
+    width: 200px;
+    height: 200px;
+    position: relative;
+    opacity: 0.9;
+}
+
+.analog-clock-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.clock-face {
+    fill: var(--ion-color-secondary-soft);
+    stroke: var(--ion-color-primary);
+    stroke-width: 2;
+}
+
+.clock-marker {
+    stroke: var(--ion-color-primary);
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.clock-hand {
+    stroke-linecap: round;
+    /* Removed transform-origin: center to avoid conflict with SVG rotate() */
+}
+
+.clock-hand.hour {
+    stroke: var(--ion-color-primary);
+    stroke-width: 4;
+}
+
+.clock-hand.minute {
+    stroke: var(--ion-color-primary);
+    stroke-width: 3;
+}
+
+.clock-hand.second {
+    stroke: var(--ion-color-secondary);
+    stroke-width: 1.5;
+}
+
+.clock-center {
+    fill: var(--ion-color-primary);
+}
+
+/* ========== METRICS ROW ========== */
+.ss-metrics-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ss-mini-topics-area {
+    flex: 1;
+}
+
+.ms-topic-btn.mini {
+    background: transparent;
+    padding: 0;
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+.ms-topic-fill-box.mini {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.ms-topic-fill {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    transition: height 0.5s ease;
+}
+
+.ms-topic-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+}
+
+.ms-topic-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+}
+
+.ms-progress-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: white;
+    font-weight: 700;
 }
 
 /* ========== MINI LIBRARY GRID ========== */
@@ -267,6 +415,35 @@
   justify-content: center;
   align-items: center;
   padding-bottom: 8px;
+}
+
+.ss-footer.semicircle {
+    border-radius: 200px 200px 0 0;
+}
+
+.quiz-footer-notch {
+    display: contents;
+}
+
+.quiz-generate-btn {
+    width: 280px;
+    height: 48px;
+    background-color: var(--ion-color-secondary);
+    border-radius: 140px 140px 0 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 20px;
+    font-weight: 500;
+    font-family: 'Georgia', serif;
+    border: none;
+    cursor: pointer;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+    position: absolute;
+    bottom: 0;
+    gap: 10px;
 }
 
 .ss-start-btn {

@@ -108,25 +108,119 @@ export async function getActiveSession(req: Request, res: Response, next: NextFu
 
     const classes = await sessionRepo.listClasses({
       professorId,
-      status: 'started',
-      id_section: finalSectionId || undefined,
+      status: 'running',
+      sectionId: finalSectionId || undefined,
     });
 
     if (classes.length === 0) {
-      res.json({ success: true, data: null });
+      res.json(null);
       return;
     }
 
+    // Since listClasses orders by start_time DESC, classes[0] is the newest running session
     const activeSession = classes[0];
-    const topics = await classTemplateRepo.listTopicsByTemplate(activeSession.id_class_template);
+    
+    // Safety check: verify it belongs to the professor (already filtered in listClasses but good to be explicit)
+    if (activeSession.id_professor !== professorId) {
+       res.json(null);
+       return;
+    }
+    const topics = await repo.listTopicsByTemplate(activeSession.id_class_template);
 
     res.json({
-      success: true,
-      data: {
-        ...activeSession,
-        topics,
-      },
+      ...activeSession,
+      topics,
     });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getSessionHistory(req: Request, res: Response, next: NextFunction) {
+  try {
+    const professorId = req.user?.id;
+    const institutionId = req.user?.id_institution;
+    const grade = req.query.grade as string;
+    const sectionNumber = req.query.sectionNumber as string;
+
+    if (!professorId) throw new ApiError(401, 'Unauthorized');
+
+    let finalSectionId = req.query.sectionId ? parseInt(req.query.sectionId as string, 10) : null;
+
+    if (grade && sectionNumber && institutionId) {
+      const section = await sectionRepo.findSectionByGradeAndNumber(grade, sectionNumber, institutionId);
+      if (section) finalSectionId = section.id_section;
+    }
+
+    const classes = await sessionRepo.listClasses({
+      professorId,
+      sectionId: finalSectionId || undefined,
+    });
+
+    const timezoneOffset = parseInt(req.query.timezoneOffset as string, 10) || 0;
+
+    // Format output: { "2026-04-15": 2, "2026-04-16": 1 }
+    const dateCounts: Record<string, number> = {};
+    for (const c of classes) {
+      if (c.start_time) {
+        // Adjust timestamp by offset to group by the professor's local day
+        const d = new Date(c.start_time);
+        const localTime = new Date(d.getTime() - (timezoneOffset * 60 * 1000));
+        const dateStr = localTime.toISOString().split('T')[0];
+        dateCounts[dateStr] = (dateCounts[dateStr] || 0) + 1;
+      }
+    }
+
+    res.json(dateCounts);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getSessionByDate(req: Request, res: Response, next: NextFunction) {
+  try {
+    const professorId = req.user?.id;
+    const institutionId = req.user?.id_institution;
+    const dateQuery = req.query.date as string;
+    const grade = req.query.grade as string;
+    const sectionNumber = req.query.sectionNumber as string;
+
+    if (!professorId) throw new ApiError(401, 'Unauthorized');
+    if (!dateQuery) throw new ApiError(400, 'Missing date parameter');
+
+    let finalSectionId = req.query.sectionId ? parseInt(req.query.sectionId as string, 10) : null;
+
+    if (grade && sectionNumber && institutionId) {
+      const section = await sectionRepo.findSectionByGradeAndNumber(grade, sectionNumber, institutionId);
+      if (section) finalSectionId = section.id_section;
+    }
+
+    const timezoneOffset = parseInt(req.query.timezoneOffset as string, 10) || 0;
+
+    // Calculate UTC range for the selected local date
+    // If local date is 2026-04-15 and offset is 360 (UTC-6)
+    // Local range: 2026-04-15 00:00:00 to 2026-04-15 23:59:59
+    // UTC range: 2026-04-15 06:00:00 to 2026-04-16 05:59:59
+    const startOfLocalDay = new Date(`${dateQuery}T00:00:00Z`);
+    const endOfLocalDay = new Date(`${dateQuery}T23:59:59Z`);
+    
+    // Shift to UTC by adding the offset (in minutes)
+    const startDateUTC = new Date(startOfLocalDay.getTime() + (timezoneOffset * 60 * 1000)).toISOString();
+    const endDateUTC = new Date(endOfLocalDay.getTime() + (timezoneOffset * 60 * 1000)).toISOString();
+
+    const classes = await sessionRepo.listClasses({
+      professorId,
+      sectionId: finalSectionId || undefined,
+      startDate: startDateUTC,
+      endDate: endDateUTC
+    });
+
+    const populatedClasses = await Promise.all(classes.map(async (c) => {
+      const topics = await repo.listTopicsByTemplate(c.id_class_template);
+      return { ...c, topics };
+    }));
+
+    res.json(populatedClasses);
   } catch (error) {
     next(error);
   }
@@ -139,6 +233,22 @@ export async function endSession(req: Request, res: Response, next: NextFunction
     if (!professorId) throw new ApiError(401, 'Unauthorized');
 
     await sessionRepo.updateClassStatus(parseInt(id, 10), 'finished', true);
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function renameSession(req: Request, res: Response, next: NextFunction) {
+  try {
+    const professorId = req.user?.id;
+    const { id } = req.params;
+    const { name_session } = req.body;
+    
+    if (!professorId) throw new ApiError(401, 'Unauthorized');
+    if (!name_session) throw new ApiError(400, 'Missing name_session');
+
+    await sessionRepo.updateClassName(parseInt(id, 10), name_session);
     res.status(204).send();
   } catch (error) {
     next(error);

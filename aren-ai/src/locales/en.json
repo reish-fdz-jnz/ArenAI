@@ -141,7 +141,18 @@
             "markAllAbsent": "Mark All Absent",
             "searchPlaceholder": "Search student...",
             "present": "Present",
-            "absent": "Absent"
+            "absent": "Absent",
+            "total": "total",
+            "search": "Search students...",
+            "student_list": "Student List",
+            "no_session": "No active session found for this section.",
+            "go_to_launcher": "Go to Class Launcher",
+            "no_students": "No students found in this section.",
+            "finish_return": "Finish and return to main menu",
+            "finish_return_short": "Return to Menu",
+            "edit_identifier": "Edit Student Identifier",
+            "first_name": "First Name",
+            "last_name": "Last Name"
         },
         "menu": {
             "allClasses": "All Classes",
@@ -364,7 +375,13 @@
             "aiDifficulty": "AI Level",
             "launchClass": "Launch Class",
             "selectTemplateFirst": "Please select a class template first.",
-            "startingClass": "Starting \"{{name}}\" for Section {{section}}..."
+            "startingClass": "Starting \"{{name}}\" for Section {{section}}...",
+            "startingClassTitle": "Starting Class",
+            "startingClassDesc": "Preparing the live learning environment and loading diagnostics...",
+            "finishingClass": "Finishing Class",
+            "finishingClassDesc": "Saving attendance and finalizing lesson data...",
+            "endClass": "End Class",
+            "classEnded": "Class Ended Successfully"
         }
     },
     "mainStudent": {

@@ -1289,5 +1289,22 @@
         "gradeAndSection": "年级和班级",
         "grade": "年级",
         "section": "班级"
+    },
+    "professor": {
+        "attendance": {
+            "title": "出勤",
+            "markAllPresent": "全部出勤",
+            "markAllAbsent": "全部缺勤",
+            "searchPlaceholder": "搜索学生...",
+            "present": "出勤",
+            "absent": "缺勤",
+            "total": "总计",
+            "search": "搜索学生...",
+            "student_list": "学生名单",
+            "no_session": "未找到此课程的活动会话。",
+            "go_to_launcher": "前往课程启动器",
+            "no_students": "在此班级中未找到学生。",
+            "finish_return": "结束并返回主菜单"
+        }
     }
 }

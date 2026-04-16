@@ -23,7 +23,7 @@ interface ClassStudentTopicPayload {
   aiSummary?: string | null;
 }
 
-export async function listClasses(filters: { professorId?: number; sectionId?: number; status?: string }) {
+export async function listClasses(filters: { professorId?: number; sectionId?: number; status?: string; startDate?: string; endDate?: string }) {
   const conditions: string[] = [];
   const params: any[] = [];
 
@@ -40,6 +40,11 @@ export async function listClasses(filters: { professorId?: number; sectionId?: n
   if (filters.status) {
     conditions.push('c.status = ?');
     params.push(filters.status);
+  }
+
+  if (filters.startDate && filters.endDate) {
+    conditions.push('c.start_time BETWEEN ? AND ?');
+    params.push(filters.startDate, filters.endDate);
   }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
@@ -80,8 +85,8 @@ export async function createClass(payload: {
   status?: string;
 }) {
   const insertResult = await db.query<ResultSetHeader>(
-    `INSERT INTO class (name_session, id_class_template, id_section, id_professor, id_institution, status)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO class (name_session, id_class_template, id_section, id_professor, id_institution, status, start_time)
+     VALUES (?, ?, ?, ?, ?, ?, NOW())`,
     [
       payload.name_session ?? null,
       payload.templateId ?? null,
@@ -103,13 +108,24 @@ export async function createClass(payload: {
 }
 
 export async function updateClassStatus(classId: number, status: string, setEndTime: boolean = false) {
-  const query = setEndTime 
-    ? `UPDATE class SET status = ?, end_time = NOW() WHERE id_class = ?`
-    : `UPDATE class SET status = ? WHERE id_class = ?`;
-  
-  const params = setEndTime ? [status, classId] : [status, classId];
-  
+  let query = `UPDATE class SET status = ?`;
+  const params: any[] = [status];
+
+  if (setEndTime) {
+    query += `, end_time = NOW()`;
+  }
+
+  query += ` WHERE id_class = ?`;
+  params.push(classId);
+
   await db.query(query, params);
+}
+
+export async function updateClassName(classId: number, name: string) {
+  await db.query(
+    `UPDATE class SET name_session = ? WHERE id_class = ?`,
+    [name, classId]
+  );
 }
 
 export async function updateClassSummary(classId: number, summary: string, scoreAverage?: number) {
@@ -166,7 +182,7 @@ export async function recordClassStudents(classId: number, students: ClassStuden
            score_average = VALUES(score_average),
            ai_summary = VALUES(ai_summary),
            attendance = VALUES(attendance)`,
-        [classId, student.userId, student.scoreAverage ?? 0, student.aiSummary ?? null, student.attendance ?? true]
+        [classId, student.userId, student.scoreAverage ?? 0, student.aiSummary ?? null, student.attendance ?? null]
       );
     }
     await client.commit();

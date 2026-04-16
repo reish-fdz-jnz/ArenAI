@@ -153,8 +153,7 @@ const AIQuizGenerator: React.FC = () => {
     }
   }, [filterSubject]);
 
-  // Default topics - Empty if not in a class
-  const defaultTopics = useMemo(() => {
+  const defaultTopics = useMemo<{ key: string; name: string; subject: string }[]>(() => {
     return [];
   }, []);
 
