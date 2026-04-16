@@ -500,7 +500,9 @@
             "placeholder": "Pregunta sobre planes de lección, ideas o calificaciones...",
             "error": "⚠️ Ocurrió un error. Por favor intenta de nuevo.",
             "serverError": "Lo siento, no pude procesar tu solicitud."
-        }
+        },
+        "noActiveClassTitle": "Sin Sesión de Clase Activa",
+        "noActiveClassDesc": "Espera a que tu profesor inicie una sesión para ver tu rendimiento y temas en tiempo real aquí."
     },
     "settings": {
         "title": "Configuración",
@@ -724,6 +726,19 @@
             "Science": "Ciencias",
             "ScienceDesc": "Preguntas de biología, química y física"
         }
+    },
+    "common": {
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "back": "Volver",
+        "close": "Cerrar",
+        "loading": "Cargando...",
+        "error": "Ocurrió un error",
+        "noData": "No hay datos disponibles",
+        "returnToToday": "Volver a Hoy",
+        "exitReview": "Salir de Revisión"
     },
     "calendar": {
         "sun": "Dom",

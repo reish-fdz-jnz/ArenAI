@@ -189,3 +189,12 @@ export async function getStudentSubjectScores(userId: number): Promise<SubjectSc
   }));
 }
 
+export async function listStudentSections(userId: number) {
+  const result = await db.query<{ id_section: number }>(
+    `SELECT id_section FROM user_section WHERE id_user = ?`,
+    [userId]
+  );
+  return result.rows.map(r => r.id_section);
+}
+
+

@@ -76,6 +76,15 @@ export async function listClasses(filters: { professorId?: number; sectionId?: n
   return result.rows;
 }
 
+export async function getClassById(classId: number): Promise<ClassRecord | null> {
+  const result = await db.query<ClassRecord>(
+    `SELECT * FROM class WHERE id_class = ?`,
+    [classId]
+  );
+  return result.rows.length ? result.rows[0] : null;
+}
+
+
 export async function createClass(payload: {
   name_session?: string | null;
   templateId?: number | null;
@@ -232,6 +241,92 @@ export async function listAttendance(classId: number) {
      WHERE cs.id_class = ?
      ORDER BY u.name, u.username`,
     [classId]
+  );
+  return result.rows;
+}
+
+export async function listClassesForStudent(studentId: number, filters?: { status?: string; startDate?: string; endDate?: string }) {
+  const conditions: string[] = ['us.id_user = ?'];
+  const params: any[] = [studentId];
+
+  if (filters?.status) {
+    conditions.push('c.status = ?');
+    params.push(filters.status);
+  }
+
+  if (filters?.startDate && filters?.endDate) {
+    conditions.push('c.start_time BETWEEN ? AND ?');
+    params.push(filters.startDate, filters.endDate);
+  }
+
+  const whereClause = `WHERE ${conditions.join(' AND ')}`;
+
+  const result = await db.query<any>(
+    `SELECT
+        c.id_class,
+        c.name_session,
+        c.id_class_template,
+        c.id_professor,
+        c.id_section,
+        c.id_institution,
+        c.start_time,
+        c.end_time,
+        c.score_average as class_score_average,
+        c.ai_summary as class_ai_summary,
+        c.status,
+        ct.name_template,
+        sec.section_number AS section_name,
+        sec.grade AS section_grade,
+        cs.attendance,
+        cs.score_average as student_score_average,
+        cs.ai_summary as student_ai_summary
+     FROM class c
+     INNER JOIN user_section us ON us.id_section = c.id_section
+     LEFT JOIN class_template ct ON ct.id_class_template = c.id_class_template
+     INNER JOIN section sec ON sec.id_section = c.id_section
+     LEFT JOIN class_student cs ON cs.id_class = c.id_class AND cs.id_user = us.id_user
+     ${whereClause}
+     ORDER BY c.start_time DESC`,
+    params
+  );
+
+  return result.rows;
+}
+
+export async function upsertStudentAttendance(classId: number, userId: number, attendance: number = 1) {
+  try {
+    await db.query(
+      `INSERT INTO class_student (id_class, id_user, attendance)
+       VALUES (?, ?, ?)
+       ON DUPLICATE KEY UPDATE attendance = VALUES(attendance)`,
+      [classId, userId, attendance]
+    );
+  } catch (err: any) {
+    console.error('Error auto-joining class:', err.message);
+  }
+}
+
+export async function getStudentClassData(classId: number, userId: number) {
+  const result = await db.query<any>(
+    `SELECT attendance, score_average, ai_summary, interaction_coefficient
+     FROM class_student
+     WHERE id_class = ? AND id_user = ?`,
+    [classId, userId]
+  );
+  return result.rows[0];
+}
+
+export async function getStudentClassTopics(classId: number, userId: number) {
+  const result = await db.query<any>(
+    `SELECT 
+        cst.id_topic, 
+        t.name as topic_name, 
+        cst.score, 
+        cst.ai_summary
+     FROM class_student_topic cst
+     INNER JOIN topic t ON t.id_topic = cst.id_topic
+     WHERE cst.id_class = ? AND cst.id_user = ?`,
+    [classId, userId]
   );
   return result.rows;
 }

@@ -3,6 +3,7 @@ import * as repo from '../repositories/classTemplateRepository.js';
 import * as sessionRepo from '../repositories/classRepository.js';
 import * as sectionRepo from '../repositories/sectionRepository.js';
 import { ApiError } from '../middleware/errorHandler.js';
+import { io } from '../server.js';
 
 export async function listTemplates(req: Request, res: Response, next: NextFunction) {
   try {
@@ -65,20 +66,41 @@ export async function startSession(req: Request, res: Response, next: NextFuncti
     const professorId = req.user?.id;
     if (!professorId) throw new ApiError(401, 'Unauthorized');
 
-    const { templateId, sectionId, institutionId, name_session } = req.body;
+    const { templateId, sectionId, institutionId, name_session, grade } = req.body;
 
     if (!sectionId) {
       throw new ApiError(400, 'Missing sectionId');
     }
 
+    // Resolve the internal DB id_section if institutional context is provided
+    // because professors send "Section Number" (e.g., 1) but students join via "Global ID"
+    let resolvedSectionId = sectionId;
+    if (institutionId && grade) {
+        const section = await sectionRepo.findSectionByGradeAndNumber(String(grade), String(sectionId), institutionId);
+        if (section) {
+            resolvedSectionId = section.id_section;
+            console.log(`[Session] Resolved Section ${sectionId} (Grade ${grade}) to Global ID ${resolvedSectionId}`);
+        }
+    }
+
     const session = await sessionRepo.createClass({
       name_session,
       templateId,
-      sectionId,
+      sectionId: resolvedSectionId,
       professorId,
       institutionId,
       status: 'running'
     });
+    
+    // Emit real-time notification to the section room using the RESOLVED ID
+    if (io) {
+      io.to(`section_${resolvedSectionId}`).emit('class_started', {
+        classId: session.id_class,
+        name_session: session.name_session,
+        sectionId: resolvedSectionId
+      });
+      console.log(`[Socket] Broadcasted class_started to section_${resolvedSectionId}`);
+    }
 
     res.status(201).json(session);
   } catch (error) {
@@ -232,7 +254,20 @@ export async function endSession(req: Request, res: Response, next: NextFunction
     const { id } = req.params;
     if (!professorId) throw new ApiError(401, 'Unauthorized');
 
-    await sessionRepo.updateClassStatus(parseInt(id, 10), 'finished', true);
+    const classId = parseInt(id, 10);
+    const classRecord = await sessionRepo.getClassById(classId);
+
+    await sessionRepo.updateClassStatus(classId, 'finished', true);
+    
+    // Emit real-time notification to the section room
+    if (io && classRecord) {
+      io.to(`section_${classRecord.id_section}`).emit('class_finished', {
+        classId,
+        sectionId: classRecord.id_section
+      });
+      console.log(`[Socket] Broadcasted class_finished to section_${classRecord.id_section}`);
+    }
+
     res.status(204).send();
   } catch (error) {
     next(error);

@@ -40,6 +40,37 @@
   touch-action: manipulation;
 }
 
+.ms-return-today-pill {
+    position: absolute;
+    top: 50px;
+    right: 0px;
+    background: var(--ion-color-secondary);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    z-index: 100;
+    animation: msFadeIn 0.3s ease-out;
+    transition: all 0.2s ease;
+}
+
+.ms-return-today-pill:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+
+@keyframes msFadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .ms-intro-pill {
   background-color: var(--ion-color-card-header, var(--ion-color-primary));
   color: white;
@@ -488,3 +519,68 @@
     font-size: 16px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Timeline POPUP Styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+.ms-timeline-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.ms-timeline-popup {
+  background: rgba(45, 45, 45, 0.95);
+  backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 28px;
+  width: 95%;
+  max-width: 480px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+  color: white;
+  position: relative;
+}
+
+.ms-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ms-popup-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.ms-popup-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ms-popup-body {
+  overflow-y: auto;
+  flex: 1;
+}

@@ -4,6 +4,7 @@ import { appConfig } from '../config/env.js';
 import { getUserChats } from '../repositories/chatRepository.js';
 import { getRandomQuiz, getQuizQuestions } from '../repositories/quizRepository.js';
 import { getUserGrade } from '../repositories/userRepository.js';
+import { listStudentSections } from '../repositories/studentRepository.js';
 
 // --- Interfaces ---
 
@@ -75,18 +76,6 @@ export const initSocket = (io: Server) => {
         const userId = socket.data.user.id;
         console.log(`[Socket] Connected: ${userId} (${socket.id})`);
 
-        // --- DUPLICATE CONNECTION GUARD ---
-        // Kick any existing socket for the same user (prevents ghost connections
-        // that hold queue slots or game positions)
-        if (!userId.startsWith('guest_')) {
-            for (const [, existingSocket] of io.sockets.sockets) {
-                if (existingSocket.id !== socket.id && existingSocket.data.user?.id === userId) {
-                    console.log(`[Socket] Kicking duplicate connection for ${userId} (old=${existingSocket.id})`);
-                    existingSocket.emit('force_disconnect', { reason: 'new_connection' });
-                    existingSocket.disconnect(true);
-                }
-            }
-        }
         // --- END DUPLICATE CONNECTION GUARD ---
 
         // ===== CRITICAL: AUTO-JOIN CHAT ROOMS =====
@@ -103,7 +92,16 @@ export const initSocket = (io: Server) => {
                         socket.join(roomName);
                         console.log(`[Socket] Auto-joined ${userId} to room: ${roomName}`);
                     });
-                    console.log(`[Socket] ${userId} joined ${chats.length} chat rooms automatically`);
+
+                    // Join Section Rooms
+                    const sectionIds = await listStudentSections(userIdNum);
+                    sectionIds.forEach(sectionId => {
+                        const roomName = `section_${sectionId}`;
+                        socket.join(roomName);
+                        console.log(`[Socket] Auto-joined ${userId} to section room: ${roomName}`);
+                    });
+                    
+                    console.log(`[Socket] ${userId} joined ${chats.length} chat rooms and ${sectionIds.length} section rooms automatically`);
                 }
             }
         } catch (error) {

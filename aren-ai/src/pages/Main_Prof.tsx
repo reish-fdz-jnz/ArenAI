@@ -183,9 +183,18 @@ const Main_Prof: React.FC = () => {
   };
 
   const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
-    setShowScheduleView(true);
-    fetchDashboardSync(date);
+    const today = new Date();
+    const isToday = date.getDate() === today.getDate() && 
+                    date.getMonth() === today.getMonth() && 
+                    date.getFullYear() === today.getFullYear();
+    
+    if (isToday) {
+      handleExitReview();
+    } else {
+      setSelectedDate(date);
+      setShowScheduleView(true);
+      fetchDashboardSync(date);
+    }
   };
 
   const handleGoToToday = () => {
@@ -205,6 +214,15 @@ const Main_Prof: React.FC = () => {
   useIonViewWillEnter(() => {
     fetchDashboardSync();
   });
+
+  const handleExitReview = () => {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    localStorage.removeItem(`prefSession_${dateStr}`); // Clear preference for today
+    
+    setSelectedDate(today);
+    fetchDashboardSync(today);
+  };
 
   // Dynamic Insights
   // Needs mapping for "Social Studies" vs key in JSON if there's a mismatch.
@@ -433,6 +451,24 @@ const Main_Prof: React.FC = () => {
                 sessionMarkers={sessionHistory}
                 title={t("professor.dashboard.classSchedule")}
               />
+              {focusSession && (!activeSession || focusSession.id_class !== activeSession.id_class) && (
+                (() => {
+                  const today = new Date();
+                  const isToday = selectedDate.getDate() === today.getDate() && 
+                                  selectedDate.getMonth() === today.getMonth() && 
+                                  selectedDate.getFullYear() === today.getFullYear();
+                  return !isToday;
+                })()
+              ) && (
+                <div 
+                  className="ms-return-today-pill"
+                  onClick={handleExitReview}
+                  style={{ top: '65px' }} // Slightly below the calendar title if needed, or adjust CSS
+                >
+                  <IonIcon icon={statsChartOutline} />
+                  <span>{t('common.exitReview')}</span>
+                </div>
+              )}
 
               {showScheduleView && (
                 <div className="ms-timeline-overlay" onClick={() => setShowScheduleView(false)}>

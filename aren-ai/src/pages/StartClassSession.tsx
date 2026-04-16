@@ -238,6 +238,7 @@ const StartClassSession: React.FC = () => {
         name_session: sessionName,
         templateId: parseInt(selectedTemplate.ClassTemplateID),
         sectionId: parseInt(selectedSection),
+        grade: selectedGrade,
         institutionId: user?.id_institution || null
       };
 

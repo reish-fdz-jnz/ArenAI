@@ -117,3 +117,7 @@ export async function getStudentSubjectScores(userId) {
         color: SUBJECT_COLORS[row.name_subject] || SUBJECT_COLORS['default'],
     }));
 }
+export async function listStudentSections(userId) {
+    const result = await db.query(`SELECT id_section FROM user_section WHERE id_user = ?`, [userId]);
+    return result.rows.map(r => r.id_section);
+}

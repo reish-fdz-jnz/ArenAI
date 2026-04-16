@@ -28,6 +28,8 @@ const EnvSchema = z.object({
   JWT_SECRET: z.string().min(16, 'JWT_SECRET must be at least 16 characters long'),
   JWT_EXPIRES_IN: z.string().optional().default('30d'),
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
+  GOOGLE_CLOUD_PROJECT_ID: z.string().optional(),
+  GOOGLE_CLOUD_LOCATION: z.string().optional().default('us-central1'),
 });
 
 const env = EnvSchema.parse(process.env);
@@ -67,5 +69,9 @@ export const appConfig = {
   auth: {
     jwtSecret: env.JWT_SECRET,
     jwtExpiresIn: env.JWT_EXPIRES_IN,
+  },
+  google: {
+    projectId: env.GOOGLE_CLOUD_PROJECT_ID,
+    location: env.GOOGLE_CLOUD_LOCATION,
   },
 };

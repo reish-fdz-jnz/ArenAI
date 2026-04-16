@@ -31,6 +31,38 @@
   display: flex;
   justify-content: center;
   margin-top: 10px;
+  position: relative;
+}
+
+.ms-return-today-pill {
+    position: absolute;
+    top: 50px;
+    right: 0px;
+    background: var(--ion-color-secondary);
+    color: white;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    z-index: 100;
+    animation: msFadeIn 0.3s ease-out;
+    transition: all 0.2s ease;
+}
+
+.ms-return-today-pill:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+
+@keyframes msFadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .ms-intro-pill {

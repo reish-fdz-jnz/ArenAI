@@ -21,6 +21,7 @@ import {
   homeOutline,
   americanFootballOutline,
   peopleOutline,
+  schoolOutline,
 } from "ionicons/icons";
 import { useTranslation } from "react-i18next";
 import "./Main_Student.css";
@@ -34,6 +35,7 @@ import { getSubjectKey } from "../utils/subjectUtils";
 import PageTransition from "../components/PageTransition";
 import { getApiUrl } from "../config/api";
 import { socketService } from "../services/socket";
+import { DailyScheduleView, DailySession } from '../components/DailyScheduleView';
 
 // ============================================================================
 // COMPONENT
@@ -59,6 +61,15 @@ const Main_Student: React.FC = () => {
   const [viewMode, setViewMode] = useState<"insights" | "que">("insights");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
+  // Session State
+  const [sessionMarkers, setSessionMarkers] = useState<Record<string, number>>({});
+  const [dailySessions, setDailySessions] = useState<DailySession[]>([]);
+  const [activeSession, setActiveSession] = useState<any>(null);
+  const [showScheduleView, setShowScheduleView] = useState(false);
+  const [isManualDateSelection, setIsManualDateSelection] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+
   // AI Insights State
   const [studentInsights, setStudentInsights] = useState<{
     summary: string;
@@ -78,41 +89,133 @@ const Main_Student: React.FC = () => {
     localStorage.setItem("selectedSubject", selectedSubject);
   }, [selectedSubject]);
 
+  // Fetch Session History
+  const fetchHistory = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const offset = new Date().getTimezoneOffset();
+      const res = await fetch(getApiUrl(`api/student-sessions/history?timezoneOffset=${offset}`), {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data && typeof data === 'object') {
+        setSessionMarkers(data);
+      }
+    } catch (err) {
+      console.error("Error fetching session history:", err);
+    }
+  };
+
   // Initial Data Fetch
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
       try {
         const [fetchedWeeks, fetchedStats] = await Promise.all([
           studentService.getWeeks(),
           studentService.getStudentStats(),
         ]);
         setWeeks(fetchedWeeks);
-        // Stats can be used if we want global performance
       } catch (error) {
         console.error("Failed to fetch initial data", error);
       }
-      setIsLoading(false);
     };
     fetchData();
+    fetchHistory();
   }, []);
 
-  // Update topics and overall performance when subject changes
+  // Fetch Session State
+  const fetchSessionState = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      let activeSessionData: any = null;
+      if (!isManualDateSelection) {
+        const activeRes = await fetch(getApiUrl(`api/student-sessions/active`), {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (activeRes.ok) {
+          const result = await activeRes.json();
+          activeSessionData = result.data;
+          
+          if (activeSessionData && activeSessionData.id_class) {
+            setActiveSession(activeSessionData);
+            setDailySessions([activeSessionData]);
+            if (activeSessionData.topics) {
+                const formattedTopics: TopicProgress[] = activeSessionData.topics.map((t: any) => ({
+                    name: t.name_topic || t.name || "",
+                    nameKey: t.name_topic || t.name || "",
+                    percentage: t.score !== undefined ? Number(t.score) : 0,
+                    icon: "🎓"
+                }));
+                // Only override standard topics if we have them
+                setTopics(formattedTopics);
+                setOverallPerformance(Number(activeSessionData.student_score_average) || 0);
+
+                const summary = activeSessionData.student_ai_summary || activeSessionData.class_ai_summary || "Class is active. Monitoring your progress...";
+                setStudentInsights({ summary, issues: [] });
+                setDisplayedSummary(summary);
+            }
+            setIsLoading(false);
+            return; // Skip normal fetching if active session is present!
+          } else {
+            // Explicitly clear active session if API confirms NO session is running
+            setActiveSession(null);
+          }
+        } else {
+          setActiveSession(null);
+        }
+      }
+
+      // Check daily sessions fallback
+      const dateStr = [
+        selectedDate.getFullYear(),
+        String(selectedDate.getMonth() + 1).padStart(2, '0'),
+        String(selectedDate.getDate()).padStart(2, '0')
+      ].join('-');
+
+      const offset = new Date().getTimezoneOffset();
+      const sessionRes = await fetch(getApiUrl(`api/student-sessions/by-date?date=${dateStr}&timezoneOffset=${offset}`), {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const sessionsObj = await sessionRes.json();
+      const sessions: DailySession[] = Array.isArray(sessionsObj) ? sessionsObj : (sessionsObj && sessionsObj.id_class ? [sessionsObj] : []);
+      
+      setDailySessions(prev => {
+        const merged = [...sessions];
+        if (activeSessionData && !merged.some(s => s.id_class === activeSessionData.id_class)) {
+            merged.push(activeSessionData);
+        }
+        return merged;
+      });
+
+      if (isManualDateSelection) {
+        setShowScheduleView(true);
+      }
+
+      // Fallback: Fetch regular subject data if NOT looking at a specific session
+      if (!activeSessionData) {
+          const subjectData = await studentService.getSubjectDetails(selectedSubject);
+          setTopics(subjectData.topics);
+          setOverallPerformance(calculateOverallPerformance(subjectData.topics));
+      }
+
+    } catch (err) {
+      console.error("Error fetching session state:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchSubjectData = async () => {
-      // Don't set full loading here to avoid screen flickering,
-      // maybe just a small loading indicator or skeleton on the list if needed.
-      // For now we'll do a quick fetch.
-      const subjectData =
-        await studentService.getSubjectDetails(selectedSubject);
-      setTopics(subjectData.topics);
+    fetchSessionState();
+  }, [selectedDate, selectedSubject]);
 
-      const newPerformance = calculateOverallPerformance(subjectData.topics);
-      setOverallPerformance(newPerformance);
-    };
-
-    fetchSubjectData();
-  }, [selectedSubject]);
+  const handleReturnToToday = () => {
+    setIsManualDateSelection(false);
+    setSelectedDate(new Date());
+    // fetchSessionState will be triggered by the useEffect on [selectedDate]
+  };
 
   // Helper Functions
   const calculateOverallPerformance = (currentTopics: TopicProgress[]) => {
@@ -279,10 +382,32 @@ const Main_Student: React.FC = () => {
       }
     };
 
+    const handleClassStarted = (data: any) => {
+      console.log("[Main_Student] Class started notification received:", data);
+      // Automatically pull the student into the live class even if they were reviewing history
+      setIsManualDateSelection(false);
+      setSelectedDate(new Date());
+      fetchSessionState();
+    };
+
+    const handleClassFinished = (data: any) => {
+      console.log("[Main_Student] Class finished notification received:", data);
+      // Reset live class state without a page reload
+      setActiveSession(null);
+      setTopics([]);
+      setOverallPerformance(0);
+      // Optional: re-fetch to see if there's another class or to update history list
+      fetchSessionState();
+    };
+
     socketService.socket?.on("insight_update", handleInsightUpdate);
+    socketService.socket?.on("class_started", handleClassStarted);
+    socketService.socket?.on("class_finished", handleClassFinished);
 
     return () => {
       socketService.socket?.off("insight_update", handleInsightUpdate);
+      socketService.socket?.off("class_started", handleClassStarted);
+      socketService.socket?.off("class_finished", handleClassFinished);
     };
   }, []);
 
@@ -300,20 +425,28 @@ const Main_Student: React.FC = () => {
     setCurrentQuestionIndex((prev) => (prev - 1 + 5) % 5);
   };
 
-  const [selectedDate, setSelectedDate] = useState(new Date());
+
 
   // Available subjects
   const availableSubjects = ["Math", "Science", "Social Studies", "Spanish"];
 
   // Handlers
   const handleDateSelect = (date: Date) => {
+    const today = new Date();
+    const isToday = date.getDate() === today.getDate() && 
+                    date.getMonth() === today.getMonth() && 
+                    date.getFullYear() === today.getFullYear();
+
+    setIsManualDateSelection(!isToday);
     setSelectedDate(date);
-    console.log("Selected date:", date);
+    console.log("Selected date:", date, "isToday:", isToday);
   };
 
   const handleCalendarSubjectSelect = (subject: string, date: Date) => {
+    setIsManualDateSelection(false);
     setSelectedSubject(subject);
     setSelectedDate(date);
+    setActiveSession(null);
   };
 
   const navigateTo = (path: string) => {
@@ -385,73 +518,128 @@ const Main_Student: React.FC = () => {
                   <CalendarSelector
                     onDateSelect={handleDateSelect}
                     onSubjectSelect={handleCalendarSubjectSelect}
-                    title={t("Clase prototipo") || "Class Schedule"}
+                    title={activeSession ? activeSession.name_session : (t("Clase prototipo") || "Class Schedule")}
                     subjects={availableSubjects}
                     selectedSubject={selectedSubject}
+                    sessionMarkers={sessionMarkers}
                   />
+                  {isManualDateSelection && (
+                    <div 
+                      className="ms-return-today-pill"
+                      onClick={handleReturnToToday}
+                    >
+                      <IonIcon icon={homeOutline} />
+                      <span>{t('common.returnToToday')}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Stats Row: Subject + Grade */}
-                <div className="ms-stats-row">
-                  <div className="ms-your-math-pill">
-                    {t("mainStudent.yourSubject", {
-                      subject: t(getSubjectKey(selectedSubject)),
-                    })}
-                  </div>
-                  <div
-                    className="ms-progress-circle"
-                    style={{
-                      border: `6px solid ${getColorForPercentage(
-                        overallPerformance,
-                      )}`,
-                      boxShadow: `inset 0 0 0 3px white`, // White inner outline
-                      color: "white",
-                      width: "70px",
-                      height: "70px",
-                      borderRadius: "50%",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      fontWeight: "bold",
-                      fontSize: "18px",
-                      backgroundColor: "var(--ion-color-secondary)",
-                    }}
-                  >
-                    {overallPerformance}%
-                  </div>
-                </div>
-
-                {/* Topics Grid (Swipeable) */}
-                <div className="ms-topics-scroll-container">
-                  <div className="ms-topics-track">
-                    {topics.map((topic, index) => (
-                      <div
-                        key={index}
-                        className="ms-topic-btn"
-                        onClick={() =>
-                          navigateTo(`/subject/${selectedSubject}`)
-                        }
-                      >
-                        <div className="ms-topic-fill-box">
-                          <div
-                            className="ms-topic-fill"
-                            style={{
-                              height: `${topic.percentage}%`,
-                              backgroundColor:
-                                topic.percentage < 60 ? "#FFC107" : "#78B8B0",
-                            }}
-                          ></div>
-                          <div className="ms-topic-icon">
-                            {topic.icon || "•"}
-                          </div>
-                        </div>
-                        <span className="ms-topic-label">
-                          {t(topic.nameKey)}
-                        </span>
+                {activeSession ? (
+                  <>
+                    {/* Stats Row: Subject + Grade */}
+                    <div className="ms-stats-row">
+                      <div className="ms-your-math-pill" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#FF5252', animation: 'blink 1s step-end infinite' }}></div>
+                        <span>LIVE: {activeSession.name_session}</span>
                       </div>
-                    ))}
+                      <div
+                        className="ms-progress-circle"
+                        style={{
+                          border: `6px solid ${getColorForPercentage(
+                            overallPerformance,
+                          )}`,
+                          boxShadow: `inset 0 0 0 3px white`, // White inner outline
+                          color: "white",
+                          width: "70px",
+                          height: "70px",
+                          borderRadius: "50%",
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          fontWeight: "bold",
+                          fontSize: "18px",
+                          backgroundColor: "var(--ion-color-secondary)",
+                        }}
+                      >
+                        {overallPerformance}%
+                      </div>
+                    </div>
+
+                    {/* Topics Grid (Swipeable) */}
+                    <div className="ms-topics-scroll-container">
+                      <div className="ms-topics-track">
+                        {topics.map((topic, index) => (
+                          <div
+                            key={index}
+                            className="ms-topic-btn"
+                            onClick={() =>
+                              navigateTo(`/subject/${selectedSubject}`)
+                            }
+                          >
+                            <div className="ms-topic-fill-box">
+                              <div
+                                className="ms-topic-fill"
+                                style={{
+                                  height: `${topic.percentage}%`,
+                                  backgroundColor:
+                                    topic.percentage < 60 ? "#FFC107" : "#78B8B0",
+                                }}
+                              ></div>
+                              <div className="ms-topic-icon">
+                                {topic.icon || "•"}
+                              </div>
+                            </div>
+                            <span className="ms-topic-label">
+                              {t(topic.nameKey)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="ms-empty-session" style={{
+                    textAlign: 'center',
+                    margin: '40px 20px',
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    padding: '40px 20px',
+                    borderRadius: '24px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <IonIcon
+                      icon={schoolOutline}
+                      style={{
+                        fontSize: '64px',
+                        marginBottom: '20px',
+                        color: 'var(--ion-color-secondary)',
+                        opacity: 0.8
+                      }}
+                    />
+                    <h3 style={{
+                      margin: '0 0 12px 0',
+                      fontSize: '22px',
+                      fontWeight: '700',
+                      letterSpacing: '-0.5px'
+                    }}>
+                      {t("mainStudent.noActiveClassTitle")}
+                    </h3>
+                    <p style={{
+                      margin: 0,
+                      fontSize: '16px',
+                      lineHeight: '1.6',
+                      opacity: 0.7,
+                      maxWidth: '280px'
+                    }}>
+                      {t("mainStudent.noActiveClassDesc")}
+                    </p>
                   </div>
-                </div>
+                )}
 
                 {/* Bottom Section (Switch + Content) */}
                 <div className="ms-bottom-section">
@@ -580,6 +768,43 @@ const Main_Student: React.FC = () => {
           </div>
         </PageTransition>
       </IonContent>
+
+      {/* Timeline Overlay Popup */}
+      {showScheduleView && (
+        <div className="ms-timeline-overlay" onClick={() => setShowScheduleView(false)}>
+          <div className="ms-timeline-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="ms-popup-header">
+              <span className="ms-popup-title">Resumen Diario</span>
+              <button className="ms-popup-close" onClick={() => setShowScheduleView(false)}>Cerrar</button>
+            </div>
+            <div className="ms-popup-body">
+              <DailyScheduleView 
+                  date={selectedDate}
+                  sessions={dailySessions}
+                  onSessionSelect={(session) => {
+                      setActiveSession(session);
+                      setShowScheduleView(false);
+                      if (session.topics) {
+                          const formattedTopics: TopicProgress[] = session.topics.map((t: any) => ({
+                              name: t.name_topic || t.name || "",
+                              nameKey: t.name_topic || t.name || "",
+                              percentage: t.score !== undefined ? Number(t.score) : 0,
+                              icon: "🎓"
+                          }));
+                          setTopics(formattedTopics);
+                          setOverallPerformance(Number((session as any).student_score_average) || 0);
+                          
+                          const summary = (session as any).student_ai_summary || (session as any).ai_summary || "Session details loaded.";
+                          setStudentInsights({ summary, issues: [] });
+                          setDisplayedSummary(summary);
+                      }
+                  }}
+                  selectedSessionId={activeSession?.id_class}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <div className="student-bottom-nav">

@@ -465,7 +465,9 @@
             "placeholder": "Ask about lesson plans, ideas, or grading...",
             "error": "⚠️ An error occurred. Please try again.",
             "serverError": "Sorry, I couldn't process your request."
-        }
+        },
+        "noActiveClassTitle": "No Active Class Session",
+        "noActiveClassDesc": "Wait for your professor to start a session to see real-time performance and topics here."
     },
     "settings": {
         "title": "Settings",
@@ -699,6 +701,19 @@
             "Science": "Science",
             "ScienceDesc": "Questions about biology, chemistry and physics"
         }
+    },
+    "common": {
+        "cancel": "Cancel",
+        "save": "Save",
+        "edit": "Edit",
+        "delete": "Delete",
+        "back": "Back",
+        "close": "Close",
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "noData": "No data available",
+        "returnToToday": "Return to Today",
+        "exitReview": "Exit Review"
     },
     "calendar": {
         "sun": "Sun",

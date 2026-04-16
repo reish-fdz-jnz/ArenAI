@@ -105,7 +105,9 @@
             "placeholder": "询问关于课程计划、想法或评分...",
             "error": "⚠️ 发生错误。请重试。",
             "serverError": "抱歉，我无法处理您的请求。"
-        }
+        },
+        "noActiveClassTitle": "无活跃课堂会话",
+        "noActiveClassDesc": "请等待老师开启课程，之后您将在此实时看到课程表现和学习主题。"
     },
     "settings": {
         "title": "设置",
@@ -354,6 +356,19 @@
             "Science": "科学",
             "ScienceDesc": "生物、化学和物理问题"
         }
+    },
+    "common": {
+        "cancel": "取消",
+        "save": "保存",
+        "edit": "编辑",
+        "delete": "删除",
+        "back": "返回",
+        "close": "关闭",
+        "loading": "加载中...",
+        "error": "发生错误",
+        "noData": "无数据",
+        "returnToToday": "返回今日",
+        "exitReview": "退出回顾"
     },
     "calendar": {
         "sun": "日",

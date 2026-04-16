@@ -203,7 +203,8 @@ const ProfessorAttendance: React.FC = () => {
                 // If user manually tapped, ENSURE the view stays open for them to pick
                 // even if there is only 1 or 0 (it will show "No sessions" in the view)
                 setShowScheduleView(true);
-            } else {
+            } else if (!activeSessionData) {
+                // ONLY clear if we didn't find an active session in Step 1
                 setActiveSession(null);
                 setAttendance({});
                 setShowScheduleView(false);
