@@ -28,11 +28,11 @@
    CALENDAR & CARDS
    ────────────────────────────────────────────────────────── */
 .pa-calendar-wrapper {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
     border-radius: 12px;
     padding: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -70,8 +70,8 @@
 }
 
 .pa-count-badge.total {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--ion-text-color);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -134,10 +134,12 @@
 }
 
 .pa-searchbar {
-    --background: rgba(255, 255, 255, 0.08);
-    --color: white;
+    --background: var(--ion-color-primary);
+    --color: #ffffff;
     --border-radius: 12px;
-    --placeholder-color: rgba(255, 255, 255, 0.4);
+    --placeholder-color: rgba(255, 255, 255, 0.7);
+    --icon-color: #ffffff;
+    --clear-button-color: #ffffff;
     padding: 0;
 }
 
@@ -154,16 +156,16 @@
     display: flex;
     align-items: center;
     padding: 14px 16px;
-    background-color: rgba(255, 255, 255, 0.05);
+    background-color: var(--ion-color-surface, rgba(0, 0, 0, 0.02));
     border-radius: 16px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
     gap: 14px;
 }
 
 .pa-student-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.05);
     transform: translateX(4px);
 }
 
@@ -201,12 +203,12 @@
 .pa-student-name {
     font-size: 15px;
     font-weight: 600;
-    color: white;
+    color: var(--ion-text-color);
 }
 
 .pa-student-email {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--ion-color-step-500);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -264,19 +266,20 @@
 
 .pa-no-session-warning p {
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--ion-color-primary-shade, var(--ion-color-primary));
+    font-weight: 500;
     margin: 0;
 }
 
 .pa-go-btn {
-    background: var(--ion-color-secondary);
+    background: var(--ion-color-primary-shade, var(--ion-color-primary));
     color: white;
     padding: 10px 24px;
     border-radius: 20px;
     font-weight: 600;
     font-size: 13px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -285,7 +288,8 @@
 .pa-dropdown-chip {
     padding: 8px 14px;
     border-radius: 20px;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--ion-text-color);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
@@ -320,8 +324,33 @@
 
 .pa-compact-text {
     font-size: 14px !important;
-    color: white !important;
+    color: var(--ion-text-color) !important;
 }
+
+/* ══════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   ────────────────────────────────────────────────────────── */
+@media (prefers-color-scheme: dark) {
+    .pa-calendar-wrapper { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .pa-count-badge.total { background: rgba(255, 255, 255, 0.1); color: white; }
+    .pa-searchbar { --background: rgba(255, 255, 255, 0.08); --color: white; --placeholder-color: rgba(255, 255, 255, 0.4); }
+    .pa-student-item { background-color: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.05); }
+    .pa-student-item:hover { background-color: rgba(255, 255, 255, 0.1); }
+    .pa-student-name, .pa-compact-text { color: white !important; }
+    .pa-student-email { color: rgba(255, 255, 255, 0.5); }
+    .pa-no-session-warning p { color: rgba(255, 255, 255, 0.6); }
+    .pa-dropdown-chip { background: rgba(255, 255, 255, 0.05); color: white; }
+}
+
+html[data-force-dark] .pa-calendar-wrapper { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); }
+html[data-force-dark] .pa-count-badge.total { background: rgba(255, 255, 255, 0.1); color: white; }
+html[data-force-dark] .pa-searchbar { --background: rgba(255, 255, 255, 0.08); --color: white; --placeholder-color: rgba(255, 255, 255, 0.4); }
+html[data-force-dark] .pa-student-item { background-color: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.05); }
+html[data-force-dark] .pa-student-item:hover { background-color: rgba(255, 255, 255, 0.1); }
+html[data-force-dark] .pa-student-name, html[data-force-dark] .pa-compact-text { color: white !important; }
+html[data-force-dark] .pa-student-email { color: rgba(255, 255, 255, 0.5); }
+html[data-force-dark] .pa-no-session-warning p { color: rgba(255, 255, 255, 0.6); }
+html[data-force-dark] .pa-dropdown-chip { background: rgba(255, 255, 255, 0.05); color: white; }
 
 /* ══════════════════════════════════════════════════════════
    RESPONSIVE

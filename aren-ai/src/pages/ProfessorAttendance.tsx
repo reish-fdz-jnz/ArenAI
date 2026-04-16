@@ -494,7 +494,24 @@ const ProfessorAttendance: React.FC = () => {
                         </div>
 
                         {showScheduleView && (
-                            <div className="quiz-card" style={{ marginTop: '20px' }}>
+                            <div className="quiz-card" style={{ marginTop: '20px', position: 'relative' }}>
+                                <IonIcon 
+                                    icon={closeCircle} 
+                                    style={{ 
+                                        position: 'absolute', 
+                                        top: '12px', 
+                                        right: '12px', 
+                                        fontSize: '28px', 
+                                        color: 'color-mix(in srgb, var(--ion-color-primary) 30%, #111)', 
+                                        cursor: 'pointer',
+                                        zIndex: 10,
+                                        opacity: 0.95
+                                    }} 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowScheduleView(false);
+                                    }}
+                                />
                                 <div className="quiz-card-title">{t('professor.attendance.timeline', 'Daily Timeline')}</div>
                                 <DailyScheduleView 
                                     date={selectedDate}

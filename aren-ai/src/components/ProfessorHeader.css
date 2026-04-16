@@ -2,9 +2,17 @@
 
 .professor-header-container {
     background: transparent;
-    box-shadow: none;
+    box-shadow: none !important;
     position: relative;
     z-index: 100;
+}
+
+.professor-header-container::after,
+.professor-header-container ion-toolbar::after,
+.professor-toolbar::after {
+    display: none !important;
+    background: none !important;
+    height: 0 !important;
 }
 
 .professor-toolbar {
@@ -15,6 +23,10 @@
     border-bottom-right-radius: 30px;
     position: relative;
     z-index: 100;
+    --border-width: 0 !important;
+    --border-style: none !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
 }
 
 .ph-content {

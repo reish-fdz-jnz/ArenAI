@@ -314,6 +314,23 @@ ion-textarea.has-error,
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   GLOBAL OVERRIDES (To fix all persistent lines/shadows)
+   ═══════════════════════════════════════════════════════════════════════════ */
+ion-header::after,
+ion-toolbar::after,
+.header-md::after,
+.header-ios::after,
+.toolbar-background::after,
+ion-header,
+ion-toolbar {
+    background-image: none !important;
+    border-bottom: none !important;
+    box-shadow: none !important;
+    --border-width: 0 !important;
+    --border-style: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    DESKTOP RESPONSIVE — Tablet (768px+)
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (min-width: 768px) {

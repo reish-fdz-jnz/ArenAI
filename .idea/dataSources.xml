@@ -22,5 +22,12 @@
       <jdbc-url>jdbc:mysql://34.172.49.18:3306/arenaidb</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="arenaidb@127.0.0.1" uuid="1410f45f-de23-40ce-a6c2-441aa1c2cda2">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://127.0.0.1:3306/arenaidb</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

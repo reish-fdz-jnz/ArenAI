@@ -85,9 +85,12 @@ const ChatMenu: React.FC = () => {
   };
   // === END UNREAD MANAGEMENT ===
 
-  // Helper to format date
-  const formatTime = (dateStr: string) => {
-    const d = new Date(dateStr);
+  // Helper to format date safely
+  const formatTime = (dateInput: any) => {
+    if (!dateInput) return "";
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return "";
+    
     const now = new Date();
     if (d.toDateString() === now.toDateString()) {
       return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -140,11 +143,8 @@ const ChatMenu: React.FC = () => {
             return {
               ...chat,
               message: message,
-              rawTime: new Date(timestamp),
-              time:
-                typeof timestamp === "string"
-                  ? formatTime(timestamp)
-                  : formatTime(timestamp.toISOString()),
+              rawTime: timestamp ? new Date(timestamp) : new Date(0),
+              time: formatTime(timestamp),
               unread: unreadCount,
             };
           });
@@ -191,7 +191,7 @@ const ChatMenu: React.FC = () => {
           unread: chatStorage.getUnreadCount(chat.id),
           message: chatStorage.getLastMessage(chat.id)?.text || chat.message,
           time: chatStorage.getLastMessage(chat.id)?.timestamp
-            ? formatTime(chatStorage.getLastMessage(chat.id)!.timestamp as any)
+            ? formatTime(chatStorage.getLastMessage(chat.id)!.timestamp)
             : chat.time,
         })),
       );
@@ -414,7 +414,6 @@ const ChatMenu: React.FC = () => {
                   showNotifications ? "active" : ""
                 }`}
                 shape="round"
-                fill="clear"
               >
                 <IonIcon icon={notificationsOutline} />
               </IonButton>

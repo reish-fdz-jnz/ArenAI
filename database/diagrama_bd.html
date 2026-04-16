@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ArenAI - Diagrama de Base de Datos</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #fff; color: #1a1a2e; padding: 40px; }
+        h1 { font-size: 28px; color: #1a1a2e; margin-bottom: 4px; }
+        .subtitle { color: #666; font-size: 14px; margin-bottom: 30px; }
+        h2 {
+            font-size: 18px; color: #4a2d8a; margin: 40px 0 16px;
+            padding-bottom: 8px; border-bottom: 2px solid #e8e0f7;
+            page-break-after: avoid;
+        }
+        h2:first-of-type { margin-top: 20px; }
+        .diagram-box {
+            background: #fafafe; border: 1px solid #e0daf0; border-radius: 8px;
+            padding: 20px; margin-bottom: 30px; overflow: visible;
+            page-break-inside: avoid;
+        }
+        .mermaid { display: flex; justify-content: center; }
+        .mermaid svg { max-width: 100%; height: auto; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0 20px; font-size: 13px; }
+        th { background: #4a2d8a; color: #fff; padding: 8px 12px; text-align: left; }
+        td { padding: 8px 12px; border-bottom: 1px solid #e8e0f7; }
+        tr:nth-child(even) td { background: #f8f6fc; }
+        code { background: #f0ecf7; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #4a2d8a; }
+        .print-btn {
+            position: fixed; bottom: 30px; right: 30px; z-index: 999;
+            padding: 14px 28px; background: #4a2d8a; color: #fff; border: none;
+            border-radius: 8px; font-size: 16px; cursor: pointer; font-family: 'Inter', sans-serif;
+            box-shadow: 0 4px 16px rgba(74,45,138,0.3);
+        }
+        .print-btn:hover { background: #5c3ba0; }
+        @media print {
+            .print-btn { display: none; }
+            body { padding: 20px; }
+            .diagram-box { page-break-inside: avoid; border: 1px solid #ccc; }
+            h2 { page-break-after: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+<button class="print-btn" onclick="window.print()">Guardar como PDF</button>
+
+<h1>ArenAI - Diagrama de Base de Datos</h1>
+<p class="subtitle">28 tablas - 6 ENUMs - 55+ relaciones FK - Esquema completo</p>
+
+<h2>1. Institucion y Estructura Academica</h2>
+<div class="diagram-box">
+<pre class="mermaid">
+erDiagram
+    institution ||--o{ grade_score_average : "tiene promedios"
+    institution ||--o{ section : "tiene secciones"
+    institution ||--o{ user : "pertenecen"
+
+    institution {
+        int id_institution PK
+        varchar name_institution
+        numeric score_average
+    }
+    grade_score_average {
+        int id_grade_average PK
+        int id_institution FK
+        varchar grade
+        numeric score
+    }
+    section {
+        int id_section PK
+        varchar section_number
+        varchar grade
+        int id_institution FK
+    }
+    subject {
+        int id_subject PK
+        varchar name_subject
+    }
+</pre>
+</div>
+
+<h2>2. Usuarios y Perfiles</h2>
+<div class="diagram-box">
+<pre class="mermaid">
+erDiagram
+    institution ||--o{ user : "pertenece"
+    user ||--o| student_profile : "perfil estudiante"
+    user ||--o| professor_profile : "perfil profesor"
+    user ||--o{ user_avatar : "tiene avatares"
+    user ||--o{ user_section : "asignado"
+    section ||--o{ user_section : "contiene"
+    user ||--o{ friend_requests : "envia-recibe"
+    user ||--o{ chat : "participa"
+    chat ||--o{ message : "contiene"
+    user ||--o{ message : "envia"
+
+    user {
+        int id_user PK
+        varchar username
+        varchar email
+        varchar password_hash
+        varchar name
+        varchar last_name
+        varchar phone_number
+        int id_institution FK
+        varchar role
+        varchar profile_picture_name
+        boolean first_login
+    }
+    student_profile {
+        int id_user PK
+        varchar email_guardian
+        numeric score_average
+        int quiz_streak
+    }
+    professor_profile {
+        int id_user PK
+        varchar grade
+    }
+    user_avatar {
+        int id_user_avatar PK
+        int id_user FK
+        varchar avatar_type
+        varchar nickname
+        int friendship_level
+        boolean is_current
+        timestamp created_at
+    }
+    user_section {
+        int id_user PK
+        int id_section PK
+        varchar role_in_section
+    }
+    friend_requests {
+        int id_request PK
+        int id_sender FK
+        int id_receiver FK
+        varchar status
+        timestamp created_at
+        timestamp updated_at
+    }
+    chat {
+        int id_chat PK
+        int id_user_1 FK
+        int id_user_2 FK
+        boolean friendship
+        timestamp last_message_at
+        varchar last_msg_preview
+    }
+    message {
+        int id_message PK
+        int id_chat FK
+        int id_user FK
+        text content
+        timestamp created_at
+        boolean is_read
+    }
+</pre>
+</div>
+
+<h2>3. Clases Temas e Inscripciones</h2>
+<div class="diagram-box">
+<pre class="mermaid">
+erDiagram
+    section ||--o{ class : "tiene clases"
+    subject ||--o{ class : "materia"
+    subject ||--o{ topic : "tiene temas"
+    class ||--o{ class_topic : "cubre"
+    topic ||--o{ class_topic : "en clase"
+    class ||--o{ class_student : "inscritos"
+    user ||--o{ class_student : "inscrito"
+    class_topic ||--o{ class_student_topic : "score por tema"
+    class_student ||--o{ class_student_topic : "detalle tema"
+    topic ||--o{ topic_father_son_relation : "padre-hijo"
+    topic ||--o{ topic_resource : "recursos"
+    user ||--o{ student_topic : "dominio"
+    topic ||--o{ student_topic : "score"
+
+    class {
+        int id_class PK
+        varchar name_class
+        int id_subject FK
+        int id_section FK
+        date fecha
+        numeric score_average
+        varchar description
+        varchar status
+        timestamp started_at
+        timestamp ended_at
+    }
+    topic {
+        int id_topic PK
+        varchar name
+        int id_subject FK
+        text description
+    }
+    class_topic {
+        int id_class_topic PK
+        int id_class FK
+        int id_topic FK
+        numeric score_average
+    }
+    class_student {
+        int id_class PK
+        int id_user PK
+        text ai_summary
+        numeric interaction_coefficient
+        numeric score_average
+        boolean attendance
+    }
+    class_student_topic {
+        int id_class PK
+        int id_topic PK
+        int id_user PK
+        numeric score
+        text ai_summary
+    }
+    topic_father_son_relation {
+        int id PK
+        int id_topic_father FK
+        int id_topic_son FK
+        numeric correlation
+    }
+    topic_resource {
+        int id_topic_resource PK
+        int id_topic FK
+        varchar resource_source
+        text description
+        numeric resource_quality
+    }
+    student_topic {
+        int id_student_topic PK
+        int id_user FK
+        int id_topic FK
+        numeric score
+    }
+</pre>
+</div>
+
+<h2>4. Reportes AI y Chat de Aprendizaje</h2>
+<div class="diagram-box">
+<pre class="mermaid">
+erDiagram
+    class ||--o{ student_class_summary : "resumenes"
+    user ||--o{ student_class_summary : "del estudiante"
+    class ||--o| professor_class_report : "reporte"
+    user ||--o{ learning_chat_history : "mensajes"
+    subject ||--o{ learning_chat_history : "materia"
+    class ||--o{ learning_chat_history : "durante clase"
+
+    student_class_summary {
+        bigint id_summary PK
+        int id_class FK
+        int id_user FK
+        text summary_text
+        jsonb strengths
+        jsonb weaknesses
+        jsonb study_tips
+        boolean is_processed
+        timestamp created_at
+        timestamp updated_at
+    }
+    professor_class_report {
+        bigint id_report PK
+        int id_class FK
+        text general_summary
+        jsonb top_confusion_topics
+        varchar sentiment_average
+        text suggested_action
+        timestamp created_at
+    }
+    learning_chat_history {
+        bigint id_message PK
+        int id_user FK
+        int id_subject FK
+        int id_class FK
+        varchar role
+        text content
+        boolean is_analyzed
+        timestamp created_at
+    }
+</pre>
+</div>
+
+<h2>5. Quizzes Tareas y Entregas</h2>
+<div class="diagram-box">
+<pre class="mermaid">
+erDiagram
+    user ||--o{ quiz : "crea"
+    subject ||--o{ quiz : "materia"
+    quiz ||--o{ quiz_question : "preguntas"
+    topic ||--o{ quiz_question : "tema"
+    quiz ||--o{ quiz_attempt : "intentos"
+    user ||--o{ quiz_attempt : "intenta"
+    quiz_attempt ||--o{ quiz_response : "respuestas"
+    quiz_question ||--o{ quiz_response : "respondida"
+    quiz ||--o{ quiz_rating : "calificaciones"
+    user ||--o{ quiz_rating : "califica"
+    user ||--o{ assignment : "asigna"
+    section ||--o{ assignment : "seccion"
+    subject ||--o{ assignment : "materia"
+    quiz ||--o{ assignment : "quiz vinculado"
+    assignment ||--o{ assignment_submission : "entregas"
+    user ||--o{ assignment_submission : "entrega"
+    assignment ||--o{ assignment_target : "destinatarios"
+    assignment_submission ||--o{ submission_quiz_score : "scores"
+    quiz ||--o{ submission_quiz_score : "score quiz"
+
+    quiz {
+        int id_quiz PK
+        int id_professor FK
+        int id_subject FK
+        varchar quiz_name
+        varchar description
+        varchar level
+        varchar language
+        timestamp created_at
+        boolean is_public
+        int downloads
+        numeric avg_rating
+        int rating_count
+    }
+    quiz_question {
+        int id_question PK
+        int id_quiz FK
+        int id_topic FK
+        text question_text
+        numeric points
+        boolean allow_multiple
+        varchar option_1
+        varchar option_2
+        varchar option_3
+        varchar option_4
+        varchar correct_options
+    }
+    quiz_attempt {
+        int id_attempt PK
+        int id_quiz FK
+        int id_student FK
+        timestamp started_at
+        timestamp finished_at
+        numeric total_score
+        int focus_lost_count
+    }
+    quiz_response {
+        int id_response PK
+        int id_attempt FK
+        int id_question FK
+        varchar selected_options
+        boolean is_correct
+        numeric points_awarded
+        numeric time_taken_seconds
+    }
+    quiz_rating {
+        int id_rating PK
+        int id_quiz FK
+        int id_user FK
+        smallint rating
+        timestamp created_at
+    }
+    assignment {
+        int id_assignment PK
+        int id_professor FK
+        int id_section FK
+        int id_quiz FK
+        int id_subject FK
+        varchar title
+        text description
+        date due_time
+        timestamp due_date
+        smallint win_battle_req
+        int min_battle_wins
+        int min_win_streak
+        boolean required_text
+        timestamp created_at
+    }
+    assignment_submission {
+        int id_submission PK
+        int id_assignment FK
+        int id_student FK
+        varchar status
+        int win_streak_achieved
+        text text_response
+        timestamp started_at
+        timestamp submitted_at
+        timestamp graded_at
+        numeric grade
+        text feedback
+    }
+    assignment_target {
+        int id_target PK
+        int id_assignment FK
+        varchar target_type
+        int target_id
+    }
+    submission_quiz_score {
+        int id PK
+        int id_submission FK
+        int id_quiz FK
+        numeric score
+        numeric max_score
+        timestamp completed_at
+    }
+</pre>
+</div>
+
+<h2>6. Sistema de Batallas</h2>
+<div class="diagram-box">
+<pre class="mermaid">
+erDiagram
+    user ||--o{ battle_matchmaking : "busca"
+    subject ||--o{ battle_matchmaking : "materia"
+    class ||--o{ battle_matchmaking : "en clase"
+    user ||--o{ battle_minigame : "jugador 1"
+    user ||--o{ battle_minigame : "jugador 2"
+    subject ||--o{ battle_minigame : "materia"
+    class ||--o{ battle_minigame : "en clase"
+    battle_minigame ||--o{ battle_minigame_question : "preguntas"
+    topic ||--o{ battle_minigame_question : "tema"
+
+    battle_matchmaking {
+        int id_matchmaking PK
+        int id_user FK
+        int id_subject FK
+        int id_class FK
+        timestamp created_at
+        varchar status
+        timestamp matched_at
+    }
+    battle_minigame {
+        int id_battle PK
+        int id_user_1 FK
+        int id_user_2 FK
+        int id_class FK
+        int id_subject FK
+        int user_1_health
+        int user_2_health
+        boolean winner
+        varchar status
+        timestamp created_at
+        timestamp started_at
+        timestamp ended_at
+    }
+    battle_minigame_question {
+        int id PK
+        int id_battle_minigame FK
+        int id_topic FK
+        varchar question
+        varchar answer1
+        varchar answer2
+        varchar answer3
+        varchar answer4
+    }
+</pre>
+</div>
+
+<h2>ENUMs</h2>
+<table>
+    <tr><th>Enum</th><th>Valores</th></tr>
+    <tr><td><code>matchmaking_status</code></td><td>waiting - matched - cancelled</td></tr>
+    <tr><td><code>battle_status</code></td><td>waiting - active - completed - cancelled</td></tr>
+    <tr><td><code>chat_role</code></td><td>user - model</td></tr>
+    <tr><td><code>friend_req_status</code></td><td>pending - accepted - rejected</td></tr>
+    <tr><td><code>submission_status</code></td><td>NOT_STARTED - IN_PROGRESS - SUBMITTED - GRADED</td></tr>
+    <tr><td><code>target_type_enum</code></td><td>SECTION - STUDENT</td></tr>
+</table>
+
+<h2>Relaciones Cross-Domain</h2>
+<table>
+    <tr><th>Desde</th><th>Hacia</th><th>FK</th><th>Descripcion</th></tr>
+    <tr><td><code>assignment</code></td><td><code>quiz</code></td><td>id_quiz</td><td>Tarea incluye quiz</td></tr>
+    <tr><td><code>submission_quiz_score</code></td><td><code>quiz</code></td><td>id_quiz</td><td>Score del quiz en entrega</td></tr>
+    <tr><td><code>submission_quiz_score</code></td><td><code>assignment_submission</code></td><td>id_submission</td><td>Puente quiz - entrega</td></tr>
+    <tr><td><code>quiz_question</code></td><td><code>topic</code></td><td>id_topic</td><td>Pregunta quiz - tema</td></tr>
+    <tr><td><code>battle_minigame_question</code></td><td><code>topic</code></td><td>id_topic</td><td>Pregunta batalla - tema</td></tr>
+    <tr><td><code>assignment</code></td><td><code>section</code></td><td>id_section</td><td>Tarea - seccion</td></tr>
+    <tr><td><code>learning_chat_history</code></td><td><code>class</code></td><td>id_class</td><td>Chat durante clase</td></tr>
+    <tr><td><code>battle_matchmaking</code></td><td><code>class</code></td><td>id_class</td><td>Matchmaking en clase</td></tr>
+    <tr><td><code>battle_minigame</code></td><td><code>class</code></td><td>id_class</td><td>Batalla en clase</td></tr>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+    mermaid.initialize({
+        startOnLoad: true,
+        theme: 'default',
+        er: {
+            diagramPadding: 20,
+            layoutDirection: 'TB',
+            minEntityWidth: 100,
+            minEntityHeight: 75,
+            entityPadding: 15,
+            useMaxWidth: true
+        }
+    });
+</script>
+</body>
+</html>

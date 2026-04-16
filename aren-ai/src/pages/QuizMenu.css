@@ -51,7 +51,7 @@
 .quiz-menu-section-title {
   font-family: 'Georgia', serif;
   font-size: 20px;
-  color: var(--ion-text-color);
+  color: var(--ion-color-primary);
   margin: 0;
   display: flex;
   align-items: center;
@@ -703,4 +703,16 @@
 
 .quiz-menu-footer-spacer {
   height: calc(90px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: dark) {
+  .quiz-menu-detail-title,
+  .quiz-menu-ownership-label,
+  .quiz-menu-ownership-chain,
+  .quiz-menu-close-btn {
+    color: var(--ion-color-secondary) !important;
+  }
 }

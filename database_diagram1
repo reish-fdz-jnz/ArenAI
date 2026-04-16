@@ -1,0 +1,544 @@
+# ArenAI — Diagrama de Relaciones de Base de Datos
+
+> [!NOTE]
+> **28 tablas** · **6 ENUMs** · Esquema basado en [script_postgresql.sql](file:///d:/repositories/ArenAI/database/script_postgresql.sql) + migraciones
+
+---
+
+## Diagrama de Relaciones (Todas las tablas)
+
+```mermaid
+erDiagram
+
+    institution ||--o{ grade_score_average : "FK id_institution"
+    institution ||--o{ section : "FK id_institution"
+    institution ||--o{ user : "FK id_institution"
+
+    section ||--o{ class : "FK id_section"
+    section ||--o{ user_section : "FK id_section"
+    section ||--o{ assignment : "FK id_section"
+
+    subject ||--o{ class : "FK id_subject"
+    subject ||--o{ topic : "FK id_subject"
+    subject ||--o{ quiz : "FK id_subject"
+    subject ||--o{ assignment : "FK id_subject"
+    subject ||--o{ battle_matchmaking : "FK id_subject"
+    subject ||--o{ battle_minigame : "FK id_subject"
+    subject ||--o{ learning_chat_history : "FK id_subject"
+
+    user ||--o| student_profile : "FK id_user"
+    user ||--o| professor_profile : "FK id_user"
+    user ||--o{ user_avatar : "FK id_user"
+    user ||--o{ user_section : "FK id_user"
+    user ||--o{ class_student : "FK id_user"
+    user ||--o{ student_class_summary : "FK id_user"
+    user ||--o{ student_topic : "FK id_user"
+    user ||--o{ quiz : "FK id_professor"
+    user ||--o{ quiz_attempt : "FK id_student"
+    user ||--o{ quiz_rating : "FK id_user"
+    user ||--o{ assignment : "FK id_professor"
+    user ||--o{ assignment_submission : "FK id_student"
+    user ||--o{ battle_matchmaking : "FK id_user"
+    user ||--o{ battle_minigame : "FK id_user_1"
+    user ||--o{ battle_minigame : "FK id_user_2"
+    user ||--o{ chat : "FK id_user_1"
+    user ||--o{ chat : "FK id_user_2"
+    user ||--o{ message : "FK id_user"
+    user ||--o{ friend_requests : "FK id_sender"
+    user ||--o{ friend_requests : "FK id_receiver"
+    user ||--o{ learning_chat_history : "FK id_user"
+
+    class ||--o{ class_topic : "FK id_class"
+    class ||--o{ class_student : "FK id_class"
+    class ||--o{ professor_class_report : "FK id_class"
+    class ||--o{ student_class_summary : "FK id_class"
+    class ||--o{ battle_matchmaking : "FK id_class"
+    class ||--o{ battle_minigame : "FK id_class"
+    class ||--o{ learning_chat_history : "FK id_class"
+
+    topic ||--o{ class_topic : "FK id_topic"
+    topic ||--o{ topic_father_son_relation : "FK id_topic_father"
+    topic ||--o{ topic_father_son_relation : "FK id_topic_son"
+    topic ||--o{ topic_resource : "FK id_topic"
+    topic ||--o{ student_topic : "FK id_topic"
+    topic ||--o{ quiz_question : "FK id_topic"
+    topic ||--o{ battle_minigame_question : "FK id_topic"
+
+    class_topic ||--o{ class_student_topic : "FK (id_class, id_topic)"
+    class_student ||--o{ class_student_topic : "FK (id_class, id_user)"
+
+    quiz ||--o{ quiz_question : "FK id_quiz"
+    quiz ||--o{ quiz_attempt : "FK id_quiz"
+    quiz ||--o{ quiz_rating : "FK id_quiz"
+    quiz ||--o{ assignment : "FK id_quiz"
+    quiz ||--o{ submission_quiz_score : "FK id_quiz"
+
+    quiz_attempt ||--o{ quiz_response : "FK id_attempt"
+    quiz_question ||--o{ quiz_response : "FK id_question"
+
+    assignment ||--o{ assignment_submission : "FK id_assignment"
+    assignment ||--o{ assignment_target : "FK id_assignment"
+
+    assignment_submission ||--o{ submission_quiz_score : "FK id_submission"
+
+    battle_minigame ||--o{ battle_minigame_question : "FK id_battle_minigame"
+
+    chat ||--o{ message : "FK id_chat"
+
+    institution { _ _ }
+    grade_score_average { _ _ }
+    section { _ _ }
+    subject { _ _ }
+    user { _ _ }
+    student_profile { _ _ }
+    professor_profile { _ _ }
+    user_avatar { _ _ }
+    user_section { _ _ }
+    class { _ _ }
+    topic { _ _ }
+    class_topic { _ _ }
+    class_student { _ _ }
+    class_student_topic { _ _ }
+    topic_father_son_relation { _ _ }
+    topic_resource { _ _ }
+    student_topic { _ _ }
+    student_class_summary { _ _ }
+    professor_class_report { _ _ }
+    quiz { _ _ }
+    quiz_question { _ _ }
+    quiz_attempt { _ _ }
+    quiz_response { _ _ }
+    quiz_rating { _ _ }
+    assignment { _ _ }
+    assignment_submission { _ _ }
+    assignment_target { _ _ }
+    submission_quiz_score { _ _ }
+    battle_matchmaking { _ _ }
+    battle_minigame { _ _ }
+    battle_minigame_question { _ _ }
+    chat { _ _ }
+    message { _ _ }
+    friend_requests { _ _ }
+    learning_chat_history { _ _ }
+```
+
+---
+
+## Relaciones por Dominio
+
+### 1. Institución & Estructura Académica
+
+```mermaid
+erDiagram
+    institution ||--o{ grade_score_average : "tiene promedios"
+    institution ||--o{ section : "tiene secciones"
+    institution ||--o{ user : "usuarios pertenecen"
+
+    institution {
+        SERIAL id_institution PK
+        VARCHAR name_institution UK
+        NUMERIC score_average
+    }
+    grade_score_average {
+        SERIAL id_grade_average PK
+        INT id_institution FK
+        VARCHAR grade
+        NUMERIC score
+    }
+    section {
+        SERIAL id_section PK
+        VARCHAR section_number
+        VARCHAR grade
+        INT id_institution FK
+    }
+```
+
+### 2. Usuarios & Perfiles
+
+```mermaid
+erDiagram
+    user ||--o| student_profile : "perfil estudiante"
+    user ||--o| professor_profile : "perfil profesor"
+    user ||--o{ user_avatar : "tiene avatares"
+    user ||--o{ user_section : "asignado a"
+    section ||--o{ user_section : "contiene"
+    user ||--o{ friend_requests : "envía / recibe"
+
+    user {
+        SERIAL id_user PK
+        VARCHAR username UK
+        VARCHAR email
+        VARCHAR password_hash
+        VARCHAR name
+        VARCHAR last_name
+        VARCHAR phone_number
+        INT id_institution FK
+        VARCHAR role
+        VARCHAR profile_picture_name
+        BOOLEAN first_login
+    }
+    student_profile {
+        INT id_user PK_FK
+        VARCHAR email_guardian
+        NUMERIC score_average
+        INT quiz_streak
+    }
+    professor_profile {
+        INT id_user PK_FK
+        VARCHAR grade
+    }
+    user_avatar {
+        SERIAL id_user_avatar PK
+        INT id_user FK
+        VARCHAR avatar_type
+        VARCHAR nickname
+        INT friendship_level
+        BOOLEAN is_current
+        TIMESTAMP created_at
+    }
+    user_section {
+        INT id_user PK_FK
+        INT id_section PK_FK
+        VARCHAR role_in_section
+    }
+    friend_requests {
+        SERIAL id_request PK
+        INT id_sender FK
+        INT id_receiver FK
+        ENUM status
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+```
+
+### 3. Clases, Temas & Inscripciones
+
+```mermaid
+erDiagram
+    section ||--o{ class : "tiene clases"
+    subject ||--o{ class : "materia"
+    subject ||--o{ topic : "tiene temas"
+    class ||--o{ class_topic : "cubre"
+    topic ||--o{ class_topic : "en clase"
+    class ||--o{ class_student : "inscritos"
+    user ||--o{ class_student : "inscrito"
+    class_topic ||--o{ class_student_topic : "score por tema"
+    class_student ||--o{ class_student_topic : "detalle tema"
+    topic ||--o{ topic_father_son_relation : "padre/hijo"
+    topic ||--o{ topic_resource : "recursos"
+    user ||--o{ student_topic : "dominio"
+    topic ||--o{ student_topic : "score"
+
+    class {
+        SERIAL id_class PK
+        VARCHAR name_class
+        INT id_subject FK
+        INT id_section FK
+        DATE fecha
+        NUMERIC score_average
+        VARCHAR description
+        VARCHAR status
+        TIMESTAMP started_at
+        TIMESTAMP ended_at
+    }
+    topic {
+        SERIAL id_topic PK
+        VARCHAR name
+        INT id_subject FK
+        TEXT description
+    }
+    class_topic {
+        SERIAL id_class_topic PK
+        INT id_class FK
+        INT id_topic FK
+        NUMERIC score_average
+    }
+    class_student {
+        INT id_class PK_FK
+        INT id_user PK_FK
+        TEXT ai_summary
+        NUMERIC interaction_coefficient
+        NUMERIC score_average
+        BOOLEAN attendance
+    }
+    class_student_topic {
+        INT id_class PK_FK
+        INT id_topic PK_FK
+        INT id_user PK_FK
+        NUMERIC score
+        TEXT ai_summary
+    }
+    topic_father_son_relation {
+        SERIAL id PK
+        INT id_topic_father FK
+        INT id_topic_son FK
+        NUMERIC correlation_coefficient
+    }
+    topic_resource {
+        SERIAL id_topic_resource PK
+        INT id_topic FK
+        VARCHAR resource_source
+        TEXT description
+        NUMERIC resource_quality
+    }
+    student_topic {
+        SERIAL id_student_topic PK
+        INT id_user FK
+        INT id_topic FK
+        NUMERIC score
+    }
+```
+
+### 4. Reportes & Análisis AI
+
+```mermaid
+erDiagram
+    class ||--o{ student_class_summary : "resúmenes"
+    user ||--o{ student_class_summary : "del estudiante"
+    class ||--o| professor_class_report : "reporte"
+    user ||--o{ learning_chat_history : "mensajes"
+    subject ||--o{ learning_chat_history : "materia"
+    class ||--o{ learning_chat_history : "durante clase"
+
+    student_class_summary {
+        BIGSERIAL id_summary PK
+        INT id_class FK
+        INT id_user FK
+        TEXT summary_text
+        JSONB strengths
+        JSONB weaknesses
+        JSONB study_tips
+        BOOLEAN is_processed_for_professor
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    professor_class_report {
+        BIGSERIAL id_report PK
+        INT id_class FK_UK
+        TEXT general_summary
+        JSONB top_confusion_topics
+        VARCHAR sentiment_average
+        TEXT suggested_action
+        TIMESTAMP created_at
+    }
+    learning_chat_history {
+        BIGSERIAL id_message PK
+        INT id_user FK
+        INT id_subject FK
+        INT id_class FK
+        ENUM role
+        TEXT content
+        BOOLEAN is_analyzed
+        TIMESTAMP created_at
+    }
+```
+
+### 5. Quizzes & Evaluaciones
+
+```mermaid
+erDiagram
+    user ||--o{ quiz : "crea"
+    subject ||--o{ quiz : "materia"
+    quiz ||--o{ quiz_question : "preguntas"
+    topic ||--o{ quiz_question : "tema"
+    quiz ||--o{ quiz_attempt : "intentos"
+    user ||--o{ quiz_attempt : "intenta"
+    quiz_attempt ||--o{ quiz_response : "respuestas"
+    quiz_question ||--o{ quiz_response : "respondida"
+    quiz ||--o{ quiz_rating : "calificaciones"
+    user ||--o{ quiz_rating : "califica"
+
+    quiz {
+        SERIAL id_quiz PK
+        INT id_professor FK
+        INT id_subject FK
+        VARCHAR quiz_name
+        VARCHAR description
+        VARCHAR level
+        VARCHAR language
+        TIMESTAMP created_at
+        BOOLEAN is_public
+        INT downloads
+        NUMERIC avg_rating
+        INT rating_count
+    }
+    quiz_question {
+        SERIAL id_question PK
+        INT id_quiz FK
+        INT id_topic FK
+        TEXT question_text
+        NUMERIC points
+        BOOLEAN allow_multiple_selection
+        VARCHAR option_1
+        VARCHAR option_2
+        VARCHAR option_3
+        VARCHAR option_4
+        VARCHAR correct_options
+    }
+    quiz_attempt {
+        SERIAL id_attempt PK
+        INT id_quiz FK
+        INT id_student FK
+        TIMESTAMP started_at
+        TIMESTAMP finished_at
+        NUMERIC total_score
+        INT focus_lost_count
+    }
+    quiz_response {
+        SERIAL id_response PK
+        INT id_attempt FK
+        INT id_question FK
+        VARCHAR selected_options
+        BOOLEAN is_correct
+        NUMERIC points_awarded
+        NUMERIC time_taken_seconds
+    }
+    quiz_rating {
+        SERIAL id_rating PK
+        INT id_quiz FK
+        INT id_user FK
+        SMALLINT rating
+        TIMESTAMP created_at
+    }
+```
+
+### 6. Tareas & Entregas
+
+```mermaid
+erDiagram
+    user ||--o{ assignment : "asigna"
+    section ||--o{ assignment : "sección"
+    subject ||--o{ assignment : "materia"
+    quiz ||--o{ assignment : "quiz vinculado"
+    assignment ||--o{ assignment_submission : "entregas"
+    user ||--o{ assignment_submission : "entrega"
+    assignment ||--o{ assignment_target : "destinatarios"
+    assignment_submission ||--o{ submission_quiz_score : "scores quiz"
+    quiz ||--o{ submission_quiz_score : "score"
+
+    assignment {
+        SERIAL id_assignment PK
+        INT id_professor FK
+        INT id_section FK
+        INT id_quiz FK
+        INT id_subject FK
+        VARCHAR title
+        TEXT description
+        DATE due_time
+        TIMESTAMP due_date
+        SMALLINT win_battle_requirement
+        INT min_battle_wins
+        INT min_win_streak
+        BOOLEAN required_text_response
+        TIMESTAMP created_at
+    }
+    assignment_submission {
+        SERIAL id_submission PK
+        INT id_assignment FK
+        INT id_student FK
+        ENUM status
+        INT win_streak_achieved
+        TEXT text_response
+        TIMESTAMP started_at
+        TIMESTAMP submitted_at
+        TIMESTAMP graded_at
+        NUMERIC grade
+        TEXT feedback
+    }
+    assignment_target {
+        SERIAL id_assignment_target PK
+        INT id_assignment FK
+        ENUM target_type
+        INT target_id
+    }
+    submission_quiz_score {
+        SERIAL id PK
+        INT id_submission FK
+        INT id_quiz FK
+        NUMERIC score
+        NUMERIC max_score
+        TIMESTAMP completed_at
+    }
+```
+
+### 7. Sistema de Batallas & Chat Social
+
+```mermaid
+erDiagram
+    user ||--o{ battle_matchmaking : "busca"
+    subject ||--o{ battle_matchmaking : "materia"
+    class ||--o{ battle_matchmaking : "en clase"
+    user ||--o{ battle_minigame : "jugador"
+    subject ||--o{ battle_minigame : "materia"
+    class ||--o{ battle_minigame : "en clase"
+    battle_minigame ||--o{ battle_minigame_question : "preguntas"
+    topic ||--o{ battle_minigame_question : "tema"
+    user ||--o{ chat : "participa"
+    chat ||--o{ message : "mensajes"
+    user ||--o{ message : "envía"
+
+    battle_matchmaking {
+        SERIAL id_matchmaking PK
+        INT id_user FK
+        INT id_subject FK
+        INT id_class FK
+        TIMESTAMP created_at
+        ENUM status
+        TIMESTAMP matched_at
+    }
+    battle_minigame {
+        SERIAL id_battle_minigame PK
+        INT id_user_1 FK
+        INT id_user_2 FK
+        INT id_class FK
+        INT id_subject FK
+        INT user_1_health
+        INT user_2_health
+        BOOLEAN winner
+        ENUM status
+        TIMESTAMP created_at
+        TIMESTAMP started_at
+        TIMESTAMP ended_at
+    }
+    battle_minigame_question {
+        SERIAL id PK
+        INT id_battle_minigame FK
+        INT id_topic FK
+        VARCHAR question
+        VARCHAR answer1
+        VARCHAR answer2
+        VARCHAR answer3
+        VARCHAR answer4
+    }
+    chat {
+        SERIAL id_chat PK
+        INT id_user_1 FK
+        INT id_user_2 FK
+        BOOLEAN friendship
+        TIMESTAMP last_message_at
+        VARCHAR last_message_preview
+    }
+    message {
+        SERIAL id_message PK
+        INT id_chat FK
+        INT id_user FK
+        TEXT content
+        TIMESTAMP created_at
+        BOOLEAN is_read
+        TEXT text
+        TIMESTAMP date
+    }
+```
+
+---
+
+## ENUMs
+
+| Enum | Valores |
+|---|---|
+| `matchmaking_status` | `waiting` · `matched` · `cancelled` |
+| `battle_status` | `waiting` · `active` · `completed` · `cancelled` |
+| `chat_role` | `user` · `model` |
+| `friend_req_status` | `pending` · `accepted` · `rejected` |
+| `submission_status` | `NOT_STARTED` · `IN_PROGRESS` · `SUBMITTED` · `GRADED` |
+| `target_type_enum` | `SECTION` · `STUDENT` |
