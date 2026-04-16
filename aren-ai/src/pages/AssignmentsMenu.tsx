@@ -307,7 +307,7 @@ const AssignmentsMenu: React.FC = () => {
         )}
 
         {/* Card Header Premium */}
-        <div className={`am-header-v3 gradient-${assignment.colorStyle}`}>
+        <div className={`am-header-v3 ${assignment.isOngoing ? `gradient-${assignment.colorStyle}` : 'gradient-theme'}`}>
           <div className="am-title-row">
             <h3 className="am-card-title">{assignment.name}</h3>
           </div>

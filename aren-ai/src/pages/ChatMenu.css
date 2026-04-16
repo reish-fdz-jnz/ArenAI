@@ -26,12 +26,14 @@
 
 .custom-searchbar {
     padding: 0;
-    --background: var(--ion-color-light);
+    --background: rgba(var(--ion-color-primary-rgb), 0.1);
     --border-radius: 20px;
     --box-shadow: none;
-    --placeholder-color: var(--ion-color-medium);
-    --icon-color: var(--ion-color-medium);
-    height: 55px; /* Bigger searchbar */
+    --placeholder-color: var(--ion-color-primary);
+    --icon-color: var(--ion-color-primary);
+    color: var(--ion-color-primary);
+    height: 55px;
+    /* Bigger searchbar */
     font-size: 1.1rem;
 }
 
@@ -43,8 +45,8 @@
 }
 
 .action-toggle-btn {
-    --background: var(--ion-color-light); 
-    --color: var(--ion-color-medium);
+    --background: rgba(var(--ion-color-primary-rgb), 0.1);
+    --color: var(--ion-color-primary);
     --box-shadow: none;
     width: 55px;
     height: 55px;
@@ -74,20 +76,24 @@
     width: 100%;
     height: 100%;
     margin: 0;
-    --color: var(--ion-color-medium); /* Default State */
+    --background: rgba(var(--ion-color-primary-rgb), 0.1);
+    --color: var(--ion-color-primary);
+    /* Default State */
     --padding-start: 0;
     --padding-end: 0;
     --ripple-color: var(--ion-color-primary);
 }
 
 .notification-btn.active {
-    --color: var(--ion-color-primary); /* Active Color */
+    --color: var(--ion-color-primary);
+    /* Active Color */
     --background: rgba(var(--ion-color-primary-rgb), 0.1);
 }
 
 .notif-badge {
     position: absolute;
-    top: 8px; /* Precise float position */
+    top: 8px;
+    /* Precise float position */
     right: 8px;
     background: var(--ion-color-danger);
     color: white;
@@ -99,8 +105,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    border: 2px solid var(--ion-background-color); 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--ion-background-color);
     z-index: 20;
     pointer-events: none;
 }
@@ -123,8 +129,15 @@
 }
 
 @keyframes popupEnter {
-    from { opacity: 0; transform: translate(-50%, -40%) scale(0.92); }
-    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    from {
+        opacity: 0;
+        transform: translate(-50%, -40%) scale(0.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
 }
 
 .popup-header {
@@ -163,14 +176,17 @@
     --background: var(--ion-background-color);
     --border-radius: 16px;
     --padding-start: 16px;
-    --inner-padding-end: 6px; /* Reduced right padding for buttons */
-    --padding-top: 0; /* Clear padding for full height buttons */
+    --inner-padding-end: 6px;
+    /* Reduced right padding for buttons */
+    --padding-top: 0;
+    /* Clear padding for full height buttons */
     --padding-bottom: 0;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
     border: 1px solid var(--ion-color-step-50);
     margin: 0;
     width: 100%;
-    height: 70px; /* Fixed height for rows */
+    height: 70px;
+    /* Fixed height for rows */
 }
 
 /* Ensure flex content layout */
@@ -188,7 +204,8 @@
     justify-content: center;
     gap: 4px;
     flex-grow: 1;
-    padding-left: 16px; /* Restore internal padding */
+    padding-left: 16px;
+    /* Restore internal padding */
     height: 100%;
 }
 
@@ -207,7 +224,8 @@
 
 .req-actions {
     display: flex;
-    height: 100%; /* Full Height */
+    height: 100%;
+    /* Full Height */
     align-items: center;
     margin-left: auto;
 }
@@ -215,17 +233,20 @@
 .req-actions ion-button {
     --padding-start: 0;
     --padding-end: 0;
-    height: 100%; /* Full Height of Row */
-    width: 60px; /* Wide touch target */
+    height: 100%;
+    /* Full Height of Row */
+    width: 60px;
+    /* Wide touch target */
     --border-radius: 0;
     margin: 0;
-    --box-shadow: none; 
+    --box-shadow: none;
     --background: transparent;
-    --background-hover: rgba(0,0,0,0.05);
+    --background-hover: rgba(0, 0, 0, 0.05);
 }
 
 .req-actions ion-button ion-icon {
-    font-size: 32px; /* Large Icon Size */
+    font-size: 32px;
+    /* Large Icon Size */
 }
 
 /* Explicit Colors to fix gray icons */
@@ -246,13 +267,14 @@
 
 .glass-modal::part(content) {
     border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     width: 90%;
     max-width: 400px;
     height: auto;
     max-height: 400px;
     margin: auto;
-    background: transparent; /* Wrapper is transparent */
+    background: transparent;
+    /* Wrapper is transparent */
 }
 
 .glass-modal-content {
@@ -261,13 +283,66 @@
     padding: 24px;
     border-radius: 20px;
     text-align: center;
-    border: 1px solid rgba(255,255,255,0.5);
+    border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 @media (prefers-color-scheme: dark) {
     .glass-modal-content {
         background: rgba(40, 40, 40, 0.9);
-        border: 1px solid rgba(255,255,255,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Chat username - white in dark mode */
+    .chat-header h2 {
+        color: #ffffff !important;
+    }
+
+    /* Searchbar text - dark on light searchbar in dark mode */
+    .custom-searchbar input,
+    .custom-searchbar .searchbar-input {
+        color: var(--ion-color-primary) !important;
+        -webkit-text-fill-color: var(--ion-color-primary) !important;
+    }
+
+    .custom-searchbar {
+        --background: var(--ion-color-light) !important;
+        --placeholder-color: var(--ion-color-primary) !important;
+        --icon-color: var(--ion-color-primary) !important;
+    }
+
+    /* Restore buttons and badge for dark mode */
+    .action-toggle-btn {
+        --background: var(--ion-color-light) !important;
+        --color: var(--ion-color-medium) !important;
+    }
+
+    .notification-btn {
+        --background: transparent !important;
+        --color: var(--ion-color-medium) !important;
+    }
+
+    .unread-badge {
+        background: var(--ion-color-primary) !important;
+        color: white !important;
+    }
+
+    /* Restore chat items for dark mode */
+    .chat-item {
+        --background: rgba(0, 0, 0, 0.15) !important;
+        box-shadow: none !important;
+        margin: 0 0 2px 0 !important;
+        border-radius: 0 !important;
+    }
+
+    .chat-item:hover {
+        --background: rgba(255, 255, 255, 0.05) !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    .chat-time,
+    .chat-preview {
+        color: rgba(255, 255, 255, 0.6) !important;
     }
 }
 
@@ -286,7 +361,7 @@
 
 .glass-input {
     margin-bottom: 24px;
-    --background: rgba(0,0,0,0.05);
+    --background: rgba(0, 0, 0, 0.05);
     border-radius: 12px;
     --padding-start: 12px;
     font-size: 1.1rem;
@@ -313,8 +388,15 @@
 }
 
 @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Chat List */
@@ -324,17 +406,20 @@
 }
 
 .chat-item {
-    --background: transparent;
+    --background: var(--ion-color-primary) !important;
+    border-radius: 16px;
+    margin: 8px 15px;
     --padding-start: 15px;
     --padding-end: 15px;
     --padding-top: 10px;
     --padding-bottom: 10px;
     --inner-padding-end: 0;
-    margin-bottom: 2px;
+    box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.2);
 }
 
 .chat-item:hover {
-    --background: rgba(0,0,0,0.02);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(var(--ion-color-primary-rgb), 0.3);
 }
 
 .chat-avatar {
@@ -360,18 +445,18 @@
     font-size: 1.05rem;
     font-weight: 600;
     margin: 0;
-    color: var(--ion-text-color);
+    color: #ffffff !important;
 }
 
 .chat-time {
     font-size: 0.75rem;
-    color: var(--ion-color-medium);
+    color: rgba(255, 255, 255, 0.8) !important;
     font-weight: 400;
 }
 
 .chat-preview {
     font-size: 0.9rem;
-    color: var(--ion-color-medium);
+    color: rgba(255, 255, 255, 0.9) !important;
     margin: 0;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -381,8 +466,8 @@
 
 /* Unread Badge */
 .unread-badge {
-    background: var(--ion-color-primary);
-    color: white;
+    background: #ffffff;
+    color: var(--ion-color-primary-shade, var(--ion-color-primary));
     font-size: 0.75rem;
     font-weight: bold;
     min-width: 22px;

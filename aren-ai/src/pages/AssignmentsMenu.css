@@ -55,7 +55,7 @@
   max-width: 400px;
 }
 
-body[class*="theme-"] .am-segment-wrapper {
+html[data-force-dark] .am-segment-wrapper {
   background: rgba(255, 255, 255, 0.08);
   /* Dark mode inner shadow */
 }
@@ -66,7 +66,7 @@ body[class*="theme-"] .am-segment-wrapper {
   border-radius: 100px;
   font-size: 15px;
   font-weight: 700;
-  color: var(--ion-text-color-step-400);
+  color: var(--ion-color-secondary);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -105,7 +105,7 @@ body[class*="theme-"] .am-segment-wrapper {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--ion-color-secondary-soft);
+  background: var(--ion-color-primary);
   padding: 8px 16px;
   border-radius: 20px;
   border: 1px solid rgba(var(--ion-color-primary-rgb), 0.1);
@@ -119,7 +119,7 @@ body[class*="theme-"] .am-segment-wrapper {
 .am-stat-val {
   font-size: 18px;
   font-weight: 800;
-  color: var(--ion-color-primary);
+  color: #ffffff;
   font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
 }
 
@@ -130,7 +130,7 @@ body[class*="theme-"] .am-segment-wrapper {
 .am-stat-lbl {
   font-size: 12px;
   font-weight: 600;
-  color: var(--ion-text-color-step-150);
+  color: rgba(255, 255, 255, 0.9);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -139,12 +139,11 @@ body[class*="theme-"] .am-segment-wrapper {
   color: var(--ion-color-danger);
 }
 
-/* Glass Search Bar */
 .am-search-glass {
   display: flex;
   align-items: center;
-  background: rgba(var(--ion-color-primary-rgb), 0.05);
-  border: 1px solid rgba(var(--ion-color-primary-rgb), 0.1);
+  background: var(--ion-card-background, #ffffff);
+  border: 1px solid rgba(var(--ion-color-primary-rgb), 0.2);
   backdrop-filter: blur(12px);
   border-radius: 24px;
   padding: 6px 6px 6px 16px;
@@ -155,24 +154,25 @@ body[class*="theme-"] .am-segment-wrapper {
 }
 
 .am-search-glass:focus-within {
-  background: var(--ion-color-secondary-soft);
-  box-shadow: 0 6px 20px rgba(var(--ion-color-primary-rgb), 0.1);
-  border-color: rgba(var(--ion-color-primary-rgb), 0.3);
+  background: var(--ion-background-color, #f4f5f8);
+  box-shadow: 0 6px 20px rgba(var(--ion-color-primary-rgb), 0.2);
+  border-color: rgba(var(--ion-color-primary-rgb), 0.4);
 }
 
-body[class*="theme-"] .am-search-glass {
+html[data-force-dark] .am-search-glass {
   background: rgba(255, 255, 255, 0.05);
   /* Lighter dark mode inputs */
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-body[class*="theme-"] .am-search-glass:focus-within {
+html[data-force-dark] .am-search-glass:focus-within {
   background: rgba(255, 255, 255, 0.1);
 }
 
 .am-search-icon {
   font-size: 20px;
-  color: var(--ion-text-color-step-400);
+  color: var(--ion-color-primary);
+  opacity: 0.7;
 }
 
 .am-search-input {
@@ -183,12 +183,13 @@ body[class*="theme-"] .am-search-glass:focus-within {
   padding: 8px 12px;
   font-size: 15px;
   font-weight: 500;
-  color: var(--ion-text-color);
+  color: var(--ion-color-primary);
   font-family: var(--font-family-base);
 }
 
 .am-search-input::placeholder {
-  color: var(--ion-text-color-step-400);
+  color: var(--ion-color-primary);
+  opacity: 0.6;
 }
 
 .am-filter-btn {
@@ -380,6 +381,10 @@ body[class*="theme-"] .am-search-glass:focus-within {
   background: linear-gradient(135deg, var(--ion-color-primary-tint), var(--ion-color-primary));
 }
 
+.gradient-theme {
+  background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade));
+}
+
 /* ───────────────────────────────────────────────────────────────────────────
    Card Body & Two-Column Split
    ─────────────────────────────────────────────────────────────────────────── */
@@ -404,7 +409,7 @@ body[class*="theme-"] .am-search-glass:focus-within {
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: var(--ion-text-color-step-400);
+  color: color-mix(in srgb, var(--ion-color-primary) 30%, #111);
   font-weight: 600;
 }
 
@@ -432,7 +437,7 @@ body[class*="theme-"] .am-search-glass:focus-within {
 
 .am-prog-title {
   font-size: 12px;
-  color: var(--ion-text-color-step-400);
+  color: color-mix(in srgb, var(--ion-color-primary) 40%, #111);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -441,7 +446,7 @@ body[class*="theme-"] .am-search-glass:focus-within {
 .am-prog-numbers {
   font-size: 14px;
   font-weight: 800;
-  color: var(--ion-text-color);
+  color: color-mix(in srgb, var(--ion-color-primary) 20%, #000);
   font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
 }
 
@@ -452,7 +457,7 @@ body[class*="theme-"] .am-search-glass:focus-within {
   overflow: hidden;
 }
 
-body[class*="theme-"] .am-progress-track {
+html[data-force-dark] .am-progress-track {
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -473,14 +478,14 @@ body[class*="theme-"] .am-progress-track {
   border-top: 1px dashed rgba(var(--ion-color-primary-rgb), 0.2);
 }
 
-body[class*="theme-"] .am-avg-section {
+html[data-force-dark] .am-avg-section {
   border-top-color: rgba(255, 255, 255, 0.1);
 }
 
 .am-avg-title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--ion-text-color);
+  color: color-mix(in srgb, var(--ion-color-primary) 30%, #111);
 }
 
 .am-score-badge {
@@ -522,7 +527,7 @@ body[class*="theme-"] .am-avg-section {
   padding-left: 16px;
 }
 
-body[class*="theme-"] .am-actions-col {
+html[data-force-dark] .am-actions-col {
   border-left-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -541,7 +546,7 @@ body[class*="theme-"] .am-actions-col {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-body[class*="theme-"] .am-action-btn {
+html[data-force-dark] .am-action-btn {
   background: rgba(255, 255, 255, 0.05);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
@@ -596,7 +601,7 @@ body[class*="theme-"] .am-action-btn {
   margin-top: 20px;
 }
 
-body[class*="theme-"] .am-empty-state {
+html[data-force-dark] .am-empty-state {
   border-color: rgba(255, 255, 255, 0.15);
 }
 
@@ -613,13 +618,13 @@ body[class*="theme-"] .am-empty-state {
 
 .am-empty-icon {
   font-size: 40px;
-  color: var(--ion-color-primary);
+  color: var(--ion-color-secondary);
 }
 
 .am-empty-state h2 {
   font-size: 20px;
   font-weight: 700;
-  color: var(--ion-text-color);
+  color: var(--ion-color-secondary);
   margin: 0 0 10px 0;
 }
 
@@ -643,4 +648,21 @@ body[class*="theme-"] .am-empty-state {
 
 .am-bottom-spacer {
   height: 40px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE OVERRIDES (Requested by User)
+   ═══════════════════════════════════════════════════════════════════════════ */
+html[data-force-dark] .am-empty-icon,
+html[data-force-dark] .am-empty-state h2 {
+  color: var(--ion-color-secondary) !important;
+}
+
+html[data-force-dark] .am-search-input::placeholder {
+  color: var(--ion-color-primary) !important;
+}
+
+html[data-force-dark] .am-stat-pill:not(.warning) .am-stat-val,
+html[data-force-dark] .am-stat-pill:not(.warning) .am-stat-lbl {
+  color: #ffffff !important;
 }

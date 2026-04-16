@@ -399,16 +399,6 @@ CREATE TRIGGER trg_cst_student_check_upd
 -- friend_requests
 -- -------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
 CREATE TABLE friend_requests (
     id_request  SERIAL            PRIMARY KEY,
     id_sender   INT               NOT NULL,

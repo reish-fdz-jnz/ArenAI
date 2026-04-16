@@ -41,8 +41,8 @@ const ProfessorHeader: React.FC<ProfessorHeaderProps> = ({
   const { t } = useTranslation();
 
   return (
-    <IonHeader className="professor-header-container">
-      <IonToolbar color="primary" className="professor-toolbar">
+    <IonHeader className="professor-header-container ion-no-border">
+      <IonToolbar color="primary" className="professor-toolbar ion-no-border">
         <div className="ph-content">
           {/* Menu / Back Button */}
           <IonButtons slot="start" className="ph-menu-btn-container">
