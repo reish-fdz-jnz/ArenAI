@@ -631,10 +631,9 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
         });
     }
 }
-
 // ============================================================
-// Phase 5: Generate per-topic SECTION summaries
-// Aggregates data from ALL students in a section, across all classes
+// Phase 5: Generate per-topic SECTION summaries (temporal)
+// Uses class_topic historical summaries as main data source
 // ============================================================
 export async function generateSectionTopicSummaries(sectionId?: number): Promise<void> {
     console.log('');
@@ -656,22 +655,10 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
 
         if (sectionIds.length === 0) {
             console.log('⏭️  No sections with topics found. Skipping Phase 5.');
-            broadcastInsightUpdate('🔍 No sections with topics found', {
-                phase: 5,
-                status: 'skipped',
-                reason: 'No section_topic records'
-            });
             return;
         }
 
         console.log(`📊 Found ${sectionIds.length} sections to analyze`);
-
-        broadcastInsightUpdate(`🏫 Phase 5 Starting: ${sectionIds.length} sections to analyze`, {
-            phase: 5,
-            status: 'started',
-            sectionCount: sectionIds.length
-        });
-
         let totalSuccess = 0;
 
         for (const secId of sectionIds) {
@@ -684,8 +671,6 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
                 const sectionName = sectionInfo.rows[0]
                     ? `${sectionInfo.rows[0].grade}-${sectionInfo.rows[0].section_number}`
                     : `Sección ${secId}`;
-
-                console.log(`\n🏫 Processing section: ${sectionName} (ID: ${secId})`);
 
                 // 3. Get topics for this section
                 const topicResult = await db.query<{
@@ -700,78 +685,34 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
                     [secId]
                 );
 
-                if (topicResult.rows.length === 0) {
-                    console.log(`⏭️  No topics for section ${secId}`);
-                    continue;
-                }
+                if (topicResult.rows.length === 0) continue;
+                console.log(`\n🏫 Section ${sectionName}: ${topicResult.rows.length} topics`);
 
-                console.log(`📘 ${topicResult.rows.length} topics to process`);
-
-                // 4. Get students in this section
-                const studentResult = await db.query<{ id_user: number }>(
-                    `SELECT us.id_user FROM user_section us
-                     INNER JOIN student_profile sp ON sp.id_user = us.id_user
-                     WHERE us.id_section = ?`,
+                // 4. Count students in section
+                const studentCount = await db.query<{ cnt: number }>(
+                    `SELECT COUNT(*) as cnt FROM user_section WHERE id_section = ?`,
                     [secId]
                 );
-                const studentIds = studentResult.rows.map(r => r.id_user);
-                const totalStudents = studentIds.length;
-                console.log(`👥 ${totalStudents} students in section`);
+                const totalStudents = studentCount.rows[0]?.cnt || 0;
 
-                // 5. Get chatbot question stats (wrapped in try/catch)
-                let questionStats: Awaited<ReturnType<typeof getQuestionStatsByTopic>> = [];
-                try {
-                    // Get questions from students in this section
-                    const classesInSection = await db.query<{ id_class: number }>(
-                        `SELECT id_class FROM class WHERE id_section = ?`,
-                        [secId]
-                    );
-                    for (const cls of classesInSection.rows) {
-                        const stats = await getQuestionStatsByTopic(cls.id_class);
-                        questionStats.push(...stats);
-                    }
-                } catch (e) {
-                    console.warn('⚠️  Could not fetch question stats');
-                }
-
-                // 6. Get student class summaries for context
-                const summaryResult = await db.query<{
-                    summary_text: string;
-                    weaknesses: string | string[] | null;
-                }>(
-                    `SELECT scs.summary_text, scs.weaknesses
-                     FROM student_class_summary scs
-                     WHERE scs.id_user IN (${studentIds.length > 0 ? studentIds.map(() => '?').join(',') : '0'})`,
-                    studentIds.length > 0 ? studentIds : [0]
-                );
-
-                const chatConclusions = summaryResult.rows.map(s => {
-                    const weaknesses = typeof s.weaknesses === 'string'
-                        ? JSON.parse(s.weaknesses)
-                        : (s.weaknesses || []);
-                    return { summary: s.summary_text, weaknesses: weaknesses as string[] };
-                });
-
-                // 7. Process each topic
+                // 5. Process each topic
                 for (const topic of topicResult.rows) {
                     try {
-                        console.log(`\n─${'─'.repeat(59)}`);
-                        console.log(`📘 Topic: ${topic.topic_name} (ID: ${topic.id_topic})`);
+                        const avgScore = topic.score || 0;
 
-                        // Get student scores for this topic in this section
-                        const scoreResult = await db.query<{ score: number }>(
-                            `SELECT st.score FROM student_topic st
-                             WHERE st.id_user IN (${studentIds.length > 0 ? studentIds.map(() => '?').join(',') : '0'})
-                             AND st.id_topic = ? AND st.score IS NOT NULL`,
-                            [...(studentIds.length > 0 ? studentIds : [0]), topic.id_topic]
+                        // Get class_topic historical summaries (main data source)
+                        const classSummaryResult = await db.query<{ ai_summary: string | null; class_name: string }>(
+                            `SELECT ct.ai_summary, c.name_session as class_name
+                             FROM class_topic ct
+                             INNER JOIN class c ON c.id_class = ct.id_class
+                             WHERE ct.id_topic = ? AND c.id_section = ? AND ct.ai_summary IS NOT NULL
+                             ORDER BY c.start_time DESC LIMIT 5`,
+                            [topic.id_topic, secId]
                         );
 
-                        const studentsCompleted = scoreResult.rows.length;
-                        const avgScore = studentsCompleted > 0
-                            ? Math.round(scoreResult.rows.reduce((s, r) => s + r.score, 0) / studentsCompleted)
-                            : (topic.score || 0);
-
-                        console.log(`📊 Score: ${avgScore}% | Completed: ${studentsCompleted}/${totalStudents}`);
+                        const classSummaries = classSummaryResult.rows
+                            .map(r => `- ${r.class_name}: ${r.ai_summary?.substring(0, 300)}`)
+                            .join('\n') || 'Sin resúmenes de clase disponibles';
 
                         // Get correlations
                         const correlationResult = await db.query<{
@@ -790,17 +731,6 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
                             [topic.id_topic, topic.id_topic, topic.id_topic, topic.id_topic]
                         );
 
-                        // Get class-level summaries for this topic
-                        const classSummaryResult = await db.query<{ ai_summary: string | null; class_name: string }>(
-                            `SELECT ct.ai_summary, c.name_session as class_name
-                             FROM class_topic ct
-                             INNER JOIN class c ON c.id_class = ct.id_class
-                             WHERE ct.id_topic = ? AND c.id_section = ? AND ct.ai_summary IS NOT NULL
-                             ORDER BY c.start_time DESC LIMIT 3`,
-                            [topic.id_topic, secId]
-                        );
-
-                        // Build context strings
                         const relatedTopics = correlationResult.rows.map(r =>
                             `${r.related_name} (${r.relation_type})`
                         ).join(', ') || 'Ninguno';
@@ -809,50 +739,22 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
                             `${r.related_name}: ${r.correlation_coefficient}`
                         ).join(', ') || 'N/A';
 
-                        const topicQStats = questionStats.find(qs => qs.topicId === topic.id_topic);
-                        const questionSummary = topicQStats
-                            ? topicQStats.sampleQuestions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n')
-                            : 'Sin preguntas registradas';
-
-                        const relevantConclusions = chatConclusions
-                            .filter(c => {
-                                const weakStr = JSON.stringify(c.weaknesses).toLowerCase();
-                                return weakStr.includes(topic.topic_name.toLowerCase());
-                            })
-                            .map(c => c.summary)
-                            .slice(0, 3)
-                            .join('\n') || 'Sin conclusiones específicas';
-
-                        const classSummaries = classSummaryResult.rows
-                            .map(r => `- ${r.class_name}: ${r.ai_summary?.substring(0, 200)}`)
-                            .join('\n') || 'Sin resúmenes de clase';
-
-                        // Build prompt
+                        // Build prompt (same format as TOPIC_CLASS_SUMMARY_PROMPT)
                         const { SECTION_TOPIC_SUMMARY_PROMPT } = await import('../config/prompts.js');
                         const prompt = SECTION_TOPIC_SUMMARY_PROMPT
                             .replace('{TOPIC_NAME}', topic.topic_name)
                             .replace('{SECTION_NAME}', sectionName)
                             .replace('{TOPIC_SCORE}', String(avgScore))
-                            .replace('{STUDENTS_COMPLETED}', String(studentsCompleted))
+                            .replace('{STUDENTS_COMPLETED}', String(totalStudents))
                             .replace('{TOTAL_STUDENTS}', String(totalStudents))
+                            .replace('{CLASS_SUMMARIES}', classSummaries)
                             .replace('{RELATED_TOPICS}', relatedTopics)
-                            .replace('{CORRELATIONS}', correlations)
-                            .replace('{STUDENT_QUESTIONS}', questionSummary)
-                            .replace('{AVG_FRUSTRATION}', topicQStats?.avgFrustration || 'low')
-                            .replace('{CHAT_CONCLUSIONS}', relevantConclusions)
-                            .replace('{CLASS_SUMMARIES}', classSummaries);
-
-                        console.log('🤖 Calling Gemini AI for section topic summary...');
+                            .replace('{CORRELATIONS}', correlations);
 
                         const aiResponse = await generateContentWithGemini(
                             `Analiza el estado de este tópico en la sección y genera el JSON:`,
                             prompt
                         );
-
-                        console.log('🎯 SECTION TOPIC SUMMARY RESULT:');
-                        console.log('─'.repeat(40));
-                        console.log(aiResponse.substring(0, 500));
-                        console.log('─'.repeat(40));
 
                         // Parse and save
                         const parsed = parseInsightResponse(aiResponse);
@@ -866,43 +768,23 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
                         );
 
                         totalSuccess++;
-                        console.log(`✅ SECTION TOPIC SUMMARY SAVED for: ${topic.topic_name}`);
-
-                        broadcastInsightUpdate(`🏫 Section Topic Summary: ${topic.topic_name}`, {
-                            phase: 5,
-                            status: 'section_topic_saved',
-                            sectionId: secId,
-                            sectionName,
-                            topicId: topic.id_topic,
-                            topicName: topic.topic_name,
-                            score: avgScore
-                        });
+                        console.log(`  ✅ ${topic.topic_name} (${avgScore}%)`);
 
                     } catch (topicErr) {
-                        console.error(`❌ Failed to process topic ${topic.topic_name}:`, topicErr);
+                        console.error(`  ❌ ${topic.topic_name}:`, topicErr);
                     }
                 }
 
             } catch (sectionErr) {
-                console.error(`❌ Failed to process section ${secId}:`, sectionErr);
+                console.error(`❌ Section ${secId}:`, sectionErr);
             }
         }
 
         console.log(`\n✅ Phase 5 complete - ${totalSuccess} section topic summaries generated`);
 
-        broadcastInsightUpdate(`🏫 Phase 5 Complete: ${totalSuccess} section topic summaries generated`, {
-            phase: 5,
-            status: 'complete',
-            successCount: totalSuccess
-        });
-
     } catch (err) {
-        console.error('💥 Fatal error in section topic summary generation:', err);
-        broadcastInsightUpdate('💥 Phase 5 Error: Failed to generate section topic summaries', {
-            phase: 5,
-            status: 'error',
-            error: String(err)
-        });
+        console.error('💥 Phase 5 error:', err);
     }
 }
+
 

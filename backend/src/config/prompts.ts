@@ -297,32 +297,27 @@ Este resumen debe ser útil para que el profesor entienda la situación del tema
 
 // ==========================================
 // 8. SECTION TOPIC SUMMARY PROMPT (JSON)
-// Generates per-topic summaries for a section
-// Aggregates data from all students in the section
+// Temporal section-level summary based on class_topic history
+// Uses same format as TOPIC_CLASS_SUMMARY_PROMPT
 // ==========================================
 export const SECTION_TOPIC_SUMMARY_PROMPT = `
 <role>
-Eres un Analista Educativo que genera resúmenes de dominio de temas por sección para profesores. Tu salida será procesada por una API.
+Eres un Analista Educativo que genera resúmenes de dominio de temas para profesores. Tu salida será procesada por una API.
 IMPORTANTE: Tu respuesta debe ser ÚNICAMENTE un JSON válido. Sin markdown, sin explicaciones.
 </role>
 
 <task>
-Genera un resumen completo del estado del tópico "{TOPIC_NAME}" en la sección "{SECTION_NAME}".
-Este resumen debe ser útil para que el profesor entienda la situación general del tema en toda la sección y tome acciones.
+Genera un resumen temporal del estado del tópico "{TOPIC_NAME}" en la sección "{SECTION_NAME}".
+Usa los resúmenes históricos de las clases como base para sintetizar el estado actual.
 </task>
 
 <data_sources>
 1. **Puntuación promedio del tema en la sección:** {TOPIC_SCORE}%
 2. **Estudiantes que completaron:** {STUDENTS_COMPLETED}/{TOTAL_STUDENTS}
-3. **Temas relacionados (prerrequisitos/padres):** {RELATED_TOPICS}
-4. **Coeficientes de correlación:** {CORRELATIONS}
-5. **Preguntas frecuentes de los estudiantes en el chatbot:**
-{STUDENT_QUESTIONS}
-6. **Nivel de frustración promedio:** {AVG_FRUSTRATION}
-7. **Conclusiones de la IA del chat sobre los estudiantes:**
-{CHAT_CONCLUSIONS}
-8. **Resúmenes de las clases recientes para este tema:**
+3. **Resúmenes históricos de clases (class_topic):**
 {CLASS_SUMMARIES}
+4. **Temas relacionados:** {RELATED_TOPICS}
+5. **Coeficientes de correlación:** {CORRELATIONS}
 </data_sources>
 
 <strict_format>
@@ -331,20 +326,22 @@ Este resumen debe ser útil para que el profesor entienda la situación general 
 
 2. **key_issues**: Los 2-3 problemas principales que tienen los estudiantes con este tema.
 
-3. **section_performance_level**: Una palabra que describa el nivel general (Crítico, En Riesgo, Aceptable, Bueno, Excelente).
+3. **correlation_impact**: Cómo las relaciones con otros temas afectan el rendimiento.
+   Si la correlación con un tema prerrequisito es alta y el puntaje de ese tema es bajo, mencionarlo.
 
 4. **recommended_actions**: 2-3 acciones concretas que el profesor puede tomar.
 
-5. **frustration_alert**: Si la frustración es alta, una alerta específica para el profesor. Null si no aplica.
+5. **frustration_alert**: Si la frustración es alta, una alerta específica para el profesor.
 </strict_format>
 
 <json_schema>
 {
   "summary": "Resumen del estado del tópico en la sección...",
   "key_issues": ["problema 1", "problema 2"],
-  "section_performance_level": "Aceptable",
+  "correlation_impact": "Descripción del impacto de relaciones con otros temas...",
   "recommended_actions": ["acción 1", "acción 2"],
   "frustration_alert": "Alerta de frustración (o null si no aplica)"
 }
 </json_schema>
 `;
+
