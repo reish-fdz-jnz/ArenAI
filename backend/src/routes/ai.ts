@@ -9,7 +9,8 @@ import {
   getChatHistory,
   getSubjectIdByName
 } from '../repositories/chatLogRepository.js';
-import { runInsightGeneration, runClassReportGeneration } from '../services/insightService.js';
+import { runInsightGeneration, runClassReportGeneration, generateSectionTopicSummaries } from '../services/insightService.js';
+import { getSectionTopics, upsertSectionTopic } from '../repositories/sectionRepository.js';
 import { db } from '../db/pool.js';
 import { getStudentTopicProgress } from '../repositories/studentRepository.js';
 import { classifyQuestion } from '../utils/questionClassifier.js';
@@ -659,6 +660,130 @@ router.get('/topic-summaries', async (req, res, next) => {
     });
   } catch (error: any) {
     console.error('Topic summaries error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /ai/section-topic-summaries - Get per-topic AI summaries for a section
+router.get('/section-topic-summaries', async (req, res, next) => {
+  try {
+    const sectionId = parseInt(req.query.sectionId as string);
+    if (!sectionId) {
+      return res.status(400).json({ error: 'sectionId is required' });
+    }
+
+    console.log(`[API] /section-topic-summaries called sectionId=${sectionId}`);
+
+    const sectionTopics = await getSectionTopics(sectionId);
+
+    // Get topic relations
+    const relationResult = await db.query<any>(
+      `SELECT 
+          tfr.id_topic_father,
+          tf.name as father_name,
+          tfr.id_topic_son,
+          ts.name as son_name,
+          tfr.correlation_coefficient
+       FROM topic_father_son_relation tfr
+       INNER JOIN topic tf ON tf.id_topic = tfr.id_topic_father
+       INNER JOIN topic ts ON ts.id_topic = tfr.id_topic_son
+       INNER JOIN section_topic st ON (st.id_topic = tfr.id_topic_father OR st.id_topic = tfr.id_topic_son)
+       WHERE st.id_section = ?
+       GROUP BY tfr.id_topic_father, tf.name, tfr.id_topic_son, ts.name, tfr.correlation_coefficient`,
+      [sectionId]
+    );
+
+    // Build response
+    const topics = sectionTopics.map((topic) => {
+      const relations = relationResult.rows
+        .filter((r: any) => r.id_topic_father === topic.id_topic || r.id_topic_son === topic.id_topic)
+        .map((r: any) => ({
+          relatedTopic: r.id_topic_father === topic.id_topic ? r.son_name : r.father_name,
+          relatedTopicId: r.id_topic_father === topic.id_topic ? r.id_topic_son : r.id_topic_father,
+          type: r.id_topic_father === topic.id_topic ? 'parent_of' : 'child_of',
+          correlation: r.correlation_coefficient
+        }));
+
+      let parsedSummary = null;
+      if (topic.ai_summary) {
+        try {
+          parsedSummary = JSON.parse(topic.ai_summary);
+        } catch {
+          parsedSummary = { summary: topic.ai_summary };
+        }
+      }
+
+      return {
+        topicId: topic.id_topic,
+        topicName: topic.topic_name,
+        subjectId: topic.id_subject,
+        subjectName: topic.subject_name,
+        score: topic.score ? parseFloat(String(topic.score)) : null,
+        aiSummary: parsedSummary,
+        lastAnalysisAt: topic.last_analysis_at,
+        relations
+      };
+    });
+
+    res.json({
+      success: true,
+      sectionId,
+      topics
+    });
+  } catch (error: any) {
+    console.error('Section topic summaries error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /ai/generate-section-summaries - Trigger section topic summary generation
+router.post('/generate-section-summaries', async (req, res, next) => {
+  try {
+    const { sectionId, testMode } = req.body;
+    console.log(`[API] /generate-section-summaries called sectionId=${sectionId}, testMode=${testMode}`);
+
+    // If testMode, populate section_topic with hardcoded data first
+    if (testMode && sectionId) {
+      console.log('[API] Test mode: populating section_topic with all topics...');
+      
+      // Get ALL topics from the database
+      const allTopics = await db.query<{ id_topic: number; name: string }>(
+        `SELECT id_topic, name FROM topic ORDER BY id_subject, name`
+      );
+
+      if (allTopics.rows.length === 0) {
+        return res.status(400).json({ error: 'No topics found in database' });
+      }
+
+      // Insert each topic into section_topic with a random score
+      for (const topic of allTopics.rows) {
+        const randomScore = Math.floor(Math.random() * 60) + 40; // 40-100
+        await upsertSectionTopic(sectionId, topic.id_topic, randomScore);
+      }
+
+      console.log(`[API] Populated ${allTopics.rows.length} topics for section ${sectionId}`);
+    }
+
+    // Generate summaries
+    await generateSectionTopicSummaries(sectionId || undefined);
+
+    // Return the generated summaries
+    const sectionTopics = sectionId ? await getSectionTopics(sectionId) : [];
+
+    res.json({
+      success: true,
+      message: `Section topic summaries generated${testMode ? ' (test mode with hardcoded data)' : ''}`,
+      topicsProcessed: sectionTopics.length,
+      topics: sectionTopics.map(t => ({
+        topicId: t.id_topic,
+        topicName: t.topic_name,
+        score: t.score,
+        aiSummary: t.ai_summary ? (() => { try { return JSON.parse(t.ai_summary!); } catch { return t.ai_summary; } })() : null,
+        lastAnalysisAt: t.last_analysis_at
+      }))
+    });
+  } catch (error: any) {
+    console.error('Generate section summaries error:', error);
     res.status(500).json({ error: error.message });
   }
 });
