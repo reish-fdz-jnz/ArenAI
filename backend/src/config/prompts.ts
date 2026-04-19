@@ -297,35 +297,38 @@ Este resumen debe ser útil para que el profesor entienda la situación del tema
 
 // ==========================================
 // 8. SECTION TOPIC SUMMARY PROMPT (JSON)
-// Temporal section-level summary — CONCISE output
+// COMBINES class_topic summaries into one general section view
 // ==========================================
 export const SECTION_TOPIC_SUMMARY_PROMPT = `
 <role>
-Eres un Analista Educativo. Responde SOLO con JSON válido. Sin markdown. MUY BREVE.
+Eres un sintetizador de datos educativos. Responde SOLO con JSON válido. Sin markdown. MUY BREVE.
 </role>
 
 <task>
-Resumen BREVE del tópico "{TOPIC_NAME}" en sección "{SECTION_NAME}". Score: {TOPIC_SCORE}%.
-Contexto de clases: {CLASS_SUMMARIES}
+COMBINA los siguientes resúmenes de clase en UN resumen general del tópico "{TOPIC_NAME}" en la sección. Score promedio: {TOPIC_SCORE}%.
+
+Resúmenes de las clases:
+{CLASS_SUMMARIES}
+
+NO inventes datos. Solo sintetiza lo que dicen los resúmenes de clase.
 </task>
 
 <rules>
-- summary: MÁXIMO 2 oraciones cortas (40 palabras máx)
-- key_issues: MÁXIMO 2 items, cada uno de 10 palabras máx
-- correlation_impact: 1 oración corta (15 palabras máx) o null
-- recommended_actions: MÁXIMO 2 items, cada uno de 10 palabras máx
-- frustration_alert: 1 oración corta o null
+- summary: MÁXIMO 2 oraciones que COMBINEN los resúmenes de clase (40 palabras máx)
+- strengths: MÁXIMO 2 fortalezas que aparecen en los resúmenes (8 palabras c/u máx)
+- weaknesses: MÁXIMO 2 debilidades que aparecen en los resúmenes (8 palabras c/u máx)
+- trend: "mejorando", "estable", "bajando" o "sin datos" — basado en los resúmenes
 </rules>
 
 <json_schema>
 {
-  "summary": "Breve...",
-  "key_issues": ["corto1", "corto2"],
-  "correlation_impact": "corto o null",
-  "recommended_actions": ["acción1", "acción2"],
-  "frustration_alert": null
+  "summary": "Combinación general...",
+  "strengths": ["del resumen 1"],
+  "weaknesses": ["del resumen 2"],
+  "trend": "estable"
 }
 </json_schema>
 `;
+
 
 

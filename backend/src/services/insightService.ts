@@ -633,13 +633,49 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
 }
 // ============================================================
 // Phase 5: Generate per-topic SECTION summaries (temporal)
-// Uses class_topic historical summaries as main data source
-// MINIMAL queries — no per-topic correlation lookups
+// Step 1: Auto-populate section_topic from REAL data
+// Step 2: Generate AI summaries from class_topic history
 // ============================================================
 export async function generateSectionTopicSummaries(sectionId?: number): Promise<void> {
     console.log('[Phase 5] Section topic summaries starting...');
 
     try {
+        // ── Step 1: Populate section_topic with REAL data ──
+        // Find all section-topic pairs from real classes and calculate real avg scores
+        const realData = await db.query<{
+            id_section: number;
+            id_topic: number;
+            avg_score: number;
+        }>(
+            `SELECT c.id_section, ct.id_topic,
+                    COALESCE(AVG(st_scores.score), ct.score_average, 0) as avg_score
+             FROM class_topic ct
+             INNER JOIN class c ON c.id_class = ct.id_class
+             LEFT JOIN (
+                SELECT stopic.id_topic, stopic.score, us.id_section
+                FROM student_topic stopic
+                INNER JOIN user_section us ON us.id_user = stopic.id_user
+                WHERE stopic.score IS NOT NULL
+             ) st_scores ON st_scores.id_topic = ct.id_topic AND st_scores.id_section = c.id_section
+             WHERE c.id_section IS NOT NULL
+             ${sectionId ? 'AND c.id_section = ?' : ''}
+             GROUP BY c.id_section, ct.id_topic`,
+            sectionId ? [sectionId] : []
+        );
+
+        if (realData.rows.length > 0) {
+            console.log(`[Phase 5] Upserting ${realData.rows.length} real section-topic records...`);
+            for (const row of realData.rows) {
+                await db.query(
+                    `INSERT INTO section_topic (id_section, id_topic, score)
+                     VALUES (?, ?, ?)
+                     ON DUPLICATE KEY UPDATE score = VALUES(score)`,
+                    [row.id_section, row.id_topic, Math.round(row.avg_score)]
+                );
+            }
+        }
+
+        // ── Step 2: Get sections to generate summaries for ──
         let sectionIds: number[] = [];
         if (sectionId) {
             sectionIds = [sectionId];
@@ -654,13 +690,12 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
 
         for (const secId of sectionIds) {
             try {
-                // Section name
                 const si = await db.query<{ section_number: string; grade: string }>(
                     `SELECT section_number, grade FROM section WHERE id_section = ?`, [secId]
                 );
                 const sectionName = si.rows[0] ? `${si.rows[0].grade}-${si.rows[0].section_number}` : `Sección ${secId}`;
 
-                // All topics for this section
+                // Topics with their REAL scores
                 const topics = await db.query<{ id_topic: number; topic_name: string; score: number | null }>(
                     `SELECT st.id_topic, t.name as topic_name, st.score
                      FROM section_topic st INNER JOIN topic t ON t.id_topic = st.id_topic
@@ -676,11 +711,9 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
                      WHERE c.id_section = ? AND ct.ai_summary IS NOT NULL`, [secId]
                 );
 
-                // Group by topic
                 const summaryMap = new Map<number, string[]>();
                 for (const row of allClassSummaries.rows) {
                     if (!summaryMap.has(row.id_topic)) summaryMap.set(row.id_topic, []);
-                    // Truncate each summary to 100 chars
                     summaryMap.get(row.id_topic)!.push(row.ai_summary.substring(0, 100));
                 }
 
@@ -726,3 +759,4 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
         console.error('[Phase 5] Error:', err);
     }
 }
+

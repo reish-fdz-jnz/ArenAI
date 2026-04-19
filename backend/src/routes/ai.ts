@@ -10,7 +10,7 @@ import {
   getSubjectIdByName
 } from '../repositories/chatLogRepository.js';
 import { runInsightGeneration, runClassReportGeneration, generateSectionTopicSummaries } from '../services/insightService.js';
-import { getSectionTopics, upsertSectionTopic } from '../repositories/sectionRepository.js';
+import { getSectionTopics } from '../repositories/sectionRepository.js';
 import { db } from '../db/pool.js';
 import { getStudentTopicProgress } from '../repositories/studentRepository.js';
 import { classifyQuestion } from '../utils/questionClassifier.js';
@@ -736,54 +736,49 @@ router.get('/section-topic-summaries', async (req, res, next) => {
   }
 });
 
-// POST /ai/generate-section-summaries - Trigger section topic summary generation
+// POST /ai/generate-section-summaries - Force real pipeline
 router.post('/generate-section-summaries', async (req, res, next) => {
   try {
-    const { sectionId, testMode } = req.body;
-    console.log(`[API] /generate-section-summaries called sectionId=${sectionId}, testMode=${testMode}`);
+    console.log('[API] Forcing real pipeline...');
 
-    // If testMode, populate section_topic with hardcoded data first
-    if (testMode && sectionId) {
-      console.log('[API] Test mode: populating section_topic with all topics...');
-      
-      // Get ALL topics from the database
-      const allTopics = await db.query<{ id_topic: number; name: string }>(
-        `SELECT id_topic, name FROM topic ORDER BY id_subject, name`
-      );
+    // Phase 4: Generate class_topic summaries for ALL classes that have topics
+    const allClasses = await db.query<{ id_class: number }>(
+      `SELECT DISTINCT id_class FROM class_topic`
+    );
 
-      if (allTopics.rows.length === 0) {
-        return res.status(400).json({ error: 'No topics found in database' });
-      }
-
-      // Insert each topic into section_topic with a random score
-      for (const topic of allTopics.rows) {
-        const randomScore = Math.floor(Math.random() * 60) + 40; // 40-100
-        await upsertSectionTopic(sectionId, topic.id_topic, randomScore);
-      }
-
-      console.log(`[API] Populated ${allTopics.rows.length} topics for section ${sectionId}`);
+    const { generateTopicClassSummaries } = await import('../services/insightService.js');
+    for (const cls of allClasses.rows) {
+      await generateTopicClassSummaries(cls.id_class);
     }
 
-    // Generate summaries
-    await generateSectionTopicSummaries(sectionId || undefined);
+    // Phase 5: Combine class_topic summaries into section_topic
+    await generateSectionTopicSummaries();
 
-    // Return the generated summaries
-    const sectionTopics = sectionId ? await getSectionTopics(sectionId) : [];
+    // Return results
+    const allSections = await db.query<{ id_section: number }>(
+      `SELECT DISTINCT id_section FROM section_topic`
+    );
 
-    res.json({
-      success: true,
-      message: `Section topic summaries generated${testMode ? ' (test mode with hardcoded data)' : ''}`,
-      topicsProcessed: sectionTopics.length,
-      topics: sectionTopics.map(t => ({
+    let allTopics: any[] = [];
+    for (const sec of allSections.rows) {
+      const topics = await getSectionTopics(sec.id_section);
+      allTopics.push(...topics.map(t => ({
+        sectionId: sec.id_section,
         topicId: t.id_topic,
         topicName: t.topic_name,
         score: t.score,
-        aiSummary: t.ai_summary ? (() => { try { return JSON.parse(t.ai_summary!); } catch { return t.ai_summary; } })() : null,
-        lastAnalysisAt: t.last_analysis_at
-      }))
+        aiSummary: t.ai_summary ? (() => { try { return JSON.parse(t.ai_summary!); } catch { return t.ai_summary; } })() : null
+      })));
+    }
+
+    res.json({
+      success: true,
+      message: `Resúmenes generados`,
+      topicsProcessed: allTopics.length,
+      topics: allTopics
     });
   } catch (error: any) {
-    console.error('Generate section summaries error:', error);
+    console.error('Generate error:', error);
     res.status(500).json({ error: error.message });
   }
 });
