@@ -90,9 +90,9 @@
 }
 
 .dropdown-options {
-  background: var(--ion-card-background);
-  border: 2px solid var(--ion-color-secondary);
-  border-radius: 6px;
+  background: var(--ion-color-secondary) !important;
+  border: 1px solid var(--ion-color-secondary-tint) !important;
+  border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   min-width: 130px;
   max-height: 200px;
@@ -105,15 +105,15 @@
 }
 
 .dropdown-option {
-  color: var(--ion-text-color);
-  font-size: 0.9rem;
-  font-weight: 500;
+  color: var(--ion-color-secondary-contrast, #ffffff) !important;
+  font-size: 0.95rem;
+  font-weight: 600;
   padding: 10px 14px;
   cursor: pointer;
-  border-bottom: 1px solid var(--ion-color-secondary-tint);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.2s;
   font-family: 'Open Sans', sans-serif;
-  background: var(--ion-card-background);
+  background: transparent;
 }
 
 .dropdown-option:last-child {
@@ -121,8 +121,8 @@
 }
 
 .dropdown-option:hover {
-  background: var(--ion-color-secondary);
-  color: var(--ion-color-secondary-contrast);
+  background: var(--ion-color-primary-shade, var(--ion-color-primary));
+  color: #ffffff;
 }
 
 /* Responsive Design */
@@ -189,25 +189,9 @@
   font-weight: 500;
 }
 
-/* Specific colors for Chat Options (Challenge, Rename, Delete) in order */
-.header-variant .dropdown-options .dropdown-option:nth-child(1) {
-  color: var(--ion-color-primary) !important;
-  /* Challenge/Play */
-}
-
-.header-variant .dropdown-options .dropdown-option:nth-child(2) {
-  color: var(--ion-color-secondary) !important;
-  /* Rename */
-}
-
-.header-variant .dropdown-options .dropdown-option:nth-child(3) {
-  color: var(--ion-color-danger) !important;
-  /* Delete */
-}
-
 /* Hover effects */
 .header-variant .dropdown-option:hover {
-  background: rgba(var(--ion-color-primary-rgb), 0.08);
+  background: var(--ion-color-primary-shade, var(--ion-color-primary));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

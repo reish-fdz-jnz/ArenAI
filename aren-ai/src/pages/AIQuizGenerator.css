@@ -78,6 +78,32 @@
   gap: 16px;
 }
 
+/* ── Header Overlap Fix ── */
+.ai-quiz-page .sh-brand-container-absolute {
+  max-width: 120px;
+  text-align: right;
+  top: 8px; /* Slightly higher to give more room */
+}
+
+.ai-quiz-page .sh-brand-sub {
+  font-size: 10px;
+  line-height: 1.1;
+  white-space: normal;
+  display: block;
+}
+
+@media (max-width: 380px) {
+  .ai-quiz-page .sh-brand-container-absolute {
+    max-width: 100px;
+  }
+  .ai-quiz-page .sh-brand-name {
+    font-size: 16px;
+  }
+  .ai-quiz-page .sh-brand-sub {
+    font-size: 9px;
+  }
+}
+
 /* Spacer pushes scrollable content above the fixed footer button */
 .quiz-footer-spacer {
   height: 85px;
@@ -241,7 +267,7 @@
 /* Topic label text */
 .quiz-topic-name {
   font-weight: 500;
-  color: var(--ion-text-color);
+  color: var(--ion-color-primary);
   font-size: 13px;
 }
 
@@ -252,7 +278,8 @@
 
 .quiz-topic-subject {
   font-size: 10px;
-  color: var(--ion-text-color-step-400);
+  color: var(--ion-color-primary-tint, var(--ion-color-primary));
+  opacity: 0.7;
   font-weight: 400;
 }
 
@@ -368,7 +395,7 @@
 
 .quiz-questions-label {
   font-size: 20px;
-  color: var(--ion-text-color);
+  color: var(--ion-color-primary);
   font-weight: 400;
   font-family: 'Georgia', serif;
 }
@@ -400,7 +427,7 @@
 .quiz-details-label {
   font-size: 16px;
   font-weight: 500;
-  color: var(--ion-text-color);
+  color: var(--ion-color-primary);
   margin-bottom: 10px;
   display: block;
   font-family: 'Georgia', serif;
@@ -676,8 +703,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 700;
-  /* --st-modal-text resolves to the correct text color in all themes/modes */
-  color: var(--st-modal-text);
+  color: var(--ion-color-primary);
 }
 
 /* Search bar area */
@@ -688,10 +714,10 @@
 
 .quiz-searchbar {
   --background: var(--ion-color-surface);
-  --color: var(--ion-text-color);
+  --color: var(--ion-color-primary);
   --border-radius: 12px;
   --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --placeholder-color: var(--st-input-placeholder);
+  --placeholder-color: var(--ion-color-primary-tint);
 }
 
 /* Scrollable topic list */

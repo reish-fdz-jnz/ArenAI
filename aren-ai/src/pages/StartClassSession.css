@@ -147,7 +147,17 @@
   margin: 0;
   font-size: 20px;
   font-family: 'Georgia', serif;
-  color: var(--ion-text-color);
+  color: color-mix(in srgb, var(--ion-color-primary-shade, var(--ion-color-primary)) 70%, #000000);
+}
+
+@media (prefers-color-scheme: dark) {
+  .ss-section-text-mini h2 {
+    color: #ffffff !important;
+  }
+}
+
+html[data-force-dark] .ss-section-text-mini h2 {
+  color: #ffffff !important;
 }
 
 .ss-live-badge-mini {

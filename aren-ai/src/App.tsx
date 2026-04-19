@@ -59,6 +59,7 @@ import StartClassSession from "./pages/StartClassSession";
 import ArenEntityPage from "./pages/ArenEntityPage";
 import TopicDetail from "./pages/TopicDetail";
 import ProfessorTopicDetail from "./pages/ProfessorTopicDetail";
+import ProfessorHelp from "./pages/ProfessorHelp";
 import { socketService } from "./services/socket";
 import { chatStorage } from "./services/chatStorage";
 import { App as CapApp } from "@capacitor/app";
@@ -99,7 +100,7 @@ setupIonicReact();
 
 const App: React.FC = () => {
   const [userRole, setUserRole] = useState<"professor" | "student" | null>(
-    () => localStorage.getItem("userRole") as "professor" | "student" | null
+    () => localStorage.getItem("userRole") as "professor" | "student" | null,
   );
   const [userData, setUserData] = useState<any>(() => {
     const data = localStorage.getItem("userData");
@@ -169,7 +170,8 @@ const App: React.FC = () => {
     if (!userRole) return;
 
     const checkSession = () => {
-      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      const token =
+        localStorage.getItem("authToken") || localStorage.getItem("token");
       if (!token) {
         console.warn("[SessionCheck] No token found in localStorage.");
         return;
@@ -188,22 +190,26 @@ const App: React.FC = () => {
           atob(payloadBase64)
             .split("")
             .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-            .join("")
+            .join(""),
         );
-        
+
         const payload = JSON.parse(decodedJson);
 
         if (payload.exp) {
           const currentTime = Math.floor(Date.now() / 1000);
           const timeRemaining = payload.exp - currentTime;
-          
-          // Add 15-minute (900s) leeway for time drift between server and client
-          const timeWithLeeway = timeRemaining + 900; 
 
-          console.log(`[SessionCheck] Token expires in ${Math.round(timeRemaining / 60)} minutes (with 15m drift buffer).`);
-          
+          // Add 15-minute (900s) leeway for time drift between server and client
+          const timeWithLeeway = timeRemaining + 900;
+
+          console.log(
+            `[SessionCheck] Token expires in ${Math.round(timeRemaining / 60)} minutes (with 15m drift buffer).`,
+          );
+
           if (timeWithLeeway < 0) {
-            console.warn("[SessionCheck] Session expired (including leeway). Showing modal.");
+            console.warn(
+              "[SessionCheck] Session expired (including leeway). Showing modal.",
+            );
             setIsSessionExpired(true);
           }
         }
@@ -590,34 +596,52 @@ const App: React.FC = () => {
                       )}
                     </Route>
 
-                    <Route 
-                      path="/page/topic/:id" 
+                    <Route
+                      path="/page/topic/:id"
                       exact={true}
                       render={(props) => {
                         const storedRole = localStorage.getItem("userRole");
-                        const activeRole = (userRole || storedRole || "").toLowerCase();
-                        console.log(`[App Mapping] /page/topic/:id - State: ${userRole}, Stored: ${storedRole}, Final: ${activeRole}`);
-                        
+                        const activeRole = (
+                          userRole ||
+                          storedRole ||
+                          ""
+                        ).toLowerCase();
+                        console.log(
+                          `[App Mapping] /page/topic/:id - State: ${userRole}, Stored: ${storedRole}, Final: ${activeRole}`,
+                        );
+
                         if (activeRole === "student") return <TopicDetail />;
-                        if (activeRole === "professor") return <ProfessorTopicDetail />;
-                        
-                        console.warn(`[App Mapping] Topic Route Fallback: Invalid role "${activeRole}". Redirecting to login.`);
+                        if (activeRole === "professor")
+                          return <ProfessorTopicDetail />;
+
+                        console.warn(
+                          `[App Mapping] Topic Route Fallback: Invalid role "${activeRole}". Redirecting to login.`,
+                        );
                         return <Redirect to="/login" />;
                       }}
                     />
 
-                    <Route 
-                      path="/page/class-topic/:id" 
+                    <Route
+                      path="/page/class-topic/:id"
                       exact={true}
                       render={(props) => {
                         const storedRole = localStorage.getItem("userRole");
-                        const activeRole = (userRole || storedRole || "").toLowerCase();
-                        console.log(`[App Mapping] /page/class-topic/:id - State: ${userRole}, Stored: ${storedRole}, Final: ${activeRole}`);
-                        
-                        if (activeRole === "professor") return <ProfessorTopicDetail />;
+                        const activeRole = (
+                          userRole ||
+                          storedRole ||
+                          ""
+                        ).toLowerCase();
+                        console.log(
+                          `[App Mapping] /page/class-topic/:id - State: ${userRole}, Stored: ${storedRole}, Final: ${activeRole}`,
+                        );
+
+                        if (activeRole === "professor")
+                          return <ProfessorTopicDetail />;
                         if (activeRole === "student") return <TopicDetail />;
-                        
-                        console.warn(`[App Mapping] Class-Topic Route Fallback: Invalid role "${activeRole}". Redirecting to login.`);
+
+                        console.warn(
+                          `[App Mapping] Class-Topic Route Fallback: Invalid role "${activeRole}". Redirecting to login.`,
+                        );
                         return <Redirect to="/login" />;
                       }}
                     />
@@ -708,6 +732,14 @@ const App: React.FC = () => {
                     <Route path="/professor-settings" exact={true}>
                       {userRole === "professor" ? (
                         <ProfessorSettings />
+                      ) : (
+                        <Redirect to="/login" />
+                      )}
+                    </Route>
+
+                    <Route path="/professor-help" exact={true}>
+                      {userRole === "professor" ? (
+                        <ProfessorHelp />
                       ) : (
                         <Redirect to="/login" />
                       )}

@@ -15,33 +15,33 @@ import {
 import { helpCircle, mail, chevronDown, search, book, checkmarkCircle, send } from 'ionicons/icons';
 import StudentHeader from '../components/StudentHeader';
 import PageTransition from '../components/PageTransition';
-import './Help.css';
+import './Help.css'; // Reuse common help styles
 
-const Help: React.FC = () => {
+const ProfessorHelp: React.FC = () => {
     const [searchText, setSearchText] = useState('');
     const [showToast, setShowToast] = useState(false);
     const [contactForm, setContactForm] = useState({ subject: '', message: '' });
 
     const faqs = [
         {
-            question: "¿Cómo gano más oro y gemas?",
-            answer: "Puedes ganar oro completando lecciones, quizzes diarios y misiones de clan. Las gemas se obtienen al subir de nivel, mantener rachas de estudio o en cofres especiales."
+            question: "¿Cómo creo una nueva sección o grupo?",
+            answer: "Dirígete a 'Crear Sección' en el menú lateral. Allí podrás definir el nombre del grupo, la materia y obtener el código de acceso para tus estudiantes."
         },
         {
-            question: "¿Cómo funcionan las Batallas?",
-            answer: "En el Lobby de Batalla, elige un modo (Standard, Blitz o Lógica). Te enfrentarás a otro estudiante en tiempo real respondiendo preguntas. ¡El que responda más rápido y correctamente gana!"
+            question: "¿Cómo funciona el generador de quizzes con IA?",
+            answer: "En 'Generador de Quiz', ingresa el tema y nivel educativo. Nuestra IA generará preguntas automáticas que podrás editar, guardar y asignar a tus grupos en segundos."
         },
         {
-            question: "¿Puedo cambiar mi Avatar?",
-            answer: "¡Sí! Ve a la Tienda o a tu Perfil. Puedes desbloquear nuevos avatares con oro o gemas y seleccionarlos como tu personaje activo."
+            question: "¿Cómo puedo ver el progreso de mis alumnos?",
+            answer: "Usa la sección 'Estadísticas por Tema' o 'Mis Estudiantes'. Podrás ver gráficas de rendimiento individual y grupal, así como identificar temas que necesitan refuerzo."
         },
         {
-            question: "¿Qué pasa si pierdo mi racha?",
-            answer: "Si olvidas estudiar un día, tu racha se reiniciará a cero. Puedes usar un 'Racha Freeze' comprado en la tienda para proteger tu racha por un día."
+            question: "¿Cómo inicio una sesión en vivo?",
+            answer: "Primero planea tu sesión en 'Planear Sesión'. Una vez guardada, aparecerá en tu panel principal. Haz clic en 'Iniciar' para generar el QR de acceso para tus alumnos."
         },
         {
-            question: "¿Cómo me uno a un Clan?",
-            answer: "Ve a la sección 'Clan' en el menú o el lobby. Puedes buscar un clan por nombre o unirte al clan de tu clase si tu profesor lo ha habilitado."
+            question: "¿Cómo asigno tareas a mis grupos?",
+            answer: "Ve a 'Nueva Tarea', selecciona los cuestionarios que deseas incluir y elige las secciones o alumnos específicos. Define una fecha límite y haz clic en guardar."
         }
     ];
 
@@ -51,8 +51,7 @@ const Help: React.FC = () => {
     );
 
     const handleContactSubmit = () => {
-        // Mock submission
-        console.log("Contact form submitted:", contactForm);
+        console.log("Professor contact form submitted:", contactForm);
         setContactForm({ subject: '', message: '' });
         setShowToast(true);
     };
@@ -65,12 +64,12 @@ const Help: React.FC = () => {
                 <PageTransition variant="fade">
                     <div className="help-hero">
                         <IonIcon icon={helpCircle} className="help-hero-icon" />
-                        <h1>¿En qué podemos ayudarte?</h1>
+                        <h1>Panel de Ayuda para Profesores</h1>
                         <div className="search-bar-container">
                             <IonIcon icon={search} className="search-icon" />
                             <input
                                 type="text"
-                                placeholder="Buscar preguntas..."
+                                placeholder="Buscar tutoriales o preguntas..."
                                 value={searchText}
                                 onChange={e => setSearchText(e.target.value)}
                             />
@@ -80,7 +79,7 @@ const Help: React.FC = () => {
                     <div className="help-section">
                         <div className="section-header">
                             <IonIcon icon={book} />
-                            <h2>Preguntas Frecuentes</h2>
+                            <h2>Guía del Educador</h2>
                         </div>
 
                         <IonAccordionGroup className="faq-accordion">
@@ -97,7 +96,7 @@ const Help: React.FC = () => {
                             ))}
                             {filteredFaqs.length === 0 && (
                                 <div className="no-results">
-                                    No encontramos respuestas para "{searchText}".
+                                    No encontramos resultados para "{searchText}".
                                 </div>
                             )}
                         </IonAccordionGroup>
@@ -106,31 +105,31 @@ const Help: React.FC = () => {
                     <div className="help-section contact-section">
                         <div className="section-header">
                             <IonIcon icon={mail} />
-                            <h2>Contáctanos</h2>
+                            <h2>Soporte Técnico Especializado</h2>
                         </div>
-                        <p className="contact-desc">¿No encuentras lo que buscas? Envíanos un mensaje.</p>
+                        <p className="contact-desc">¿Necesitas ayuda con la gestión de tus grupos? Contáctanos.</p>
 
                         <div className="contact-form">
                             <IonItem className="input-item" lines="none">
-                                <IonLabel position="stacked">Asunto</IonLabel>
+                                <IonLabel position="stacked">Asunto de Gestión</IonLabel>
                                 <IonInput
                                     value={contactForm.subject}
-                                    placeholder="Ej. Problema con mi cuenta"
+                                    placeholder="Ej. Error al subir calificaciones"
                                     onIonChange={e => setContactForm({ ...contactForm, subject: e.detail.value! })}
                                 />
                             </IonItem>
                             <IonItem className="input-item" lines="none">
-                                <IonLabel position="stacked">Mensaje</IonLabel>
+                                <IonLabel position="stacked">Detalle del Requerimiento</IonLabel>
                                 <IonTextarea
                                     rows={4}
                                     value={contactForm.message}
-                                    placeholder="Describe tu problema en detalle..."
+                                    placeholder="Explícanos cómo podemos apoyarte con tu clase..."
                                     onIonChange={e => setContactForm({ ...contactForm, message: e.detail.value! })}
                                 />
                             </IonItem>
 
                             <IonButton expand="block" color="primary" className="btn-send-help" onClick={handleContactSubmit}>
-                                Enviar Mensaje <IonIcon slot="end" icon={send} />
+                                Enviar a Soporte Académico <IonIcon slot="end" icon={send} />
                             </IonButton>
                         </div>
                     </div>
@@ -139,7 +138,7 @@ const Help: React.FC = () => {
                 <IonToast
                     isOpen={showToast}
                     onDidDismiss={() => setShowToast(false)}
-                    message="¡Mensaje enviado! Te responderemos pronto."
+                    message="Solicitud enviada. Un asesor académico te contactará pronto."
                     duration={3000}
                     position="bottom"
                     color="success"
@@ -150,4 +149,4 @@ const Help: React.FC = () => {
     );
 };
 
-export default Help;
+export default ProfessorHelp;

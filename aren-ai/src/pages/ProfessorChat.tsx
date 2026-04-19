@@ -229,7 +229,7 @@ const ProfessorChat: React.FC = () => {
   return (
     <IonPage className="chatbot-page">
       <StudentHeader
-        pageTitle="professor.chat.title"
+        pageTitle={getT("title")}
         showSubject={false}
         showNotch={false}
       />

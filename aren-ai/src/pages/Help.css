@@ -1,168 +1,220 @@
+/* Help.css - Premium Support Redesign */
+
 .help-page-content {
     --background: var(--ion-background-color);
+    background: linear-gradient(180deg, rgba(var(--ion-color-primary-rgb), 0.1) 0%, var(--ion-background-color) 100%);
 }
 
 .help-hero {
-    background: var(--ion-color-primary);
-    color: white;
-    padding: 40px 20px 60px;
+    background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade));
+    padding: 40px 25px;
     text-align: center;
-    border-bottom-left-radius: 30px;
-    border-bottom-right-radius: 30px;
-    margin-bottom: 20px;
+    border-radius: 30px;
+    box-shadow: 0 15px 40px rgba(var(--ion-color-primary-rgb), 0.25);
     position: relative;
+    overflow: hidden;
+    margin: 15px 15px 30px;
+}
+
+.help-hero::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
 }
 
 .help-hero-icon {
-    font-size: 64px;
-    opacity: 0.2;
+    font-size: 80px;
+    color: rgba(255, 255, 255, 0.2);
     position: absolute;
     top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 20px;
 }
 
 .help-hero h1 {
-    font-size: 24px;
-    margin-top: 20px;
-    margin-bottom: 20px;
-    font-weight: 700;
+    color: #ffffff;
+    font-size: 28px;
+    font-weight: 900;
+    margin: 0 0 25px 0;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     position: relative;
     z-index: 2;
 }
 
 .search-bar-container {
-    background: var(--st-surface, white);
-    border-radius: 50px;
-    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 18px;
+    padding: 12px 20px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     max-width: 500px;
     margin: 0 auto;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: box-shadow 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.search-bar-container .search-icon {
-    color: var(--ion-color-medium);
-    font-size: 20px;
+.search-bar-container:focus-within {
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.search-icon {
+    color: #ffffff;
+    font-size: 22px;
 }
 
 .search-bar-container input {
+    background: transparent;
     border: none;
-    outline: none;
-    width: 100%;
+    color: #ffffff;
     font-size: 16px;
-    color: var(--ion-text-color);
+    width: 100%;
+    outline: none;
+    font-weight: 500;
+}
+
+.search-bar-container input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .help-section {
-    padding: 20px;
-    max-width: 800px;
-    margin: 0 auto;
+    padding: 0 20px;
+    margin-bottom: 40px;
 }
 
 .section-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-    color: var(--ion-text-color);
-}
-
-.section-header h2 {
-    font-size: 20px;
-    font-weight: 700;
-    margin: 0;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-left: 5px;
 }
 
 .section-header ion-icon {
-    font-size: 24px;
+    font-size: 20px;
     color: var(--ion-color-primary);
+    background: rgba(var(--ion-color-primary-rgb), 0.1);
+    padding: 8px;
+    border-radius: 12px;
 }
 
-/* Accordion Styling */
+.section-header h2 {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--ion-color-primary-shade);
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+
+/* FAQ Accordion Glass Style */
+.faq-accordion {
+    background: transparent;
+}
+
 .faq-accordion ion-accordion {
-    background: var(--ion-item-background, #fff);
-    margin-bottom: 10px;
-    border-radius: 12px;
+    background: var(--ion-card-background, #ffffff);
+    margin-bottom: 12px;
+    border-radius: 20px !important;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(var(--ion-color-primary-rgb), 0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.faq-accordion ion-item[slot="header"] {
+    --background: transparent;
+    --padding-start: 20px;
+    --padding-end: 20px;
+    --min-height: 70px;
 }
 
 .faq-question {
-    font-weight: 600;
-    font-size: 15px;
-    white-space: normal;
+    font-weight: 700 !important;
+    color: var(--ion-color-primary-shade) !important;
+    font-size: 15px !important;
+    line-height: 1.4;
+    white-space: normal !important;
 }
 
 .faq-answer {
-    color: var(--ion-color-medium);
+    color: var(--ion-color-primary-shade);
+    opacity: 0.85;
+    line-height: 1.7;
     font-size: 14px;
-    line-height: 1.5;
     margin: 0;
+    font-weight: 500;
+}
+
+/* Contact Form */
+.contact-form {
+    background: var(--ion-card-background, #ffffff);
+    border-radius: 28px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(var(--ion-color-primary-rgb), 0.08);
+}
+
+.contact-desc {
+    color: var(--ion-color-primary);
+    font-size: 14px;
+    margin-bottom: 20px;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+.input-item {
+    --background: rgba(var(--ion-color-primary-rgb), 0.03);
+    --border-radius: 16px;
+    --padding-start: 16px;
+    margin-bottom: 15px;
+    border-radius: 16px;
+    border: 1px solid rgba(var(--ion-color-primary-rgb), 0.05);
+}
+
+.input-item ion-label {
+    color: var(--ion-color-primary) !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    margin-bottom: 8px !important;
+}
+
+.btn-send-help {
+    --border-radius: 18px;
+    height: 56px;
+    margin-top: 25px;
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 0.5px;
+    --box-shadow: 0 10px 25px rgba(var(--ion-color-primary-rgb), 0.3);
 }
 
 .no-results {
     text-align: center;
-    color: var(--ion-color-medium);
-    padding: 20px;
-    font-style: italic;
-}
-
-/* Contact Form */
-.contact-section {
-    padding-bottom: 60px;
-}
-
-.contact-desc {
-    color: var(--ion-color-medium);
-    margin-bottom: 20px;
-    margin-top: -10px;
-}
-
-.contact-form {
-    background: var(--ion-item-background, #fff);
-    padding: 20px;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.input-item {
-    --background: transparent;
-    margin-bottom: 15px;
-    --padding-start: 0;
-}
-
-.btn-send-help {
-    margin-top: 20px;
-    --border-radius: 12px;
+    padding: 40px 20px;
+    color: var(--ion-color-primary);
     font-weight: 600;
+    font-style: italic;
+    opacity: 0.7;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   DARK MODE OVERRIDES
-   ═══════════════════════════════════════════════════════════════════════════ */
 @media (prefers-color-scheme: dark) {
-    .search-bar-container {
-        background: var(--ion-card-background);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    }
-
-    .search-bar-container input {
-        color: var(--ion-text-color);
-    }
-
-    .section-header {
-        color: var(--ion-text-color);
-    }
-
     .faq-accordion ion-accordion {
-        background: var(--ion-card-background);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
     }
-
+    
+    .faq-question, .faq-answer {
+        color: #ffffff !important;
+    }
+    
     .contact-form {
-        background: var(--ion-card-background);
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
 }

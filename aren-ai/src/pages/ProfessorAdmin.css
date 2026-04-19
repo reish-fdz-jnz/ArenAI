@@ -16,13 +16,13 @@
 .admin-title {
     font-size: 1.8rem;
     font-weight: 700;
-    color: white;
+    color: var(--ion-color-primary-shade, #1a1a1a);
     margin-bottom: 8px;
 }
 
 .admin-subtitle {
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--ion-color-step-600);
 }
 
 .admin-grid {
@@ -73,12 +73,12 @@
     margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
-    color: white;
+    color: var(--ion-color-primary-shade, #1a1a1a);
 }
 
 .admin-student-id {
     font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--ion-color-step-500);
 }
 
 .admin-controls {
@@ -95,8 +95,8 @@
 
 .control-label {
     font-size: 0.85rem;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.5);
+    font-weight: 700;
+    color: var(--ion-color-secondary-shade);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -118,14 +118,14 @@
     border-radius: 6px;
     font-size: 0.85rem;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--ion-color-step-700);
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .attendance-btn.active {
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    background: rgba(var(--ion-color-primary-rgb), 0.1);
+    color: var(--ion-color-primary-shade);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     font-weight: 600;
 }
@@ -161,7 +161,7 @@
     font-size: 1.1rem;
     font-weight: 600;
     text-align: center;
-    color: white;
+    color: var(--ion-color-primary-shade);
     transition: all 0.2s;
 }
 

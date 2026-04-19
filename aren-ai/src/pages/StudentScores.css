@@ -1,4 +1,4 @@
-/* StudentScores.css */
+/* StudentScores.css - Leaderboard Edition - Maximum Theme Integration */
 
 .student-scores-content {
   --background: transparent;
@@ -7,276 +7,364 @@
 .dashboard-container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 24px 20px;
+  padding: 10px 16px 30px 16px;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-/* Header Styling - Integrated with ArenAI theme */
-.pst-page ion-header {
-  --border-width: 0 !important;
-  --border-style: none !important;
-  --background: transparent !important;
-}
-
-.pst-page .header-toolbar {
-  --background: var(--ion-background-color) !important;
-  --padding-top: 10px;
-  --padding-bottom: 5px;
-}
-
+/* ── Header Brand Polish ── */
 .pst-header-brand {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 10px;
   width: 100%;
 }
 
 .pst-brand-name {
+  font-family: 'Open Sans', sans-serif;
   font-size: 24px;
-  font-weight: 800;
+  font-weight: 300;
   color: var(--ion-color-primary);
-  letter-spacing: -0.5px;
+  letter-spacing: 1px;
 }
 
 .pst-brand-sub {
-  font-size: 12px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--ion-text-color-step-400);
   letter-spacing: 2px;
-  margin-top: -2px;
+  opacity: 0.8;
+  border-left: 1px solid var(--ion-border-color);
+  padding-left: 8px;
 }
 
-/* Section Header & Controls */
-.header-controls {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 15px;
-  margin-bottom: 5px;
-}
-
-.filter-card {
-  background: var(--ion-color-secondary-soft);
-  border-radius: 16px;
-  padding: 4px 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(var(--ion-color-primary-rgb), 0.1);
-}
-
-.filter-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: white;
-  opacity: 0.7;
-}
-
-.filter-select {
-  --padding-start: 0;
-  --placeholder-color: white;
-  font-weight: 700;
-  font-size: 15px;
-  color: white;
-}
-
-/* Page Title with Notch (Consistent with Student Apps) */
+/* ── Title Pill Centering ── */
 .pst-notch-container {
   display: flex;
   justify-content: center;
-  margin-top: -5px;
-}
-
-.pst-notch {
-  background: var(--ion-background-color);
-  padding: 0 40px 15px 40px;
-  border-bottom-left-radius: 40px;
-  border-bottom-right-radius: 40px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  z-index: 10;
+  width: 100%;
+  margin-top: 10px;
 }
 
 .pst-title-pill {
   background: var(--ion-color-primary);
-  color: white;
+  color: var(--ion-color-primary-contrast, #ffffff);
   padding: 8px 30px;
-  border-radius: 25px;
+  border-radius: 30px;
   font-weight: 700;
-  font-size: 16px;
-  box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.3);
-}
-
-/* Average Score Card - Hero Section */
-.average-score-bubble {
-  background: linear-gradient(135deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
-  border-radius: 24px;
-  padding: 30px 20px;
+  font-size: 14px;
+  box-shadow: 0 4px 15px rgba(var(--ion-color-primary-rgb), 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
   text-align: center;
-  margin-bottom: 10px;
-  color: white;
-  box-shadow: 0 10px 25px rgba(var(--ion-color-primary-rgb), 0.3);
-  position: relative;
-  overflow: hidden;
-  border: 4px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Decorative circles in background */
-.average-score-bubble::before {
-  content: "";
-  position: absolute;
-  top: -50px;
-  right: -50px;
-  width: 150px;
-  height: 150px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-}
-
-.average-score-bubble h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.average-icon {
-  font-size: 1.8rem;
-  color: var(--ion-color-warning);
-  /* Gold trophy color */
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-/* Student Items List */
-.student-score-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.student-bubble-card {
-  --background: var(--ion-color-secondary-soft);
-  border-radius: 18px;
-  margin: 0;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border: 1px solid rgba(var(--ion-color-primary-rgb), 0.05);
-}
-
-.student-bubble-card:hover {
-  transform: scale(1.02) translateX(5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-  --background: var(--ion-card-background);
-}
-
-.student-bubble-card ion-card-content {
+/* ── Top Row: Themed ── */
+.dashboard-top-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 20px !important;
+  gap: 15px;
+  background: var(--ion-color-primary);
+  padding: 20px;
+  border-radius: 28px;
+  box-shadow: 0 10px 25px rgba(var(--ion-color-primary-rgb), 0.25);
+  color: white;
 }
 
-.student-info {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.student-avatar {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-tertiary));
+.avg-circle-container {
+  position: relative;
+  width: 100px;
+  height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+.avg-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.avg-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.2);
+  stroke-width: 10;
+}
+
+.avg-fill {
+  fill: none;
+  stroke: white;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 283;
+  transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.avg-circle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 2;
+}
+
+.avg-val {
+  font-size: 24px;
+  font-weight: 800;
   color: white;
-  font-weight: 800;
-  font-size: 15px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  line-height: 1;
 }
 
-.student-name {
-  font-weight: 700;
-  font-size: 16px;
-  color: var(--ion-text-color);
-  letter-spacing: -0.2px;
-}
-
-.student-score-badge {
-  padding: 8px 16px;
-  border-radius: 14px;
+.avg-lbl {
+  font-size: 7px;
   font-weight: 800;
-  font-size: 17px;
-  min-width: 75px;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
   text-align: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
-  font-family: 'Inter', sans-serif;
 }
 
-/* Score Variations */
-.score-high {
-  background: var(--ion-color-success);
+.header-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.filter-pill {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 8px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.pill-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: white;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.filter-pill ion-select {
+  --padding-start: 0;
+  font-weight: 700;
+  font-size: 14px;
   color: white;
 }
 
-.score-medium {
-  background: var(--ion-color-warning);
+/* ── Podium Section: Maximum Theme ── */
+.podium-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 20px 0 10px 0;
+}
+
+.podium-spot {
+  flex: 1;
+  max-width: 110px;
+  background: var(--ion-color-secondary-soft); /* Themed base */
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 5px 15px 5px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 2px solid transparent;
+}
+
+.podium-spot:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 30px rgba(var(--ion-color-primary-rgb), 0.2);
+}
+
+.podium-spot.gold {
+  height: 200px;
+  background: #FFFBF0; /* Keep gold distinct but can have themed border */
+  border-color: #FFD700;
+  z-index: 3;
+}
+
+.podium-spot.silver {
+  height: 170px;
+  background: var(--ion-color-secondary-soft);
+  border-color: rgba(var(--ion-color-primary-rgb), 0.3);
+}
+
+.podium-spot.bronze {
+  height: 150px;
+  background: var(--ion-color-secondary-soft);
+  border-color: rgba(var(--ion-color-primary-rgb), 0.3);
+}
+
+.podium-crown {
+  position: absolute;
+  top: -20px;
+  font-size: 30px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+}
+
+.podium-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--ion-color-primary);
+  margin-bottom: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.podium-rank {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
   color: white;
+  margin-bottom: 6px;
 }
 
-.score-low {
-  background: var(--ion-color-danger);
-  color: white;
+.gold .podium-rank { background: #FFD700; }
+.silver .podium-rank { background: #C0C0C0; }
+.bronze .podium-rank { background: #CD7F32; }
+
+.podium-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ion-color-primary);
+  text-align: center;
+  margin-bottom: 2px;
+  width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Responsive Grid / Tablet+ */
-@media (min-width: 768px) {
-  .dashboard-container {
-    padding: 30px 40px;
-    gap: 30px;
-  }
-
-  .student-score-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-
-  .average-score-bubble {
-    padding: 40px;
-    border-radius: 30px;
-  }
-
-  .average-score-bubble h2 {
-    font-size: 2rem;
-  }
-
-  .filter-card {
-    padding: 6px 20px;
-  }
+.podium-score {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ion-color-primary);
+  font-family: 'SF Mono', monospace;
 }
 
-/* Dark Mode Overrides */
+/* ── Ranking List: Maximum Theme ── */
+.others-list {
+  background: var(--ion-color-secondary-soft); /* Change from White to Theme */
+  border-radius: 32px;
+  padding: 24px 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(var(--ion-color-primary-rgb), 0.15);
+}
+
+.list-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ion-color-primary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+  opacity: 0.6;
+  text-align: center;
+}
+
+.ranking-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 18px;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.4); /* Glass effect on themed bg */
+}
+
+.ranking-row:hover {
+  background: white;
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(var(--ion-color-primary-rgb), 0.1);
+}
+
+.row-rank {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ion-color-primary);
+  width: 20px;
+  opacity: 0.5;
+}
+
+.row-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ion-color-primary);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.row-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ion-color-primary); /* Themed text */
+}
+
+.row-score {
+  font-size: 16px;
+  font-weight: 800;
+  font-family: 'SF Mono', monospace;
+}
+
+.ranking-row.score-high .row-score { color: var(--ion-color-success); }
+.ranking-row.score-medium .row-score { color: var(--ion-color-warning); }
+.ranking-row.score-low .row-score { color: var(--ion-color-danger); }
+
+/* ── Responsive ── */
+@media (max-width: 400px) {
+  .podium-container { gap: 6px; }
+  .podium-spot { padding: 15px 4px; }
+  .podium-name { font-size: 11px; }
+}
+
+/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
-  .student-bubble-card {
-    border-color: rgba(255, 255, 255, 0.05);
+  .ranking-row {
+    background: rgba(0, 0, 0, 0.2);
   }
-
-  .student-avatar {
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .pst-notch {
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  .ranking-row:hover {
+    background: rgba(0, 0, 0, 0.4);
   }
 }

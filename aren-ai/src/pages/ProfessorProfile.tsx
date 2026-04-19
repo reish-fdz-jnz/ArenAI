@@ -38,9 +38,16 @@ const ProfessorProfile: React.FC = () => {
         // Clear local storage and redirect
         localStorage.removeItem("userRole");
         localStorage.removeItem("userData");
+        localStorage.removeItem("authToken");
         // Force reload or redirect to login
         window.location.href = '/login';
     };
+
+    // Get dynamic user data
+    const userDataStr = localStorage.getItem("userData");
+    const userData = userDataStr ? JSON.parse(userDataStr) : null;
+    const userName = userData ? `${userData.name} ${userData.last_name || ""}` : "Professor";
+    const userEmail = userData ? userData.email : "professor@arenai.edu";
 
     return (
         <IonPage className="profile-page-premium">
@@ -76,13 +83,13 @@ const ProfessorProfile: React.FC = () => {
 
                         <div className="player-identity-centered">
                             <h1>
-                                Yereth Soto
+                                {userName}
                             </h1>
                             <div className="identity-subtitle">
                                 {t('professor.profile.role')}
                             </div>
                             <div className="identity-subtitle" style={{ fontSize: '12px', opacity: 0.7 }}>
-                                yereth.soto@arenai.edu
+                                {userEmail}
                             </div>
                         </div>
                     </div>
@@ -156,7 +163,7 @@ const ProfessorProfile: React.FC = () => {
                         </div>
 
                         <div style={{ marginTop: '30px', marginBottom: '30px' }}>
-                            <IonButton expand="block" color="danger" fill="outline" className="logout-btn-premium" onClick={handleLogout} style={{ height: '50px', borderRadius: '16px', fontWeight: 'bold' }}>
+                            <IonButton expand="block" color="danger" className="logout-btn-premium" onClick={handleLogout}>
                                 <IonIcon slot="start" icon={logOutOutline} />
                                 {t('professor.profile.logout')}
                             </IonButton>

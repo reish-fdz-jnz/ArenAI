@@ -536,38 +536,22 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
                     .slice(0, 3)
                     .join('\n') || 'Sin conclusiones específicas';
 
-                // Build the prompt (same replace pattern as generateTopicMasteryInsight)
+                // Build the prompt
                 const prompt = TOPIC_CLASS_SUMMARY_PROMPT
                     .replace('{TOPIC_NAME}', topic.name)
                     .replace('{TOPIC_SCORE}', String(topic.score_average || 0))
                     .replace('{STUDENTS_COMPLETED}', String(studentsCompleted))
                     .replace('{TOTAL_STUDENTS}', String(totalStudents))
-                    .replace('{RELATED_TOPICS}', relatedTopics)
-                    .replace('{CORRELATIONS}', correlations)
                     .replace('{STUDENT_QUESTIONS}', questionSummary)
-                    .replace('{AVG_FRUSTRATION}', topicQStats?.avgFrustration || 'low')
-                    .replace('{CHAT_CONCLUSIONS}', relevantConclusions);
+                    .replace('{AVG_FRUSTRATION}', topicQStats?.avgFrustration || 'low');
 
-                console.log('');
-                console.log('🤖 Calling Gemini AI for topic summary...');
-
-                // Call Gemini (same pattern as processUserSummary)
                 const aiResponse = await generateContentWithGemini(
-                    `Analiza el estado de este tópico en la clase y genera el JSON:`,
-                    prompt
+                    `JSON breve del tópico:`, prompt
                 );
 
-                console.log('');
-                console.log('🎯 TOPIC SUMMARY RESULT:');
-                console.log('─'.repeat(40));
-                console.log(aiResponse.substring(0, 500) + (aiResponse.length > 500 ? '\n... [truncated]' : ''));
-                console.log('─'.repeat(40));
-
-                // Parse response (same pattern as processUserSummary)
                 const parsed = parseInsightResponse(aiResponse);
                 const summaryToSave = parsed ? JSON.stringify(parsed) : aiResponse;
 
-                // Save AI summary to class_topic (same UPDATE pattern as updatePermanentTopicSummary)
                 await db.query(
                     `UPDATE class_topic 
                      SET ai_summary = ?, last_analysis_at = CURRENT_TIMESTAMP
@@ -576,26 +560,10 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
                 );
 
                 successCount++;
+                console.log(`  ✅ ${topic.name} (${topic.score_average || 0}%)`);
 
-                console.log('');
-                console.log(`✅ TOPIC SUMMARY SAVED for: ${topic.name}`);
-                if (parsed) {
-                    console.log(`   📖 Summary: ${(parsed.summary || '').substring(0, 100)}...`);
-                    console.log(`   ⚠️  Key Issues: ${JSON.stringify(parsed.key_issues || [])}`);
-                    console.log(`   💡 Actions: ${JSON.stringify(parsed.recommended_actions || [])}`);
-                }
-
-                // Broadcast to frontend (same pattern as Phase 2)
-                broadcastInsightUpdate(`📘 Topic Summary Generated: ${topic.name}`, {
-                    phase: 4,
-                    status: 'topic_summary_saved',
-                    topicId: topic.id_topic,
-                    topicName: topic.name,
-                    scoreAverage: topic.score_average
-                });
-
-            } catch (topicErr) {
-                console.error(`❌ Failed to process topic ${topic.name}:`, topicErr);
+            } catch (topicErr: any) {
+                console.error(`  ❌ ${topic.name}:`, topicErr?.message || topicErr);
             }
         }
 
@@ -685,44 +653,46 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
         }
 
         if (sectionIds.length === 0) { console.log('[Phase 5] No sections. Skipping.'); return; }
+        console.log(`[Phase 5] Sections to process: ${JSON.stringify(sectionIds)}`);
 
         let totalSuccess = 0;
 
         for (const secId of sectionIds) {
             try {
-                const si = await db.query<{ section_number: string; grade: string }>(
-                    `SELECT section_number, grade FROM section WHERE id_section = ?`, [secId]
-                );
-                const sectionName = si.rows[0] ? `${si.rows[0].grade}-${si.rows[0].section_number}` : `Sección ${secId}`;
+                const sectionName = `Sección ${secId}`;
 
-                // Topics with their REAL scores
                 const topics = await db.query<{ id_topic: number; topic_name: string; score: number | null }>(
                     `SELECT st.id_topic, t.name as topic_name, st.score
                      FROM section_topic st INNER JOIN topic t ON t.id_topic = st.id_topic
                      WHERE st.id_section = ?`, [secId]
                 );
-                if (topics.rows.length === 0) continue;
+                if (topics.rows.length === 0) { console.log(`[Phase 5] Section ${secId}: 0 topics, skip`); continue; }
+                console.log(`[Phase 5] Section ${secId}: ${topics.rows.length} topics`);
 
-                // ALL class_topic summaries for this section in one query
-                const allClassSummaries = await db.query<{ id_topic: number; ai_summary: string }>(
+                // Get ALL class_topic summaries for this section
+                const allCS = await db.query<{ id_topic: number; ai_summary: string }>(
                     `SELECT ct.id_topic, ct.ai_summary
                      FROM class_topic ct
                      INNER JOIN class c ON c.id_class = ct.id_class
                      WHERE c.id_section = ? AND ct.ai_summary IS NOT NULL`, [secId]
                 );
+                console.log(`[Phase 5] Found ${allCS.rows.length} class_topic summaries for section ${secId}`);
 
+                // Extract just the summary text from JSON
                 const summaryMap = new Map<number, string[]>();
-                for (const row of allClassSummaries.rows) {
+                for (const row of allCS.rows) {
                     if (!summaryMap.has(row.id_topic)) summaryMap.set(row.id_topic, []);
-                    summaryMap.get(row.id_topic)!.push(row.ai_summary.substring(0, 100));
+                    let text = row.ai_summary;
+                    try { text = JSON.parse(row.ai_summary)?.summary || text; } catch {}
+                    summaryMap.get(row.id_topic)!.push(text.substring(0, 120));
                 }
 
                 const { SECTION_TOPIC_SUMMARY_PROMPT } = await import('../config/prompts.js');
 
                 for (const topic of topics.rows) {
                     try {
-                        const classSummaries = (summaryMap.get(topic.id_topic) || [])
-                            .slice(0, 3).join(' | ') || 'Sin datos';
+                        const classSummaries = (summaryMap.get(topic.id_topic) || []).slice(0, 3).join(' | ') || 'Sin datos';
+                        console.log(`[Phase 5]   Topic ${topic.topic_name}: context="${classSummaries.substring(0, 80)}..."`);
 
                         const prompt = SECTION_TOPIC_SUMMARY_PROMPT
                             .replace('{TOPIC_NAME}', topic.topic_name)
@@ -730,12 +700,13 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
                             .replace('{TOPIC_SCORE}', String(topic.score || 0))
                             .replace('{CLASS_SUMMARIES}', classSummaries);
 
-                        const aiResponse = await generateContentWithGemini(
-                            `JSON breve del tópico:`, prompt
-                        );
+                        console.log(`[Phase 5]   Calling AI...`);
+                        const aiResponse = await generateContentWithGemini(`JSON breve:`, prompt);
+                        console.log(`[Phase 5]   AI response (${aiResponse.length} chars): ${aiResponse.substring(0, 100)}`);
 
                         const parsed = parseInsightResponse(aiResponse);
                         const summaryToSave = parsed ? JSON.stringify(parsed) : aiResponse;
+                        console.log(`[Phase 5]   Parsed OK: ${!!parsed}, saving ${summaryToSave.length} chars`);
 
                         await db.query(
                             `UPDATE section_topic SET ai_summary = ?, last_analysis_at = CURRENT_TIMESTAMP
@@ -744,19 +715,19 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
                         );
 
                         totalSuccess++;
-                        console.log(`  ✅ ${topic.topic_name} (${topic.score || 0}%)`);
-                    } catch (e) {
-                        console.error(`  ❌ ${topic.topic_name}:`, e);
+                        console.log(`[Phase 5]   ✅ ${topic.topic_name} saved`);
+                    } catch (e: any) {
+                        console.error(`[Phase 5]   ❌ ${topic.topic_name}: ${e?.message || e}`);
                     }
                 }
-            } catch (e) {
-                console.error(`❌ Section ${secId}:`, e);
+            } catch (e: any) {
+                console.error(`[Phase 5] ❌ Section ${secId}: ${e?.message || e}`);
             }
         }
 
         console.log(`[Phase 5] Done — ${totalSuccess} summaries generated`);
-    } catch (err) {
-        console.error('[Phase 5] Error:', err);
+    } catch (err: any) {
+        console.error(`[Phase 5] FATAL: ${err?.message || err}`);
     }
 }
 

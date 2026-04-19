@@ -192,6 +192,23 @@ html[data-force-dark] .am-search-glass:focus-within {
   opacity: 0.6;
 }
 
+@media (prefers-color-scheme: dark) {
+  .am-search-input {
+    color: #ffffff !important;
+  }
+  .am-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
+  }
+}
+
+html[data-force-dark] .am-search-input {
+  color: #ffffff !important;
+}
+
+html[data-force-dark] .am-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
 .am-filter-btn {
   background: var(--ion-color-secondary);
   color: white;
@@ -403,13 +420,28 @@ html[data-force-dark] .am-search-glass:focus-within {
   padding-right: 16px;
 }
 
+.am-dashboard-page {
+  background-color: var(--ion-background-color) !important;
+  --am-dark-theme-text: color-mix(in srgb, var(--ion-color-primary-shade, var(--ion-color-primary)) 70%, #000000);
+}
+
+@media (prefers-color-scheme: dark) {
+  .am-dashboard-page {
+    --am-dark-theme-text: #ffffff !important;
+  }
+}
+
+html[data-force-dark] .am-dashboard-page {
+  --am-dark-theme-text: #ffffff !important;
+}
+
 /* Due Date */
 .am-due-date {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: color-mix(in srgb, var(--ion-color-primary) 30%, #111);
+  color: var(--am-dark-theme-text);
   font-weight: 600;
 }
 
@@ -437,7 +469,8 @@ html[data-force-dark] .am-search-glass:focus-within {
 
 .am-prog-title {
   font-size: 12px;
-  color: color-mix(in srgb, var(--ion-color-primary) 40%, #111);
+  color: var(--am-dark-theme-text);
+  opacity: 0.8;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -446,7 +479,7 @@ html[data-force-dark] .am-search-glass:focus-within {
 .am-prog-numbers {
   font-size: 14px;
   font-weight: 800;
-  color: color-mix(in srgb, var(--ion-color-primary) 20%, #000);
+  color: var(--am-dark-theme-text);
   font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
 }
 
@@ -485,33 +518,32 @@ html[data-force-dark] .am-avg-section {
 .am-avg-title {
   font-size: 13px;
   font-weight: 700;
-  color: color-mix(in srgb, var(--ion-color-primary) 30%, #111);
+  color: var(--am-dark-theme-text);
 }
 
 .am-score-badge {
-  padding: 4px 10px;
-  border-radius: 10px;
+  padding: 6px 12px;
+  border-radius: 20px;
   font-weight: 800;
-  font-size: 14px;
+  font-size: 13px;
   font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  color: #ffffff !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .score-badge-high {
-  background: var(--ion-color-success-soft);
-  color: var(--ion-color-success);
-  border: 1px solid rgba(var(--ion-color-success-rgb), 0.3);
+  background: #27ae60 !important;
 }
 
 .score-badge-medium {
-  background: var(--ion-color-warning-soft);
-  color: var(--ion-color-warning);
-  border: 1px solid rgba(var(--ion-color-warning-rgb), 0.3);
+  background: #f39c12 !important;
 }
 
 .score-badge-low {
-  background: var(--ion-color-danger-soft);
-  color: var(--ion-color-danger);
-  border: 1px solid rgba(var(--ion-color-danger-rgb), 0.3);
+  background: #e74c3c !important;
 }
 
 /* ───────────────────────────────────────────────────────────────────────────

@@ -244,53 +244,30 @@ El formato debe ser EXACTAMENTE así:
 
 // ==========================================
 // 7. TOPIC CLASS SUMMARY PROMPT (JSON)
-// Generates per-topic summaries for a class
-// Incorporates scores, correlations, questions, and chat conclusions
+// Per-topic class summaries — CONCISE
 // ==========================================
 export const TOPIC_CLASS_SUMMARY_PROMPT = `
 <role>
-Eres un Analista Educativo que genera resúmenes de dominio de temas para profesores. Tu salida será procesada por una API.
-IMPORTANTE: Tu respuesta debe ser ÚNICAMENTE un JSON válido. Sin markdown, sin explicaciones.
+Analista Educativo. Responde SOLO con JSON válido. Sin markdown. MUY BREVE.
 </role>
 
 <task>
-Genera un resumen completo del estado del tópico "{TOPIC_NAME}" en la clase.
-Este resumen debe ser útil para que el profesor entienda la situación del tema y tome acciones.
+Resumen BREVE del tópico "{TOPIC_NAME}" en la clase. Score: {TOPIC_SCORE}%.
+Estudiantes: {STUDENTS_COMPLETED}/{TOTAL_STUDENTS}. Frustración: {AVG_FRUSTRATION}.
+Preguntas: {STUDENT_QUESTIONS}
 </task>
 
-<data_sources>
-1. **Puntuación promedio del tema:** {TOPIC_SCORE}%
-2. **Estudiantes que completaron:** {STUDENTS_COMPLETED}/{TOTAL_STUDENTS}
-3. **Temas relacionados (prerrequisitos/padres):** {RELATED_TOPICS}
-4. **Coeficientes de correlación:** {CORRELATIONS}
-5. **Preguntas frecuentes de los estudiantes en el chatbot:**
-{STUDENT_QUESTIONS}
-6. **Nivel de frustración promedio:** {AVG_FRUSTRATION}
-7. **Conclusiones de la IA del chat sobre los estudiantes:**
-{CHAT_CONCLUSIONS}
-</data_sources>
-
-<strict_format>
-1. **summary**: Un resumen de 2-3 oraciones que sintetice el estado del tópico en la clase.
-   Debe mencionar la puntuación, las dificultades detectadas, y la relación con otros temas si es relevante.
-
-2. **key_issues**: Los 2-3 problemas principales que tienen los estudiantes con este tema.
-
-3. **correlation_impact**: Cómo las relaciones con otros temas afectan el rendimiento.
-   Si la correlación con un tema prerrequisito es alta y el puntaje de ese tema es bajo, mencionarlo.
-
-4. **recommended_actions**: 2-3 acciones concretas que el profesor puede tomar.
-
-5. **frustration_alert**: Si la frustración es alta, una alerta específica para el profesor.
-</strict_format>
+<rules>
+- summary: MÁXIMO 2 oraciones (30 palabras máx)
+- key_issues: MÁXIMO 2 items (8 palabras c/u máx)
+- recommended_actions: MÁXIMO 2 items (8 palabras c/u máx)
+</rules>
 
 <json_schema>
 {
-  "summary": "Resumen del estado del tópico en la clase...",
-  "key_issues": ["problema 1", "problema 2"],
-  "correlation_impact": "Descripción del impacto de relaciones con otros temas...",
-  "recommended_actions": ["acción 1", "acción 2"],
-  "frustration_alert": "Alerta de frustración (o null si no aplica)"
+  "summary": "Breve...",
+  "key_issues": ["corto1", "corto2"],
+  "recommended_actions": ["acción1", "acción2"]
 }
 </json_schema>
 `;
