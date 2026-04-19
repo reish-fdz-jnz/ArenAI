@@ -207,10 +207,15 @@ const App: React.FC = () => {
 
         if (payload.exp) {
           const currentTime = Math.floor(Date.now() / 1000);
-          console.log(`[SessionCheck] Token expires in ${Math.round((payload.exp - currentTime) / 60)} minutes.`);
+          const timeRemaining = payload.exp - currentTime;
           
-          if (payload.exp < currentTime) {
-            console.warn("[SessionCheck] Session expired. Showing modal.");
+          // Add 15-minute (900s) leeway for time drift between server and client
+          const timeWithLeeway = timeRemaining + 900; 
+
+          console.log(`[SessionCheck] Token expires in ${Math.round(timeRemaining / 60)} minutes (with 15m drift buffer).`);
+          
+          if (timeWithLeeway < 0) {
+            console.warn("[SessionCheck] Session expired (including leeway). Showing modal.");
             setIsSessionExpired(true);
           }
         }

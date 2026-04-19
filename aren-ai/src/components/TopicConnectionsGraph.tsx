@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { useIonRouter } from '@ionic/react';
+import './TopicConnectionsGraph.css';
 
 interface TopicRelation {
   id_topic: number;
@@ -16,41 +18,80 @@ interface TopicConnectionsGraphProps {
 }
 
 const TopicConnectionsGraph: React.FC<TopicConnectionsGraphProps> = ({ heroName, heroScore, relations }) => {
+  const router = useIonRouter();
   const fathers = useMemo(() => relations.filter(r => r.type === 'father'), [relations]);
   const sons = useMemo(() => relations.filter(r => r.type === 'son'), [relations]);
 
   // Dimensions & Layout
-  const width = 350;
-  const height = 400;
+  const width = 420; // Slightly more width
+  const height = 480; 
   const heroX = width / 2;
   const heroY = height / 2;
-  const heroRadius = 40;
-  const satelliteRadius = 25;
+  const heroRadius = 50; // Bigger hero
+  const satelliteRadius = 26; // Slightly bigger satellites
 
-  const getPerformanceColor = (score: number | null) => {
-    if (score === null || score === undefined) return 'var(--ion-color-medium)';
-    if (score >= 70) return 'var(--ion-color-success)';
-    if (score >= 40) return 'var(--ion-color-warning)';
-    return 'var(--ion-color-danger)';
+  const getPremiumPerformanceColor = (score: number | null) => {
+    if (score === null || score === undefined) return '#94a3b8'; // slate-400
+    if (score >= 85) return '#10b981'; // emerald-500
+    if (score >= 70) return '#34d399'; // emerald-400
+    if (score >= 55) return '#fbbf24'; // amber-400
+    if (score >= 40) return '#fcd34d'; // amber-300
+    return '#f43f5e'; // rose-500
   };
 
-  const heroColor = getPerformanceColor(heroScore);
+  const heroColor = getPremiumPerformanceColor(heroScore);
 
-  // Position calculations
+  // Staggered Y calculation
+  const getSatelliteY = (type: 'father' | 'son', index: number) => {
+    const baseMargin = 85;
+    const stagger = (index % 2 === 0) ? 0 : 45;
+    if (type === 'father') return baseMargin + stagger;
+    return height - baseMargin - stagger;
+  };
+
   const calculateSatelliteX = (index: number, total: number) => {
     if (total === 1) return width / 2;
-    const spacing = width / (total + 1);
-    return spacing * (index + 1);
+    const padding = 60;
+    const availableWidth = width - (padding * 2);
+    const spacing = availableWidth / (total - 1);
+    return padding + (spacing * index);
+  };
+
+  const handleNavigate = (topicId: number) => {
+    router.push(`/page/topic/${topicId}`, 'forward', 'push');
+  };
+
+  // Helper for label rendering with background and wrapping
+  const renderLabel = (x: number, y: number, name: string, isFather: boolean, topicId: number) => {
+    const labelWidth = 120;
+    const labelHeight = 50;
+    const labelY = isFather ? y - 70 : y + 28; 
+
+    return (
+      <foreignObject 
+        x={x - labelWidth / 2} 
+        y={labelY} 
+        width={labelWidth} 
+        height={labelHeight}
+        style={{ overflow: 'visible' }}
+        onClick={() => handleNavigate(topicId)}
+      >
+        <div className="tc-label-wrapper clickable">
+          <div className="tc-label-content">
+            {name}
+          </div>
+        </div>
+      </foreignObject>
+    );
   };
 
   return (
-    <div className="tc-graph-container" style={{ width: '100%', display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible' }}>
+    <div className="tc-graph-container">
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="tc-svg-canvas">
         <defs>
-          {/* Gradients for relations */}
           {relations.map((rel, idx) => {
             const isFather = rel.type === 'father';
-            const color = getPerformanceColor(rel.score);
+            const color = getPremiumPerformanceColor(rel.score);
             return (
               <linearGradient 
                 key={`grad-${idx}`} 
@@ -64,53 +105,130 @@ const TopicConnectionsGraph: React.FC<TopicConnectionsGraphProps> = ({ heroName,
             );
           })}
           
-          {/* Shadows */}
-          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+
+          <filter id="hero-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="12" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
         </defs>
 
-        {/* Lines */}
+        {/* Relation Lines */}
         {fathers.map((f, i) => {
           const fx = calculateSatelliteX(i, fathers.length);
-          const fy = 60;
-          const strokeWidth = 2 + (f.correlation_coefficient || 0.5) * 8;
+          const fy = getSatelliteY('father', i);
+          const strength = f.correlation_coefficient || 0.5;
+          const strokeWidth = 3 + strength * 14;
+          const opacity = 0.3 + strength * 0.6;
+          
           return (
-            <motion.line
-              key={`line-f-${i}`}
-              x1={fx} y1={fy}
-              x2={heroX} y2={heroY}
-              stroke={`url(#grad-${relations.indexOf(f)})`}
-              strokeWidth={strokeWidth}
-              strokeLinecap="round"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 0.6 }}
-              transition={{ duration: 1, delay: 0.5 }}
-            />
+            <g key={`line-group-f-${i}`}>
+              <motion.line
+                x1={fx} y1={fy}
+                x2={heroX} y2={heroY}
+                stroke={`url(#grad-${relations.indexOf(f)})`}
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity }}
+                transition={{ duration: 0.8, delay: i * 0.1 }}
+                style={{ filter: strength > 0.7 ? 'url(#glow)' : 'none' }}
+              />
+              <motion.line
+                x1={fx} y1={fy}
+                x2={heroX} y2={heroY}
+                stroke="white"
+                strokeWidth={strokeWidth / 2}
+                strokeDasharray="10 20"
+                strokeOpacity={0.4}
+                initial={{ strokeDashoffset: 30 }}
+                animate={{ strokeDashoffset: -30 }}
+                transition={{ repeat: Infinity, duration: 1 / strength, ease: "linear" }}
+              />
+            </g>
           );
         })}
 
         {sons.map((s, i) => {
           const sx = calculateSatelliteX(i, sons.length);
-          const sy = height - 60;
-          const strokeWidth = 2 + (s.correlation_coefficient || 0.5) * 8;
+          const sy = getSatelliteY('son', i);
+          const strength = s.correlation_coefficient || 0.5;
+          const strokeWidth = 3 + strength * 14;
+          const opacity = 0.3 + strength * 0.6;
+          
           return (
-            <motion.line
-              key={`line-s-${i}`}
-              x1={heroX} y1={heroY}
-              x2={sx} y2={sy}
-              stroke={`url(#grad-${relations.indexOf(s)})`}
-              strokeWidth={strokeWidth}
-              strokeLinecap="round"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: 0.6 }}
-              transition={{ duration: 1, delay: 0.5 }}
-            />
+            <g key={`line-group-s-${i}`}>
+              <motion.line
+                x1={heroX} y1={heroY}
+                x2={sx} y2={sy}
+                stroke={`url(#grad-${relations.indexOf(s)})`}
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity }}
+                transition={{ duration: 0.8, delay: i * 0.1 }}
+                style={{ filter: strength > 0.7 ? 'url(#glow)' : 'none' }}
+              />
+              <motion.line
+                x1={heroX} y1={heroY}
+                x2={sx} y2={sy}
+                stroke="white"
+                strokeWidth={strokeWidth / 2}
+                strokeDasharray="10 20"
+                strokeOpacity={0.4}
+                initial={{ strokeDashoffset: 0 }}
+                animate={{ strokeDashoffset: -30 }}
+                transition={{ repeat: Infinity, duration: 1 / strength, ease: "linear" }}
+              />
+            </g>
           );
         })}
 
-        {/* Hero Ball */}
+        {/* Satellite Nodes & Labels */}
+        {fathers.map((f, i) => {
+          const fx = calculateSatelliteX(i, fathers.length);
+          const fy = getSatelliteY('father', i);
+          return (
+            <g key={`father-node-${i}`} className="tc-satellite-group clickable" onClick={() => handleNavigate(f.id_topic)}>
+              <motion.circle 
+                cx={fx} cy={fy} r={satelliteRadius} 
+                fill={getPremiumPerformanceColor(f.score)} 
+                filter="url(#glow)"
+                style={{ stroke: 'rgba(255,255,255,0.4)', strokeWidth: 2 }}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3 + i * 0.1 }}
+                whileHover={{ scale: 1.15 }}
+              />
+              {renderLabel(fx, fy, f.name, true, f.id_topic)}
+            </g>
+          );
+        })}
+
+        {sons.map((s, i) => {
+          const sx = calculateSatelliteX(i, sons.length);
+          const sy = getSatelliteY('son', i);
+          return (
+            <g key={`son-node-${i}`} className="tc-satellite-group clickable" onClick={() => handleNavigate(s.id_topic)}>
+              <motion.circle 
+                cx={sx} cy={sy} r={satelliteRadius} 
+                fill={getPremiumPerformanceColor(s.score)} 
+                filter="url(#glow)"
+                style={{ stroke: 'rgba(255,255,255,0.4)', strokeWidth: 2 }}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3 + i * 0.1 }}
+                whileHover={{ scale: 1.15 }}
+              />
+              {renderLabel(sx, sy, s.name, false, s.id_topic)}
+            </g>
+          );
+        })}
+
+        {/* Hero Central Node */}
         <motion.g
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -119,76 +237,22 @@ const TopicConnectionsGraph: React.FC<TopicConnectionsGraphProps> = ({ heroName,
           <circle 
             cx={heroX} cy={heroY} r={heroRadius} 
             fill={heroColor} 
-            filter="url(#glow)"
-            style={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 2 }}
+            filter="url(#hero-glow)"
+            style={{ stroke: 'rgba(255,255,255,0.5)', strokeWidth: 4 }}
           />
-          <text 
-            x={heroX} y={heroY} 
-            textAnchor="middle" dy=".3em" 
-            fill="white" 
-            style={{ fontSize: '12px', fontWeight: 'bold', pointerEvents: 'none' }}
+          <foreignObject
+            x={heroX - heroRadius + 8}
+            y={heroY - heroRadius + 8}
+            width={heroRadius * 2 - 16}
+            height={heroRadius * 2 - 16}
           >
-            {heroName.length > 10 ? heroName.substring(0, 8) + '...' : heroName}
-          </text>
+            <div className="tc-hero-label-container">
+              <span className="tc-hero-label-text">
+                {heroName}
+              </span>
+            </div>
+          </foreignObject>
         </motion.g>
-
-        {/* Father Balls */}
-        {fathers.map((f, i) => {
-          const fx = calculateSatelliteX(i, fathers.length);
-          const fy = 60;
-          return (
-            <motion.g
-              key={`father-${i}`}
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 + i * 0.1 }}
-            >
-              <circle 
-                cx={fx} cy={fy} r={satelliteRadius} 
-                fill={getPerformanceColor(f.score)} 
-                filter="url(#glow)"
-                style={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
-              />
-              <text 
-                x={fx} y={fy + satelliteRadius + 15} 
-                textAnchor="middle" 
-                fill="var(--ion-text-color)" 
-                style={{ fontSize: '10px', fontWeight: '600' }}
-              >
-                {f.name}
-              </text>
-            </motion.g>
-          );
-        })}
-
-        {/* Son Balls */}
-        {sons.map((s, i) => {
-          const sx = calculateSatelliteX(i, sons.length);
-          const sy = height - 60;
-          return (
-            <motion.g
-              key={`son-${i}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 + i * 0.1 }}
-            >
-              <circle 
-                cx={sx} cy={sy} r={satelliteRadius} 
-                fill={getPerformanceColor(s.score)} 
-                filter="url(#glow)"
-                style={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
-              />
-              <text 
-                x={sx} y={sy + satelliteRadius + 15} 
-                textAnchor="middle" 
-                fill="var(--ion-text-color)" 
-                style={{ fontSize: '10px', fontWeight: '600' }}
-              >
-                {s.name}
-              </text>
-            </motion.g>
-          );
-        })}
       </svg>
     </div>
   );

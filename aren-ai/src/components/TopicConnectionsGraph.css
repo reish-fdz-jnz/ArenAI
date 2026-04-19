@@ -1,0 +1,111 @@
+/* TopicConnectionsGraph.css */
+
+.tc-graph-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+  user-select: none;
+}
+
+.tc-svg-canvas {
+  overflow: visible;
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.1));
+}
+
+/* Label Styling */
+.tc-label-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tc-label-content {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-family: var(--ion-font-family, 'Outfit', 'Inter', sans-serif);
+  font-size: 13px; /* Bigger font-size matching dashboard */
+  font-weight: 700;
+  color: var(--ion-color-step-850, #222);
+  text-align: center;
+  line-height: 1.25;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  max-width: 110px;
+  word-wrap: break-word;
+}
+
+/* Hero Label Specifics */
+.tc-hero-label-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tc-hero-label-text {
+  font-family: var(--ion-font-family, 'Outfit', 'Inter', sans-serif);
+  font-size: 15px;
+  font-weight: 900;
+  color: white;
+  text-align: center;
+  line-height: 1.1;
+  /* Stronger shadow for better legibility on bright backgrounds */
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.8),
+    0 0 10px rgba(0, 0, 0, 0.5);
+  word-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Ensure names are readable even on dark backgrounds */
+@media (prefers-color-scheme: dark) {
+  .tc-label-content {
+    background: rgba(40, 40, 40, 0.4);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Interactivity */
+.clickable {
+  cursor: pointer;
+}
+
+.tc-satellite-group circle {
+  transition: all 0.2s ease;
+}
+
+.tc-satellite-group:hover circle {
+  stroke: rgba(255, 255, 255, 0.8);
+}
+
+.tc-label-wrapper.clickable:hover .tc-label-content {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tc-label-wrapper.clickable:hover .tc-label-content {
+    background: rgba(80, 80, 80, 0.6);
+  }
+}
+
+/* Legend/Info if needed */
+.tc-connection-active {
+  stroke-dasharray: 8 12;
+}
