@@ -1,4 +1,4 @@
-/* StudentHeader.css */
+/* StudentHeader.css - Premium Notch Design - v2 */
 
 .student-header-container {
     background: transparent;
@@ -48,31 +48,30 @@
 /* Absolute Brand Container */
 .sh-brand-container-absolute {
     position: absolute;
-    top: 10px;
-    /* Align with toolbar padding */
-    right: 15px;
+    top: 4px;
+    right: 5px;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     z-index: 110;
-    /* Higher than notch (101) */
     pointer-events: none;
-    /* Let clicks pass through if needed */
 }
 
 .sh-brand-name {
     font-family: 'Open Sans', sans-serif;
-    font-size: 24px;
+    font-size: 16px;
     color: var(--ion-color-primary-contrast);
-    font-weight: 300;
-    letter-spacing: 1px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
 }
 
 .sh-brand-sub {
     font-family: 'Open Sans', sans-serif;
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.8);
-    font-weight: 300;
+    font-size: 8.5px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Notch / Curved Tab */
@@ -80,12 +79,9 @@
     display: flex;
     justify-content: center;
     margin-top: -45px;
-    /* Pull up MORE to overlap significantly */
     position: relative;
     z-index: 101;
-    /* Above toolbar (100), Below Brand (110) */
     pointer-events: none;
-    /* Let clicks pass through container */
 }
 
 .sh-notch {
@@ -100,13 +96,8 @@
     justify-content: center;
     align-items: center;
     pointer-events: auto;
-    /* Re-enable clicks */
     position: relative;
 }
-
-/* Seamless Curves (Fillet) - Removed per user request to fix artifacts */
-/* .sh-notch::before { ... } */
-/* .sh-notch::after { ... } */
 
 .sh-subject-display {
     width: max-content;
@@ -115,7 +106,6 @@
     height: 45px;
     background-color: var(--ion-color-secondary);
     border-radius: 50%;
-    /* Oval shape */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -130,7 +120,6 @@
 .sh-subject-display.interactive:active {
     transform: scale(0.95);
     background: var(--ion-color-secondary-tint);
-    /* Lighter shade interact */
 }
 
 .sh-subject-text {
@@ -138,171 +127,62 @@
     font-size: 18px;
     font-weight: 500;
     font-family: serif;
-    /* Match the "Math" font in image */
     letter-spacing: 1px;
     white-space: nowrap;
 }
 
-/* Override StudentMenu styles when in header */
-.student-menu-container.header-variant .subject-trigger {
-    background: transparent;
-    border: none;
-    color: var(--ion-color-secondary-contrast);
-    font-size: 18px;
-    font-family: serif;
-    letter-spacing: 1px;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+/* DROP DOWN OPTIONS */
+.template-subject-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ion-color-secondary) !important;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 220px;
+    z-index: 200;
+    overflow: hidden;
+    animation: sh-slide-down 0.3s ease-out;
+    pointer-events: auto;
+    border: 1px solid var(--ion-color-secondary-tint);
 }
 
-.student-menu-container.header-variant .dropdown-wrapper {
-    width: 100%;
-    height: 100%;
+.template-subject-option {
+    padding: 16px 20px;
+    color: #ffffff !important;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   RESPONSIVE BREAKPOINTS
-   ═══════════════════════════════════════════════════════════════════════════ */
+.template-subject-option:hover {
+    background: var(--ion-color-primary-shade);
+}
 
-/* Small screens */
-@media (max-width: 360px) {
-    .student-toolbar {
-        --min-height: 60px;
-        padding-top: 8px;
-        border-bottom-left-radius: 24px;
-        border-bottom-right-radius: 24px;
-    }
+.template-subject-option:last-child {
+    border-bottom: none;
+}
 
-    .sh-notch {
-        min-width: 160px;
-        width: max-content;
-        padding: 0 20px;
-        height: 55px;
-    }
+@keyframes sh-slide-down {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
+/* Responsive */
+@media (max-width: 768px) {
     .sh-notch-container {
-        margin-top: -35px;
-    }
-
-    .sh-subject-display {
-        min-width: 110px;
-        width: max-content;
-        padding: 0 15px;
-        height: 38px;
-    }
-
-    .sh-subject-text {
-        font-size: 15px;
+        margin-top: -38px;
     }
 
     .sh-brand-name {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .sh-brand-sub {
-        font-size: 12px;
-    }
-}
-
-/* Touch targets */
-.sh-menu-btn {
-    min-width: 44px;
-    min-height: 44px;
-}
-
-.sh-subject-display {
-    min-height: 40px;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   DESKTOP RESPONSIVE — Tablet (768px+)
-   ═══════════════════════════════════════════════════════════════════════════ */
-@media (min-width: 768px) {
-    .student-toolbar {
-        --min-height: 80px;
-        padding-top: 12px;
-    }
-
-    .sh-notch {
-        min-width: 230px;
-        width: max-content;
-        padding: 0 40px;
-        height: 78px;
-    }
-
-    .sh-notch-container {
-        margin-top: -50px;
-    }
-
-    .sh-subject-display {
-        min-width: 160px;
-        width: max-content;
-        padding: 0 24px;
-        height: 50px;
-    }
-
-    .sh-subject-text {
-        font-size: 20px;
-    }
-
-    .sh-brand-name {
-        font-size: 28px;
-    }
-
-    .sh-brand-sub {
-        font-size: 16px;
-    }
-
-    .sh-content {
-        padding: 0 20px;
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   DESKTOP RESPONSIVE — Large Desktop (1200px+)
-   ═══════════════════════════════════════════════════════════════════════════ */
-@media (min-width: 1200px) {
-    .student-toolbar {
-        --min-height: 85px;
-        padding-top: 14px;
-    }
-
-    .sh-notch {
-        min-width: 260px;
-        width: max-content;
-        padding: 0 40px;
-        height: 82px;
-    }
-
-    .sh-notch-container {
-        margin-top: -52px;
-    }
-
-    .sh-subject-display {
-        min-width: 180px;
-        width: max-content;
-        padding: 0 24px;
-        height: 54px;
-    }
-
-    .sh-subject-text {
-        font-size: 22px;
-    }
-
-    .sh-brand-name {
-        font-size: 30px;
-        letter-spacing: 1.5px;
-    }
-
-    .sh-brand-sub {
-        font-size: 17px;
-    }
-
-    .sh-content {
-        padding: 0 30px;
+        font-size: 9px;
+        letter-spacing: 0.3px;
     }
 }

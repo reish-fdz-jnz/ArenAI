@@ -1226,3 +1226,21 @@ html[data-force-dark] .task-modal-input {
   color: #ffffff !important;
   background: rgba(0, 0, 0, 0.2) !important;
 }
+
+@media (prefers-color-scheme: dark) {
+  .task-quiz-searchbar,
+  .task-section-search {
+    --background: rgba(255, 255, 255, 0.1) !important;
+    --color: #ffffff !important;
+    --placeholder-color: rgba(255, 255, 255, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+  }
+}
+
+html[data-force-dark] .task-quiz-searchbar,
+html[data-force-dark] .task-section-search {
+  --background: rgba(255, 255, 255, 0.1) !important;
+  --color: #ffffff !important;
+  --placeholder-color: rgba(255, 255, 255, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}

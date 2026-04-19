@@ -51,7 +51,7 @@
 .class-menu-section-title {
   font-family: 'Georgia', serif;
   font-size: 20px;
-  color: var(--ion-color-primary);
+  color: var(--ion-color-primary-tint, #ffffff);
   margin: 0;
   display: flex;
   align-items: center;
@@ -143,15 +143,15 @@
   font-family: 'Georgia', serif;
   font-size: 15px;
   font-weight: 600;
-  color: var(--ion-color-primary);
+  color: var(--ion-color-primary-tint, #ffffff);
   display: block;
   margin-bottom: 4px;
 }
 
 .class-menu-card-meta {
   font-size: 11px;
-  color: var(--ion-text-color);
-  opacity: 0.6;
+  color: var(--ion-color-primary-tint, #ffffff);
+  opacity: 0.8;
 }
 
 .class-menu-card-creator {
@@ -220,8 +220,8 @@
 
 .class-menu-card-date {
   font-size: 10px;
-  color: var(--ion-color-primary);
-  opacity: 0.5;
+  color: var(--ion-color-primary-tint);
+  opacity: 0.7;
   margin-bottom: 10px;
 }
 
@@ -438,7 +438,7 @@
 .class-menu-detail-section-title {
   font-family: 'Georgia', serif;
   font-size: 14px;
-  color: var(--ion-color-primary);
+  color: var(--ion-color-primary-tint);
   margin: 0 0 10px 0;
   font-weight: 600;
 }

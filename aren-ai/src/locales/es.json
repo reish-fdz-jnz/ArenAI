@@ -528,7 +528,13 @@
         "cardDesc": "Tarjeta con color de fondo primario.",
         "outlineButton": "Botón de Borde",
         "listItem": "Elemento de Lista",
-        "listDesc": "Con texto secundario"
+        "listDesc": "Con texto secundario",
+        "sounds": "Efectos de Sonido",
+        "colorScheme": "Modo de Pantalla",
+        "forcedDark": "Oscuro fijo",
+        "forcedLight": "Claro fijo",
+        "autoMode": "Automático (OS)",
+        "general": "General"
     },
     "quiz": {
         "title": "Cuestionario",
@@ -568,7 +574,8 @@
         "enterNameError": "Por favor ingrese un nombre para el quiz",
         "cancel": "Cancelar",
         "save": "Guardar",
-        "generate": "Generar"
+        "generate": "Generar",
+        "searchTopics": "Buscar Temas"
     },
     "quizPreview": {
         "title": "Vista Previa del Quiz",

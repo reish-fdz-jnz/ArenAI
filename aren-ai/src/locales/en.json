@@ -493,7 +493,13 @@
         "cardDesc": "Card with primary background color.",
         "outlineButton": "Outline Button",
         "listItem": "List Item",
-        "listDesc": "With secondary text"
+        "listDesc": "With secondary text",
+        "sounds": "Sound Effects",
+        "colorScheme": "Display Mode",
+        "forcedDark": "Forced Dark",
+        "forcedLight": "Forced Light",
+        "autoMode": "Auto (OS)",
+        "general": "General"
     },
     "quiz": {
         "title": "Quiz",
@@ -529,7 +535,8 @@
         "enterNameError": "Please enter a name for the quiz",
         "cancel": "Cancel",
         "save": "Save",
-        "generate": "Generate"
+        "generate": "Generate",
+        "searchTopics": "Search Topics"
     },
     "quizPreview": {
         "title": "Quiz Preview",

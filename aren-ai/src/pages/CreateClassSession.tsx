@@ -421,7 +421,7 @@ const CreateClassSession: React.FC = () => {
               onClick={handleAddTopicsFromModal}
               disabled={modalSelectedTopics.length === 0}
             >
-              Agregar {modalSelectedTopics.length > 0 ? `(${modalSelectedTopics.length})` : ""} Temas
+              Agregar {modalSelectedTopics.length > 0 ? `(${modalSelectedTopics.length})` : ""} {t("taskAssignment.topics") || "Temas"}
             </button>
           </div>
         </div>

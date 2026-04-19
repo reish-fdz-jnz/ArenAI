@@ -361,9 +361,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.75); /* Darker backdrop for better focus */
+  background-color: rgba(var(--ion-color-primary-rgb), 0.25);
   backdrop-filter: blur(10px);
-  z-index: 2000; /* Higher z-index to stay on top of everything */
+  z-index: 2000;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -372,9 +372,9 @@
 }
 
 .ms-timeline-popup {
-  background: rgba(45, 45, 45, 0.95);
+  background: color-mix(in srgb, var(--ion-color-primary) 4%, #ffffff);
   backdrop-filter: blur(30px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(var(--ion-color-primary-rgb), 0.2);
   border-radius: 28px;
   width: 95%;
   max-width: 480px;
@@ -382,8 +382,8 @@
   display: flex;
   flex-direction: column;
   padding: 24px;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
-  color: white;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  color: var(--ion-text-color, #2c3e50);
   position: relative;
 }
 
@@ -393,18 +393,19 @@
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(var(--ion-color-primary-rgb), 0.15);
 }
 
 .ms-popup-title {
   font-size: 18px;
   font-weight: 700;
+  color: var(--ion-color-primary);
 }
 
 .ms-popup-close {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--ion-color-primary);
   border: none;
-  color: white;
+  color: var(--ion-color-primary-contrast, #ffffff);
   padding: 8px 16px;
   border-radius: 12px;
   font-size: 13px;
@@ -415,4 +416,47 @@
 .ms-popup-body {
   overflow-y: auto;
   flex: 1;
+}
+
+/* ── Dark mode overrides for popup ── */
+@media (prefers-color-scheme: dark) {
+  html:not([data-force-light]) .ms-timeline-overlay {
+    background-color: color-mix(in srgb, var(--ion-color-primary) 20%, rgba(0, 0, 0, 0.75));
+  }
+  html:not([data-force-light]) .ms-timeline-popup {
+    background: color-mix(in srgb, var(--ion-color-primary) 30%, #1a1a1a);
+    border-color: rgba(var(--ion-color-primary-rgb), 0.3);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+    color: white;
+  }
+  html:not([data-force-light]) .ms-popup-header {
+    border-bottom-color: rgba(var(--ion-color-primary-rgb), 0.25);
+  }
+  html:not([data-force-light]) .ms-popup-title {
+    color: var(--ion-color-primary-tint);
+  }
+  html:not([data-force-light]) .ms-popup-close {
+    background: rgba(var(--ion-color-primary-rgb), 0.3);
+    color: white;
+  }
+}
+
+html[data-force-dark] .ms-timeline-overlay {
+  background-color: color-mix(in srgb, var(--ion-color-primary) 20%, rgba(0, 0, 0, 0.75));
+}
+html[data-force-dark] .ms-timeline-popup {
+  background: color-mix(in srgb, var(--ion-color-primary) 30%, #1a1a1a);
+  border-color: rgba(var(--ion-color-primary-rgb), 0.3);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+  color: white;
+}
+html[data-force-dark] .ms-popup-header {
+  border-bottom-color: rgba(var(--ion-color-primary-rgb), 0.25);
+}
+html[data-force-dark] .ms-popup-title {
+  color: var(--ion-color-primary-tint);
+}
+html[data-force-dark] .ms-popup-close {
+  background: rgba(var(--ion-color-primary-rgb), 0.3);
+  color: white;
 }

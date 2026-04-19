@@ -58,6 +58,7 @@ import StudentChat from "./pages/StudentChat";
 import StartClassSession from "./pages/StartClassSession";
 import ArenEntityPage from "./pages/ArenEntityPage";
 import TopicDetail from "./pages/TopicDetail";
+import ProfessorHelp from "./pages/ProfessorHelp";
 import { socketService } from "./services/socket";
 import { chatStorage } from "./services/chatStorage";
 import { App as CapApp } from "@capacitor/app";
@@ -703,6 +704,14 @@ const App: React.FC = () => {
                     <Route path="/professor-settings" exact={true}>
                       {userRole === "professor" ? (
                         <ProfessorSettings />
+                      ) : (
+                        <Redirect to="/login" />
+                      )}
+                    </Route>
+
+                    <Route path="/professor-help" exact={true}>
+                      {userRole === "professor" ? (
+                        <ProfessorHelp />
                       ) : (
                         <Redirect to="/login" />
                       )}

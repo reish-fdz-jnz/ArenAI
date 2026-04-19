@@ -2,8 +2,8 @@
 
 /* 1. PAGE CONTAINER */
 .class-creation-page {
-  --cc-primary: white;
-  --cc-secondary: rgba(255, 255, 255, 0.7);
+  --cc-primary: var(--ion-color-primary);
+  --cc-secondary: var(--ion-text-color-step-150);
   --cc-accent: var(--ion-color-accent);
   --cc-bg-cream: var(--ion-background-color);
   --cc-bg-paper: var(--ion-card-background);
@@ -126,7 +126,8 @@
   color: var(--cc-secondary);
   margin: 0;
   line-height: 1.4;
-  font-weight: 600;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 /* 8. FORM SECTION */
@@ -206,8 +207,8 @@
 .cc-select {
   flex: 1;
   --background: transparent;
-  --color: white;
-  --placeholder-color: rgba(255, 255, 255, 0.5);
+  --color: var(--ion-color-primary);
+  --placeholder-color: var(--ion-text-color-step-300);
   font-family: var(--cc-font-body);
   font-size: 1.1rem;
   font-weight: 700;
@@ -218,7 +219,8 @@
 }
 
 .cc-select::part(placeholder) {
-  color: var(--ion-text-color-step-400);
+  color: var(--ion-text-color-step-300);
+  opacity: 1;
 }
 
 .cc-select-arrow {
@@ -437,7 +439,7 @@
 .cc-class-code {
   font-family: var(--cc-font-title);
   font-size: 2.2rem;
-  color: white;
+  color: var(--ion-color-primary);
   margin: 8px 0;
   letter-spacing: 2px;
 }
