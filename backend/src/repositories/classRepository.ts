@@ -2,6 +2,7 @@ import type { ResultSetHeader } from 'mysql2';
 import { db } from '../db/pool.js';
 import type { ClassRecord } from '../types.js';
 import { parseNumeric } from '../utils/transformers.js';
+import { syncStudentTopicMastery } from './studentRepository.js';
 
 interface ClassTopicPayload {
   topicId: number;
@@ -228,6 +229,11 @@ export async function recordClassStudentTopics(classId: number, entries: ClassSt
            ai_summary = VALUES(ai_summary)`,
         [classId, entry.userId, entry.topicId, entry.score ?? null, entry.aiSummary ?? null]
       );
+
+      // Propagate to permanent mastery (averaged with previous score)
+      if (entry.score !== null && entry.score !== undefined) {
+        await syncStudentTopicMastery(entry.userId, entry.topicId, Number(entry.score));
+      }
     }
     await client.commit();
   } catch (error) {

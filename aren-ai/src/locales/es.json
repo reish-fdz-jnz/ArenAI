@@ -1429,6 +1429,7 @@
         "noHistoryYet": "Únete a una sesión de clase para rastrear tu progreso aquí.",
         "loading": "Analizando datos de maestría...",
         "error": "No se encontró información del tema.",
-        "pageTitle": "Detalle del Tema"
+        "pageTitle": "Detalle del Tema",
+        "nowLabel": "Ahora"
     }
 }

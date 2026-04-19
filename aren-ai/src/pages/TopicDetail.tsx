@@ -19,6 +19,15 @@ import {
   bookOutline,
 } from "ionicons/icons";
 import { useParams } from "react-router-dom";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import { useTranslation } from "react-i18next";
 import { getApiUrl } from "../config/api";
 import "./TopicDetail.css";
@@ -164,7 +173,6 @@ const TopicDetail: React.FC = () => {
           }}
         >
           {Math.round(score)}%
-          <span className="td-score-label">{t("topicDetail.masteryLabel")}</span>
         </div>
       </div>
     );
@@ -196,34 +204,75 @@ const TopicDetail: React.FC = () => {
   );
 
   const renderHistory = (history: ClassPerformance[], permanentScore: number) => (
-    <div className="td-card">
+    <div className="td-card td-history-card">
       <div className="td-card-header">
         <IonIcon icon={calendarOutline} />
         <h3 className="td-card-title">{t("topicDetail.historyTitle")}</h3>
       </div>
-      <div className="td-history-list">
-        {history.length > 0 ? (
-          history.map((session, idx) => (
-            <div key={idx} className="td-history-item">
-              <div className="td-history-left">
-                <span className="td-hist-date">{new Date(session.date).toLocaleDateString()}</span>
-                <span className="td-hist-name">{session.class_name}</span>
-              </div>
-              <div 
-                className="td-hist-score" 
-                style={{ color: getPerformanceColor(session.score) }}
-              >
-                {session.score}%
-                <IonIcon 
-                  icon={session.score >= permanentScore ? trendingUpOutline : trendingDownOutline}
+      <div className="td-history-graph-container">
+        {history.length >= 1 ? (
+          <div style={{ width: '100%', height: 220, marginTop: '15px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={[
+                ...([...history].reverse().map(h => ({
+                  name: new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+                  score: Math.round(h.score)
+                }))),
+                { 
+                  name: t("topicDetail.nowLabel"), 
+                  score: Math.round(permanentScore) 
+                }
+              ]}>
+                <defs>
+                  <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#78B8B0" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#78B8B0" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: 'var(--ion-text-color)', fontSize: 10, opacity: 0.6 }}
+                  dy={10}
                 />
-              </div>
-            </div>
-          ))
+                <YAxis 
+                  domain={[0, 100]} 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: 'var(--ion-text-color)', fontSize: 10, opacity: 0.6 }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(30, 30, 30, 0.9)', 
+                    border: 'none', 
+                    borderRadius: '12px',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                    color: '#fff'
+                  }}
+                  itemStyle={{ color: '#78B8B0', fontWeight: 'bold' }}
+                  cursor={{ stroke: 'rgba(255,255,255,0.2)', strokeWidth: 2 }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="score" 
+                  stroke="#78B8B0" 
+                  strokeWidth={4}
+                  fillOpacity={1} 
+                  fill="url(#colorScore)" 
+                  animationDuration={1500}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         ) : (
-          <p className="aren-text-muted" style={{ textAlign: 'center', margin: '20px 0' }}>
-            {t("topicDetail.noHistoryYet")}
-          </p>
+          <div className="td-not-enough-data">
+             <IonIcon icon={analyticsOutline} style={{ fontSize: '32px', opacity: 0.5, marginBottom: '12px' }} />
+             <p className="aren-text-muted">
+               {t("topicDetail.notEnoughData", "Not enough historical data available yet.")}
+             </p>
+          </div>
         )}
       </div>
     </div>

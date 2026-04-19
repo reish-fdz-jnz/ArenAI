@@ -1400,6 +1400,7 @@
         "noHistoryYet": "Join a class session to track your progress here.",
         "loading": "Analyzing mastery data...",
         "error": "No topic information found.",
-        "pageTitle": "Topic Details"
+        "pageTitle": "Topic Details",
+        "nowLabel": "Now"
     }
 }

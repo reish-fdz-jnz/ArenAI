@@ -181,27 +181,41 @@ const App: React.FC = () => {
     if (!userRole) return;
 
     const checkSession = () => {
-      const token =
-        localStorage.getItem("authToken") || localStorage.getItem("token");
-      if (!token) return;
+      const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+      if (!token) {
+        console.warn("[SessionCheck] No token found in localStorage.");
+        return;
+      }
 
       try {
-        // Manually decode JWT to avoid adding a dependency just for this
-        const payloadBase64 = token.split(".")[1];
-        if (!payloadBase64) return;
+        // More robust JWT decode to prevent premature logouts
+        const parts = token.split(".");
+        if (parts.length !== 3) {
+          console.error("[SessionCheck] Invalid JWT format.");
+          return;
+        }
 
-        const decodedJson = atob(payloadBase64);
+        const payloadBase64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+        const decodedJson = decodeURIComponent(
+          atob(payloadBase64)
+            .split("")
+            .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+            .join("")
+        );
+        
         const payload = JSON.parse(decodedJson);
 
         if (payload.exp) {
-          const currentTime = Date.now() / 1000;
+          const currentTime = Math.floor(Date.now() / 1000);
+          console.log(`[SessionCheck] Token expires in ${Math.round((payload.exp - currentTime) / 60)} minutes.`);
+          
           if (payload.exp < currentTime) {
-            console.log("Session expired. Showing modal.");
+            console.warn("[SessionCheck] Session expired. Showing modal.");
             setIsSessionExpired(true);
           }
         }
       } catch (e) {
-        console.error("Error checking token expiry:", e);
+        console.error("[SessionCheck] Error decoding token expiry:", e);
       }
     };
 
@@ -276,6 +290,10 @@ const App: React.FC = () => {
     setUserData(null); // Clear state
     localStorage.removeItem("userData");
     localStorage.removeItem("userRole");
+    // CRITICAL: Also remove the actual tokens to prevent stale session checks
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("token");
+    console.log("[App] Logged out successfully.");
   };
 
   const renderSidebar = () => {

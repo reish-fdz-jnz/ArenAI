@@ -221,7 +221,7 @@ export async function getTopicSessionHistory(userId: number, topicId: number) {
     score: number;
     date: string;
   }>(
-    `SELECT cst.id_class, c.name_class as class_name, cst.score, c.start_time as date
+    `SELECT cst.id_class, c.name_session as class_name, cst.score, c.start_time as date
      FROM class_student_topic cst
      INNER JOIN class c ON c.id_class = cst.id_class
      WHERE cst.id_user = ? AND cst.id_topic = ?
@@ -236,7 +236,7 @@ export async function getHistoricalRecordsForTopic(userId: number, topicId: numb
   const [sessions, quizzes] = await Promise.all([
     // 1. Session performance and summaries
     db.query<{ class_name: string; score: number; ai_summary: string }>(
-      `SELECT c.name_class as class_name, cst.score, scs.summary_text as ai_summary
+      `SELECT c.name_session as class_name, cst.score, scs.summary_text as ai_summary
        FROM class_student_topic cst
        INNER JOIN class c ON c.id_class = cst.id_class
        LEFT JOIN student_class_summary scs ON scs.id_class = c.id_class AND scs.id_user = cst.id_user
@@ -268,6 +268,20 @@ export async function updatePermanentTopicSummary(userId: number, topicId: numbe
      SET ai_summary = ?, last_analysis_at = CURRENT_TIMESTAMP
      WHERE id_user = ? AND id_topic = ?`,
     [summary, userId, topicId]
+  );
+}
+
+/**
+ * Syncs a new session score into the permanent student_topic table.
+ * If a score already exists, it averages it with the new score per user request.
+ */
+export async function syncStudentTopicMastery(userId: number, topicId: number, sessionScore: number) {
+  await db.query(
+    `INSERT INTO student_topic (id_user, id_topic, score)
+     VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE 
+       score = (score + VALUES(score)) / 2`,
+    [userId, topicId, sessionScore]
   );
 }
 

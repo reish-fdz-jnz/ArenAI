@@ -584,7 +584,7 @@ const Main_Student: React.FC = () => {
                           backgroundColor: "var(--ion-color-secondary)",
                         }}
                       >
-                        {overallPerformance}%
+                        {Math.round(overallPerformance)}%
                       </div>
                     </div>
 

@@ -21,7 +21,7 @@
 }
 
 .topic-profile-page .sh-notch-container {
-  margin-top: -65px; /* Move higher up */
+  margin-top: -72px; /* Center perfectly in the notch */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -252,4 +252,37 @@
   .td-scroll-container {
     padding-top: 20px;
   }
+}
+/* Historical Graph Styling */
+.td-history-graph-container {
+  padding: 10px 5px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+}
+
+.td-not-enough-data {
+  padding: 40px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 15px;
+  margin-top: 15px;
+}
+
+.td-not-enough-data p {
+  font-weight: 500;
+  font-size: 0.95rem;
+  max-width: 200px;
+}
+
+/* Recharts Tooltip Overrides */
+.recharts-tooltip-cursor {
+  stroke-dasharray: 4 4;
+}
+
+.recharts-cartesian-axis-tick-value {
+  font-weight: 500;
 }
