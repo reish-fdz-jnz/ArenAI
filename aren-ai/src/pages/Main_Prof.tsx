@@ -87,7 +87,7 @@ const Main_Prof: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
 
   const [topics, setTopics] = useState<TopicProgress[]>([]);
-  const [overallPerformance, setOverallPerformance] = useState<number | null>(null);
+  const [overallPerformance, setOverallPerformance] = useState<number | null>(0);
   const animatedPerformance = useAnimatedScore(overallPerformance);
   const [viewMode, setViewMode] = useState<"state" | "que">("state");
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
@@ -220,7 +220,7 @@ const Main_Prof: React.FC = () => {
       
       updateFocus(targetFocus, false);
       // Fetch mastery immediately with the confirmed id_class to lock session topics
-      fetchSectionMastery(targetFocus?.id_class);
+      fetchSectionMastery(targetFocus?.id_class, targetFocus);
 
     } catch (err) {
       console.error("Dashboard sync error:", err);
@@ -229,7 +229,7 @@ const Main_Prof: React.FC = () => {
     }
   };
 
-  const fetchSectionMastery = async (classId?: number) => {
+  const fetchSectionMastery = async (classId?: number, currentSession?: DailySession | null) => {
     try {
       const token = localStorage.getItem("authToken");
       // Prioritize the passed classId over the state-based focusSession to avoid race conditions
@@ -263,17 +263,21 @@ const Main_Prof: React.FC = () => {
           
           // SET OVERALL PERFORMANCE (Sector/Session Mastery)
           // Priority: 1. Direct session average from class table 2. Calculated average from topics
-          if (activeSession && activeSession.score_average !== null) {
-            setOverallPerformance(Number(activeSession.score_average));
+          const sessionToUse = currentSession || (activeSession?.id_class === targetId ? activeSession : focusSession);
+          
+          if (sessionToUse && sessionToUse.score_average !== null && sessionToUse.score_average !== undefined) {
+            setOverallPerformance(Number(sessionToUse.score_average));
           } else {
             const validScores = processed.filter(p => p.percentage !== null).map(p => p.percentage!);
             if (validScores.length > 0) {
               const sum = validScores.reduce((acc, val) => acc + val, 0);
               setOverallPerformance(Math.round(sum / validScores.length));
             } else {
-              setOverallPerformance(null);
+              setOverallPerformance(0); // Default to 0 instead of null to show "0%"
             }
           }
+        } else {
+          setOverallPerformance(0);
         }
       }
     } catch (err) {
@@ -311,7 +315,9 @@ const Main_Prof: React.FC = () => {
     });
     
     setTopics(processedTopics);
-    setOverallPerformance(null); // Initial performance should be null (smiling face) until session scores arrive
+    
+    // Use session average if available immediately, default to 0 to ensure colored border
+    setOverallPerformance(Number(session.score_average) || 0);
   };
 
   // Stable Icon Mapping helper
@@ -552,17 +558,11 @@ const Main_Prof: React.FC = () => {
   };
 
   const getColorForPercentage = (percentage: number) => {
-    const p = Math.max(0, Math.min(100, percentage)) / 100;
-
-    // Interpolate between Red (#FF5252) and Teal (#78B8B0)
-    const startColor = { r: 255, g: 82, b: 82 }; // Red
-    const endColor = { r: 120, g: 184, b: 176 }; // #78B8B0
-
-    const r = Math.round(startColor.r + (endColor.r - startColor.r) * p);
-    const g = Math.round(startColor.g + (endColor.g - startColor.g) * p);
-    const b = Math.round(startColor.b + (endColor.b - startColor.b) * p);
-
-    return `rgb(${r}, ${g}, ${b})`;
+    const p = Math.max(0, Math.min(100, percentage));
+    
+    if (p >= 80) return "#2ecc71"; // Success Green
+    if (p >= 60) return "#f39c12"; // Warning Orange/Yellow
+    return "#FF5252"; // Danger Red
   };
 
   return (
@@ -663,18 +663,24 @@ const Main_Prof: React.FC = () => {
             {activeSession ? (
               <>
                 <div className="ms-stats-row">
-                  <div className="ms-your-math-pill" style={{ fontSize: '14px', padding: '8px 16px' }}>
-                    {focusSession?.name_session || t("professor.dashboard.yourClass", {
-                      subject: t(
-                        "professor.dashboard.subjects." +
-                        selectedSubject.replace(/\s+/g, ""),
-                      ),
-                    })}
+                  <div className="ms-your-math-pill" style={{ fontSize: '14px', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {activeSession && activeSession.id_class === focusSession?.id_class && (
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#FF5252', animation: 'blink 1s step-end infinite' }}></div>
+                    )}
+                    <span>
+                      {activeSession && activeSession.id_class === focusSession?.id_class ? "LIVE: " : ""}
+                      {focusSession?.name_session || t("professor.dashboard.yourClass", {
+                        subject: t(
+                          "professor.dashboard.subjects." +
+                          selectedSubject.replace(/\s+/g, ""),
+                        ),
+                      })}
+                    </span>
                   </div>
                   <div
                     className="ms-progress-circle"
                     style={{
-                      border: (animatedPerformance !== null && animatedPerformance > 0)
+                      border: (animatedPerformance !== null)
                         ? `6px solid ${getColorForPercentage(animatedPerformance)}`
                         : `6px solid rgba(255, 255, 255, 0.2)`,
                       boxShadow: `inset 0 0 0 3px white`,
@@ -686,8 +692,8 @@ const Main_Prof: React.FC = () => {
                       justifyContent: "center",
                       alignItems: "center",
                       fontWeight: "bold",
-                      fontSize: (animatedPerformance !== null && animatedPerformance > 0) ? "18px" : "28px",
-                      backgroundColor: (animatedPerformance !== null && animatedPerformance > 0)
+                      fontSize: (animatedPerformance !== null) ? "18px" : "28px",
+                      backgroundColor: (animatedPerformance !== null)
                         ? "var(--ion-color-secondary)"
                         : "rgba(255, 255, 255, 0.1)",
                       backdropFilter: "blur(10px)",
@@ -695,7 +701,7 @@ const Main_Prof: React.FC = () => {
                       transition: "border-color 0.5s ease"
                     }}
                   >
-                    {animatedPerformance !== null ? `${Math.round(animatedPerformance)}%` : <IonIcon icon={happyOutline} />}
+                    {animatedPerformance !== null ? `${Math.round(animatedPerformance)}%` : "0%"}
                   </div>
                 </div>
 
@@ -729,7 +735,7 @@ const Main_Prof: React.FC = () => {
                   <div
                     className="ms-progress-circle"
                     style={{
-                      border: (animatedPerformance !== null && animatedPerformance > 0)
+                      border: (animatedPerformance !== null)
                         ? `6px solid ${getColorForPercentage(animatedPerformance)}`
                         : `6px solid rgba(255, 255, 255, 0.2)`,
                       boxShadow: `inset 0 0 0 3px white`,
@@ -741,12 +747,12 @@ const Main_Prof: React.FC = () => {
                       justifyContent: "center",
                       alignItems: "center",
                       fontWeight: "bold",
-                      fontSize: (animatedPerformance !== null && animatedPerformance > 0) ? "18px" : "28px",
+                      fontSize: (animatedPerformance !== null) ? "18px" : "28px",
                       backgroundColor: "var(--ion-color-secondary)",
                       transition: "border-color 0.5s ease"
                     }}
                   >
-                    {animatedPerformance !== null ? `${Math.round(animatedPerformance)}%` : <IonIcon icon={happyOutline} />}
+                    {animatedPerformance !== null ? `${Math.round(animatedPerformance)}%` : "0%"}
                   </div>
                 </div>
 

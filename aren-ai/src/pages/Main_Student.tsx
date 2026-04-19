@@ -268,17 +268,11 @@ const Main_Student: React.FC = () => {
 
   // Helper for color interpolation (Red to Teal)
   const getColorForPercentage = (percentage: number) => {
-    const p = Math.max(0, Math.min(100, percentage)) / 100;
-
-    // Interpolate between Red (#FF5252) and Teal (#78B8B0)
-    const startColor = { r: 255, g: 82, b: 82 }; // Red
-    const endColor = { r: 120, g: 184, b: 176 }; // #78B8B0
-
-    const r = Math.round(startColor.r + (endColor.r - startColor.r) * p);
-    const g = Math.round(startColor.g + (endColor.g - startColor.g) * p);
-    const b = Math.round(startColor.b + (endColor.b - startColor.b) * p);
-
-    return `rgb(${r}, ${g}, ${b})`;
+    const p = Math.max(0, Math.min(100, percentage));
+    
+    if (p >= 80) return "#2ecc71"; // Success Green
+    if (p >= 60) return "#f39c12"; // Warning Orange/Yellow
+    return "#FF5252"; // Danger Red
   };
 
   // Typing animation effect for summary + issues
@@ -631,8 +625,8 @@ const Main_Student: React.FC = () => {
                       <div
                         className="ms-progress-circle"
                         style={{
-                          border: (animatedPerformance !== null && animatedPerformance > 0)
-                            ? `6px solid ${getColorForPercentage(animatedPerformance)}`
+                          border: (animatedPerformance !== null) 
+                            ? `6px solid ${getColorForPercentage(animatedPerformance)}` 
                             : `6px solid rgba(255, 255, 255, 0.2)`,
                           boxShadow: `inset 0 0 0 3px white`, 
                           color: "white",
@@ -643,8 +637,8 @@ const Main_Student: React.FC = () => {
                           justifyContent: "center",
                           alignItems: "center",
                           fontWeight: "bold",
-                          fontSize: (animatedPerformance !== null && animatedPerformance > 0) ? "18px" : "28px",
-                          backgroundColor: (animatedPerformance !== null && animatedPerformance > 0)
+                          fontSize: (animatedPerformance !== null) ? "18px" : "28px",
+                          backgroundColor: (animatedPerformance !== null)
                             ? "var(--ion-color-secondary)"
                             : "rgba(255, 255, 255, 0.1)",
                           backdropFilter: "blur(10px)",
@@ -861,8 +855,8 @@ const Main_Student: React.FC = () => {
                   borderRadius: '12px',
                   border: 'none',
                   background: sectionTestLoading 
-                    ? 'rgba(155,89,182,0.3)' 
-                    : 'linear-gradient(135deg, #9b59b6, #3498db)',
+                    ? 'rgba(var(--ion-color-primary-rgb), 0.3)' 
+                    : 'linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade))',
                   color: 'white',
                   fontSize: '14px',
                   fontWeight: '600',
@@ -891,10 +885,10 @@ const Main_Student: React.FC = () => {
                   marginTop: '10px',
                   padding: '10px 12px',
                   borderRadius: '10px',
-                  background: 'rgba(231,76,60,0.15)',
-                  border: '1px solid rgba(231,76,60,0.3)',
+                   background: 'rgba(var(--ion-color-danger-rgb), 0.1)',
+                  border: '1px solid rgba(var(--ion-color-danger-rgb), 0.3)',
                   fontSize: '12px',
-                  color: '#e74c3c'
+                  color: 'var(--ion-color-danger)'
                 }}>
                   ❌ {sectionTestError}
                 </div>
@@ -905,11 +899,11 @@ const Main_Student: React.FC = () => {
                   <div style={{
                     padding: '10px 12px',
                     borderRadius: '10px',
-                    background: 'rgba(46,204,113,0.15)',
-                    border: '1px solid rgba(46,204,113,0.3)',
+                    background: 'rgba(var(--ion-color-success-rgb), 0.18)',
+                    border: '1px solid rgba(var(--ion-color-success-rgb), 0.4)',
                     marginBottom: '10px',
                     fontSize: '12px',
-                    color: '#2ecc71'
+                    color: 'var(--ion-color-success)'
                   }}>
                     ✅ {sectionTestResult.message} — {sectionTestResult.topicsProcessed} temas procesados
                   </div>
@@ -920,41 +914,43 @@ const Main_Student: React.FC = () => {
                       return (
                         <div key={idx} style={{
                           padding: '10px 12px',
-                          borderRadius: '10px',
-                          background: 'rgba(255,255,255,0.05)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          marginBottom: '8px'
+                          borderRadius: '12px',
+                          background: 'rgba(var(--ion-color-primary-rgb), 0.12)',
+                          border: '1px solid rgba(var(--ion-color-primary-rgb), 0.25)',
+                          marginBottom: '10px'
                         }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <strong style={{ fontSize: '13px', color: 'white' }}>📘 {topic.topicName}</strong>
+                            <strong style={{ fontSize: '13px', color: 'var(--ion-color-primary)' }}>📘 {topic.topicName}</strong>
                             <span style={{
                               fontSize: '12px',
                               padding: '2px 8px',
                               borderRadius: '8px',
-                              background: (topic.score || 0) >= 80 ? 'rgba(46,204,113,0.2)' : (topic.score || 0) >= 60 ? 'rgba(243,156,18,0.2)' : 'rgba(231,76,60,0.2)',
-                              color: (topic.score || 0) >= 80 ? '#2ecc71' : (topic.score || 0) >= 60 ? '#f39c12' : '#e74c3c'
+                               background: (topic.score || 0) >= 80 ? 'rgba(var(--ion-color-success-rgb), 0.18)' : (topic.score || 0) >= 60 ? 'rgba(var(--ion-color-warning-rgb), 0.18)' : 'rgba(var(--ion-color-danger-rgb), 0.18)',
+                              color: (topic.score || 0) >= 80 ? 'var(--ion-color-success-shade)' : (topic.score || 0) >= 60 ? 'var(--ion-color-warning-shade)' : 'var(--ion-color-danger-shade)',
+                              fontWeight: '700'
                             }}>
                               {topic.score || 0}%
                             </span>
                           </div>
-                          {summary && (
+                           {summary && (
                             <>
-                              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', margin: '0 0 6px', lineHeight: '1.5' }}>
+                              <p style={{ fontSize: '12px', color: 'var(--ion-color-primary-shade)', margin: '0 0 8px', lineHeight: '1.5', fontWeight: '500' }}>
                                 {typeof summary === 'object' ? summary.summary : summary}
                               </p>
                               {summary.trend && (
                                 <span style={{
                                   fontSize: '10px', padding: '2px 8px', borderRadius: '6px', marginBottom: '6px', display: 'inline-block',
-                                  background: summary.trend === 'mejorando' ? 'rgba(46,204,113,0.2)' : summary.trend === 'bajando' ? 'rgba(231,76,60,0.2)' : 'rgba(243,156,18,0.2)',
-                                  color: summary.trend === 'mejorando' ? '#2ecc71' : summary.trend === 'bajando' ? '#e74c3c' : '#f39c12'
+                                   background: summary.trend === 'mejorando' ? 'rgba(var(--ion-color-success-rgb), 0.18)' : summary.trend === 'bajando' ? 'rgba(var(--ion-color-danger-rgb), 0.18)' : 'rgba(var(--ion-color-warning-rgb), 0.18)',
+                                  color: summary.trend === 'mejorando' ? 'var(--ion-color-success-shade)' : summary.trend === 'bajando' ? 'var(--ion-color-danger-shade)' : 'var(--ion-color-warning-shade)',
+                                  fontWeight: '700'
                                 }}>
                                   {summary.trend === 'mejorando' ? '📈' : summary.trend === 'bajando' ? '📉' : '➡️'} {summary.trend}
                                 </span>
                               )}
                               {summary.strengths && summary.strengths.length > 0 && (
                                 <div style={{ marginTop: '4px' }}>
-                                  <span style={{ fontSize: '10px', color: 'rgba(46,204,113,0.8)' }}>✅ Fortalezas:</span>
-                                  <ul style={{ margin: '2px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>
+                                  <span style={{ fontSize: '10px', color: 'var(--ion-color-success)', fontWeight: '700' }}>✅ Fortalezas:</span>
+                                  <ul style={{ margin: '2px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'var(--ion-text-color)', opacity: 0.85 }}>
                                     {summary.strengths.map((s: string, i: number) => (
                                       <li key={i}>{s}</li>
                                     ))}
@@ -963,8 +959,8 @@ const Main_Student: React.FC = () => {
                               )}
                               {summary.weaknesses && summary.weaknesses.length > 0 && (
                                 <div style={{ marginTop: '4px' }}>
-                                  <span style={{ fontSize: '10px', color: 'rgba(231,76,60,0.8)' }}>⚠️ Dificultades:</span>
-                                  <ul style={{ margin: '2px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>
+                                  <span style={{ fontSize: '10px', color: 'var(--ion-color-danger)', fontWeight: '700' }}>⚠️ Dificultades:</span>
+                                  <ul style={{ margin: '2px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'var(--ion-text-color)', opacity: 0.85 }}>
                                     {summary.weaknesses.map((w: string, i: number) => (
                                       <li key={i}>{w}</li>
                                     ))}

@@ -7,11 +7,9 @@
 /* ── Profile Header ── */
 .student-menu-header {
   padding: 30px 20px 20px 20px;
-  background: linear-gradient(
-    180deg,
-    var(--ion-color-primary, #8d6b56),
-    var(--ion-color-primary-shade, #7c5e4c)
-  );
+  background: linear-gradient(180deg,
+      var(--ion-color-primary, #8d6b56),
+      var(--ion-color-primary-shade, #7c5e4c));
   color: var(--ion-color-primary-contrast, #fff);
   display: flex;
   flex-direction: column;
@@ -29,11 +27,9 @@
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(
-    circle at 30% 20%,
-    rgba(255, 255, 255, 0.08) 0%,
-    transparent 50%
-  );
+  background: radial-gradient(circle at 30% 20%,
+      rgba(255, 255, 255, 0.08) 0%,
+      transparent 50%);
   pointer-events: none;
 }
 
@@ -257,8 +253,15 @@
 }
 
 @keyframes tooltipIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .usage-formula-tooltip strong {
@@ -284,11 +287,9 @@
 
 .usage-progress-inner {
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--ion-color-secondary, #90BEAB) 60%,
-    var(--ion-color-tertiary, #536E83) 100%
-  );
+  background: linear-gradient(90deg,
+      var(--ion-color-secondary, #90BEAB) 60%,
+      var(--ion-color-tertiary, #536E83) 100%);
   border-radius: 4px;
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -352,7 +353,15 @@
    RESPONSIVE
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  .student-name { font-size: 1rem; }
-  .student-email { font-size: 0.75rem; }
-  .student-username { font-size: 0.7rem; }
+  .student-name {
+    font-size: 1rem;
+  }
+
+  .student-email {
+    font-size: 0.75rem;
+  }
+
+  .student-username {
+    font-size: 0.7rem;
+  }
 }

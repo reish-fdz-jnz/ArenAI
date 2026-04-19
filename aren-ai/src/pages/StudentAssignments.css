@@ -167,15 +167,16 @@
 }
 
 .speech-bubble {
-  background: var(--ion-card-background);
+  background: color-mix(in srgb, var(--ion-color-primary) 35%, #ffffff);
+  border: 1px solid rgba(var(--ion-color-primary-rgb), 0.25);
   border-radius: 18px;
   border-top-left-radius: 4px;
   padding: 16px;
   font-size: 14px;
-  color: var(--ion-text-color);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  color: color-mix(in srgb, var(--ion-color-primary-shade, #000) 80%, #000);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   line-height: 1.4;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .avatar-visual-col {
@@ -1287,20 +1288,55 @@
    DARK MODE OVERRIDES
    ═══════════════════════════════════════════════════════════════════════════ */
 @media (prefers-color-scheme: dark) {
-
-  .page-title,
-  .section-header h2,
-  .count-badge,
-  .assignment-start-link,
-  .task-quiz-name,
-  .paper-title,
-  .paper-subtitle,
-  .paper-date,
-  .quiz-sort-label {
-    color: var(--ion-text-color) !important;
+  .student-assignments-page .page-title,
+  .student-assignments-page .section-header h2,
+  .student-assignments-page .count-badge,
+  .student-assignments-page .assignment-start-link,
+  .student-assignments-page .task-quiz-name,
+  .student-assignments-page .task-quiz-subject,
+  .student-assignments-page .task-quiz-date,
+  .student-assignments-page .task-quiz-details-btn,
+  .student-assignments-page .paper-title,
+  .student-assignments-page .paper-subtitle,
+  .student-assignments-page .paper-date,
+  .student-assignments-page .quiz-sort-label,
+  .student-assignments-page .speech-bubble,
+  .student-assignments-page .speech-bubble *,
+  .student-assignments-page .assignment-due-row,
+  .student-assignments-page .assignment-due-row *,
+  .student-assignments-page .assignment-completed-row,
+  .student-assignments-page .assignment-completed-row *,
+  .student-assignments-page .no-assignments p {
+    color: #ffffff !important;
   }
 
-  .count-badge {
+  .student-assignments-page .count-badge {
     background: rgba(255, 255, 255, 0.08);
   }
+}
+
+html[data-force-dark] .student-assignments-page .page-title,
+html[data-force-dark] .student-assignments-page .section-header h2,
+html[data-force-dark] .student-assignments-page .count-badge,
+html[data-force-dark] .student-assignments-page .assignment-start-link,
+html[data-force-dark] .student-assignments-page .task-quiz-name,
+html[data-force-dark] .student-assignments-page .task-quiz-subject,
+html[data-force-dark] .student-assignments-page .task-quiz-date,
+html[data-force-dark] .student-assignments-page .task-quiz-details-btn,
+html[data-force-dark] .student-assignments-page .paper-title,
+html[data-force-dark] .student-assignments-page .paper-subtitle,
+html[data-force-dark] .student-assignments-page .paper-date,
+html[data-force-dark] .student-assignments-page .quiz-sort-label,
+html[data-force-dark] .student-assignments-page .speech-bubble,
+html[data-force-dark] .student-assignments-page .speech-bubble *,
+html[data-force-dark] .student-assignments-page .assignment-due-row,
+html[data-force-dark] .student-assignments-page .assignment-due-row *,
+html[data-force-dark] .student-assignments-page .assignment-completed-row,
+html[data-force-dark] .student-assignments-page .assignment-completed-row *,
+html[data-force-dark] .student-assignments-page .no-assignments p {
+  color: #ffffff !important;
+}
+
+html[data-force-dark] .student-assignments-page .count-badge {
+  background: rgba(255, 255, 255, 0.08);
 }

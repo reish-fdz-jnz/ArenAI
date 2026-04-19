@@ -392,6 +392,13 @@ const App: React.FC = () => {
                         <Redirect to="/login" />
                       )}
                     </Route>
+                    <Route path="/student-assignments" exact={true}>
+                      {userRole === "student" ? (
+                        <StudentAssignments />
+                      ) : (
+                        <Redirect to="/login" />
+                      )}
+                    </Route>
                     <Route path="/leaderboard" exact={true}>
                       {userRole === "student" ? (
                         <Leaderboard />

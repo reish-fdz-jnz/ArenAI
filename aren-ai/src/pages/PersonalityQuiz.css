@@ -10,12 +10,12 @@
 }
 
 .pq-container {
-    padding: 20px;
-    height: 100%;
+    padding: 80px 20px 100px 20px; /* Account for StudentHeader and safe areas */
+    min-height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    max-width: 600px;
+    gap: 25px;
+    max-width: 650px;
     margin: 0 auto;
 }
 
@@ -264,21 +264,32 @@
 }
 
 .pq-traits-container {
-    background: rgba(var(--ion-color-primary-rgb, 141, 107, 86), 0.05);
-    border-radius: 15px;
-    padding: 20px;
+    background: color-mix(in srgb, var(--ion-color-primary) 8%, var(--ion-card-background, #ffffff));
+    border: 1px solid rgba(var(--ion-color-primary-rgb), 0.1);
+    border-radius: 18px;
+    padding: 22px;
     text-align: left;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    transition: transform 0.3s ease;
+}
+
+.pq-traits-container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
 }
 
 .pq-traits-title {
     color: var(--ion-color-primary);
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 15px;
-    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
-    padding-bottom: 5px;
+    letter-spacing: 1.2px;
+    margin-bottom: 18px;
+    border-bottom: 1.5px solid rgba(var(--ion-color-primary-rgb), 0.15);
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .pq-trait-item {
@@ -295,8 +306,14 @@
     font-weight: bold;
 }
 
+.pq-recommendations {
+    background: color-mix(in srgb, var(--ion-color-secondary) 8%, var(--ion-card-background, #ffffff));
+    border-color: rgba(var(--ion-color-secondary-rgb), 0.1);
+}
+
 .pq-recommendations .pq-traits-title {
-    color: var(--ion-color-secondary);
+    color: var(--ion-color-secondary-shade, var(--ion-color-secondary));
+    border-bottom-color: rgba(var(--ion-color-secondary-rgb), 0.15);
 }
 
 .pq-recommendations .pq-trait-bullet {

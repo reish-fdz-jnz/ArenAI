@@ -69,6 +69,23 @@ export const ProfessorTopicBubble: React.FC<ProfessorTopicBubbleProps> = ({
         <div className="ms-topic-icon">
           {topic.icon || "•"}
         </div>
+        {hasData && (
+          <div style={{
+            position: 'absolute',
+            bottom: '4px',
+            right: '4px',
+            background: 'rgba(255, 255, 255, 0.9)',
+            color: performanceColor,
+            fontSize: '9px',
+            padding: '2px 4px',
+            borderRadius: '6px',
+            fontWeight: '800',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+            zIndex: 10
+          }}>
+            {Math.round(animatedPercentage!)}%
+          </div>
+        )}
       </div>
       <span 
         className={`ms-topic-label ${expandedTopic === labelKey ? 'is-expanded' : ''}`}

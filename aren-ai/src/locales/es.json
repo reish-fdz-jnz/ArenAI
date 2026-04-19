@@ -1386,7 +1386,8 @@
         "questions": "Preguntas",
         "start": "Comenzar",
         "overdue": "Atrasado",
-        "score": "Puntuación"
+        "score": "Puntuación",
+        "viewDetails": "Ver Detalles"
     },
     "auth": {
         "brandTitle": "Aren AI",

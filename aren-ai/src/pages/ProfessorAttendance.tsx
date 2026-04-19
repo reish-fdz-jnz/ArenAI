@@ -395,11 +395,10 @@ const ProfessorAttendance: React.FC = () => {
     };
 
     const getColorForPercentage = (p: number) => {
-        const ratio = Math.max(0, Math.min(100, p)) / 100;
-        const r = Math.round(255 + (120 - 255) * ratio);
-        const g = Math.round(82 + (184 - 82) * ratio);
-        const b = Math.round(82 + (176 - 82) * ratio);
-        return `rgb(${r}, ${g}, ${b})`;
+        const val = Math.max(0, Math.min(100, p));
+        if (val >= 80) return "#2ecc71"; // Success Green
+        if (val >= 60) return "#f39c12"; // Warning Orange/Yellow
+        return "#FF5252"; // Danger Red
     };
 
     return (

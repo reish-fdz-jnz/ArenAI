@@ -672,7 +672,7 @@ const Quiz: React.FC = () => {
               <div className="separator-line"></div>
             </div>
 
-            <div className="quiz-answers-container-box">
+            <div className="quiz-answers-container-box" key={currentQuestion}>
               {currentQ.options.map((option, idx) => (
                 <div
                   key={idx}
