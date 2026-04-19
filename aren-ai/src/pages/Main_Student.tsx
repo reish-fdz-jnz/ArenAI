@@ -493,11 +493,7 @@ const Main_Student: React.FC = () => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          sectionId: 1,
-          testMode: true
-        })
+        }
       });
       const data = await response.json();
       if (data.success) {
@@ -852,11 +848,11 @@ const Main_Student: React.FC = () => {
               backdropFilter: 'blur(10px)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                <span style={{ fontSize: '20px' }}>🧪</span>
-                <strong style={{ fontSize: '14px', color: 'white' }}>Test: Generar Resúmenes AI de Sección</strong>
+                <span style={{ fontSize: '20px' }}>🤖</span>
+                <strong style={{ fontSize: '14px', color: 'white' }}>Generar Resúmenes AI</strong>
               </div>
               <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: '0 0 12px', lineHeight: '1.5' }}>
-                Crea datos de prueba en <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>section_topic</code> con scores aleatorios y genera resúmenes AI para la sección 1.
+                Ejecuta el pipeline completo: genera resúmenes por clase y luego los combina en resúmenes de sección.
               </p>
               <button
                 onClick={handleTestSectionSummary}
@@ -887,7 +883,7 @@ const Main_Student: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    🤖 Generar Resúmenes de Sección
+                    🚀 Ejecutar Pipeline AI
                   </>
                 )}
               </button>
@@ -948,27 +944,31 @@ const Main_Student: React.FC = () => {
                               <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', margin: '0 0 6px', lineHeight: '1.5' }}>
                                 {typeof summary === 'object' ? summary.summary : summary}
                               </p>
-                              {summary.correlation_impact && (
-                                <p style={{ fontSize: '10px', color: 'rgba(155,89,182,0.9)', margin: '0 0 6px', lineHeight: '1.4' }}>
-                                  🔗 {summary.correlation_impact}
-                                </p>
+                              {summary.trend && (
+                                <span style={{
+                                  fontSize: '10px', padding: '2px 8px', borderRadius: '6px', marginBottom: '6px', display: 'inline-block',
+                                  background: summary.trend === 'mejorando' ? 'rgba(46,204,113,0.2)' : summary.trend === 'bajando' ? 'rgba(231,76,60,0.2)' : 'rgba(243,156,18,0.2)',
+                                  color: summary.trend === 'mejorando' ? '#2ecc71' : summary.trend === 'bajando' ? '#e74c3c' : '#f39c12'
+                                }}>
+                                  {summary.trend === 'mejorando' ? '📈' : summary.trend === 'bajando' ? '📉' : '➡️'} {summary.trend}
+                                </span>
                               )}
-                              {summary.key_issues && summary.key_issues.length > 0 && (
-                                <div style={{ marginTop: '6px' }}>
-                                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>⚠️ Problemas:</span>
-                                  <ul style={{ margin: '4px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>
-                                    {summary.key_issues.map((issue: string, i: number) => (
-                                      <li key={i} style={{ marginBottom: '2px' }}>{issue}</li>
+                              {summary.strengths && summary.strengths.length > 0 && (
+                                <div style={{ marginTop: '4px' }}>
+                                  <span style={{ fontSize: '10px', color: 'rgba(46,204,113,0.8)' }}>✅ Fortalezas:</span>
+                                  <ul style={{ margin: '2px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>
+                                    {summary.strengths.map((s: string, i: number) => (
+                                      <li key={i}>{s}</li>
                                     ))}
                                   </ul>
                                 </div>
                               )}
-                              {summary.recommended_actions && summary.recommended_actions.length > 0 && (
-                                <div style={{ marginTop: '6px' }}>
-                                  <span style={{ fontSize: '10px', color: 'rgba(46,204,113,0.8)' }}>💡 Acciones:</span>
-                                  <ul style={{ margin: '4px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>
-                                    {summary.recommended_actions.map((action: string, i: number) => (
-                                      <li key={i} style={{ marginBottom: '2px' }}>{action}</li>
+                              {summary.weaknesses && summary.weaknesses.length > 0 && (
+                                <div style={{ marginTop: '4px' }}>
+                                  <span style={{ fontSize: '10px', color: 'rgba(231,76,60,0.8)' }}>⚠️ Dificultades:</span>
+                                  <ul style={{ margin: '2px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>
+                                    {summary.weaknesses.map((w: string, i: number) => (
+                                      <li key={i}>{w}</li>
                                     ))}
                                   </ul>
                                 </div>
