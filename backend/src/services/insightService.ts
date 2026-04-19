@@ -634,157 +634,95 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
 // ============================================================
 // Phase 5: Generate per-topic SECTION summaries (temporal)
 // Uses class_topic historical summaries as main data source
+// MINIMAL queries — no per-topic correlation lookups
 // ============================================================
 export async function generateSectionTopicSummaries(sectionId?: number): Promise<void> {
-    console.log('');
-    console.log('╔══════════════════════════════════════════════════════════════════╗');
-    console.log('║        🏫 PHASE 5: SECTION TOPIC SUMMARY GENERATION             ║');
-    console.log('╚══════════════════════════════════════════════════════════════════╝');
+    console.log('[Phase 5] Section topic summaries starting...');
 
     try {
-        // 1. Get sections to process
         let sectionIds: number[] = [];
         if (sectionId) {
             sectionIds = [sectionId];
         } else {
-            const sectionResult = await db.query<{ id_section: number }>(
-                `SELECT DISTINCT id_section FROM section_topic`
-            );
-            sectionIds = sectionResult.rows.map(r => r.id_section);
+            const r = await db.query<{ id_section: number }>(`SELECT DISTINCT id_section FROM section_topic`);
+            sectionIds = r.rows.map(r => r.id_section);
         }
 
-        if (sectionIds.length === 0) {
-            console.log('⏭️  No sections with topics found. Skipping Phase 5.');
-            return;
-        }
+        if (sectionIds.length === 0) { console.log('[Phase 5] No sections. Skipping.'); return; }
 
-        console.log(`📊 Found ${sectionIds.length} sections to analyze`);
         let totalSuccess = 0;
 
         for (const secId of sectionIds) {
             try {
-                // 2. Get section info
-                const sectionInfo = await db.query<{ section_number: string; grade: string }>(
-                    `SELECT section_number, grade FROM section WHERE id_section = ?`,
-                    [secId]
+                // Section name
+                const si = await db.query<{ section_number: string; grade: string }>(
+                    `SELECT section_number, grade FROM section WHERE id_section = ?`, [secId]
                 );
-                const sectionName = sectionInfo.rows[0]
-                    ? `${sectionInfo.rows[0].grade}-${sectionInfo.rows[0].section_number}`
-                    : `Sección ${secId}`;
+                const sectionName = si.rows[0] ? `${si.rows[0].grade}-${si.rows[0].section_number}` : `Sección ${secId}`;
 
-                // 3. Get topics for this section
-                const topicResult = await db.query<{
-                    id_topic: number;
-                    topic_name: string;
-                    score: number | null;
-                }>(
+                // All topics for this section
+                const topics = await db.query<{ id_topic: number; topic_name: string; score: number | null }>(
                     `SELECT st.id_topic, t.name as topic_name, st.score
-                     FROM section_topic st
-                     INNER JOIN topic t ON t.id_topic = st.id_topic
-                     WHERE st.id_section = ?`,
-                    [secId]
+                     FROM section_topic st INNER JOIN topic t ON t.id_topic = st.id_topic
+                     WHERE st.id_section = ?`, [secId]
+                );
+                if (topics.rows.length === 0) continue;
+
+                // ALL class_topic summaries for this section in one query
+                const allClassSummaries = await db.query<{ id_topic: number; ai_summary: string }>(
+                    `SELECT ct.id_topic, ct.ai_summary
+                     FROM class_topic ct
+                     INNER JOIN class c ON c.id_class = ct.id_class
+                     WHERE c.id_section = ? AND ct.ai_summary IS NOT NULL`, [secId]
                 );
 
-                if (topicResult.rows.length === 0) continue;
-                console.log(`\n🏫 Section ${sectionName}: ${topicResult.rows.length} topics`);
+                // Group by topic
+                const summaryMap = new Map<number, string[]>();
+                for (const row of allClassSummaries.rows) {
+                    if (!summaryMap.has(row.id_topic)) summaryMap.set(row.id_topic, []);
+                    // Truncate each summary to 100 chars
+                    summaryMap.get(row.id_topic)!.push(row.ai_summary.substring(0, 100));
+                }
 
-                // 4. Count students in section
-                const studentCount = await db.query<{ cnt: number }>(
-                    `SELECT COUNT(*) as cnt FROM user_section WHERE id_section = ?`,
-                    [secId]
-                );
-                const totalStudents = studentCount.rows[0]?.cnt || 0;
+                const { SECTION_TOPIC_SUMMARY_PROMPT } = await import('../config/prompts.js');
 
-                // 5. Process each topic
-                for (const topic of topicResult.rows) {
+                for (const topic of topics.rows) {
                     try {
-                        const avgScore = topic.score || 0;
+                        const classSummaries = (summaryMap.get(topic.id_topic) || [])
+                            .slice(0, 3).join(' | ') || 'Sin datos';
 
-                        // Get class_topic historical summaries (main data source)
-                        const classSummaryResult = await db.query<{ ai_summary: string | null; class_name: string }>(
-                            `SELECT ct.ai_summary, c.name_session as class_name
-                             FROM class_topic ct
-                             INNER JOIN class c ON c.id_class = ct.id_class
-                             WHERE ct.id_topic = ? AND c.id_section = ? AND ct.ai_summary IS NOT NULL
-                             ORDER BY c.start_time DESC LIMIT 5`,
-                            [topic.id_topic, secId]
-                        );
-
-                        const classSummaries = classSummaryResult.rows
-                            .map(r => `- ${r.class_name}: ${r.ai_summary?.substring(0, 300)}`)
-                            .join('\n') || 'Sin resúmenes de clase disponibles';
-
-                        // Get correlations
-                        const correlationResult = await db.query<{
-                            related_name: string;
-                            relation_type: string;
-                            correlation_coefficient: number;
-                        }>(
-                            `SELECT 
-                                CASE WHEN tfr.id_topic_father = ? THEN ts.name ELSE tf.name END as related_name,
-                                CASE WHEN tfr.id_topic_father = ? THEN 'padre_de' ELSE 'hijo_de' END as relation_type,
-                                tfr.correlation_coefficient
-                             FROM topic_father_son_relation tfr
-                             INNER JOIN topic tf ON tf.id_topic = tfr.id_topic_father
-                             INNER JOIN topic ts ON ts.id_topic = tfr.id_topic_son
-                             WHERE tfr.id_topic_father = ? OR tfr.id_topic_son = ?`,
-                            [topic.id_topic, topic.id_topic, topic.id_topic, topic.id_topic]
-                        );
-
-                        const relatedTopics = correlationResult.rows.map(r =>
-                            `${r.related_name} (${r.relation_type})`
-                        ).join(', ') || 'Ninguno';
-
-                        const correlations = correlationResult.rows.map(r =>
-                            `${r.related_name}: ${r.correlation_coefficient}`
-                        ).join(', ') || 'N/A';
-
-                        // Build prompt (same format as TOPIC_CLASS_SUMMARY_PROMPT)
-                        const { SECTION_TOPIC_SUMMARY_PROMPT } = await import('../config/prompts.js');
                         const prompt = SECTION_TOPIC_SUMMARY_PROMPT
                             .replace('{TOPIC_NAME}', topic.topic_name)
                             .replace('{SECTION_NAME}', sectionName)
-                            .replace('{TOPIC_SCORE}', String(avgScore))
-                            .replace('{STUDENTS_COMPLETED}', String(totalStudents))
-                            .replace('{TOTAL_STUDENTS}', String(totalStudents))
-                            .replace('{CLASS_SUMMARIES}', classSummaries)
-                            .replace('{RELATED_TOPICS}', relatedTopics)
-                            .replace('{CORRELATIONS}', correlations);
+                            .replace('{TOPIC_SCORE}', String(topic.score || 0))
+                            .replace('{CLASS_SUMMARIES}', classSummaries);
 
                         const aiResponse = await generateContentWithGemini(
-                            `Analiza el estado de este tópico en la sección y genera el JSON:`,
-                            prompt
+                            `JSON breve del tópico:`, prompt
                         );
 
-                        // Parse and save
                         const parsed = parseInsightResponse(aiResponse);
                         const summaryToSave = parsed ? JSON.stringify(parsed) : aiResponse;
 
                         await db.query(
-                            `UPDATE section_topic 
-                             SET ai_summary = ?, score = ?, last_analysis_at = CURRENT_TIMESTAMP
+                            `UPDATE section_topic SET ai_summary = ?, last_analysis_at = CURRENT_TIMESTAMP
                              WHERE id_section = ? AND id_topic = ?`,
-                            [summaryToSave, avgScore, secId, topic.id_topic]
+                            [summaryToSave, secId, topic.id_topic]
                         );
 
                         totalSuccess++;
-                        console.log(`  ✅ ${topic.topic_name} (${avgScore}%)`);
-
-                    } catch (topicErr) {
-                        console.error(`  ❌ ${topic.topic_name}:`, topicErr);
+                        console.log(`  ✅ ${topic.topic_name} (${topic.score || 0}%)`);
+                    } catch (e) {
+                        console.error(`  ❌ ${topic.topic_name}:`, e);
                     }
                 }
-
-            } catch (sectionErr) {
-                console.error(`❌ Section ${secId}:`, sectionErr);
+            } catch (e) {
+                console.error(`❌ Section ${secId}:`, e);
             }
         }
 
-        console.log(`\n✅ Phase 5 complete - ${totalSuccess} section topic summaries generated`);
-
+        console.log(`[Phase 5] Done — ${totalSuccess} summaries generated`);
     } catch (err) {
-        console.error('💥 Phase 5 error:', err);
+        console.error('[Phase 5] Error:', err);
     }
 }
-
-
