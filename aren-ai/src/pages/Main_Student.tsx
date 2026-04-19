@@ -847,13 +847,6 @@ const Main_Student: React.FC = () => {
               border: '1px solid rgba(155,89,182,0.3)',
               backdropFilter: 'blur(10px)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                <span style={{ fontSize: '20px' }}>🤖</span>
-                <strong style={{ fontSize: '14px', color: 'white' }}>Generar Resúmenes AI</strong>
-              </div>
-              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: '0 0 12px', lineHeight: '1.5' }}>
-                Ejecuta el pipeline completo: genera resúmenes por clase y luego los combina en resúmenes de sección.
-              </p>
               <button
                 onClick={handleTestSectionSummary}
                 disabled={sectionTestLoading}

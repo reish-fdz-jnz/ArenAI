@@ -26,12 +26,15 @@ export function initCronJobs(): void {
             // Phase 3: Generate class reports (aggregated for professor)
             await runClassReportGeneration();
 
-            // Phase 4: Generate per-topic class summaries
-            // (incorporates scores, correlations, chatbot questions, chat conclusions)
-            await generateTopicClassSummaries();
+            // Phase 4: Generate per-topic class summaries for ALL classes
+            const classesWithTopics = await (await import('../db/pool.js')).db.query<{ id_class: number }>(
+              `SELECT DISTINCT id_class FROM class_topic`
+            );
+            for (const cls of classesWithTopics.rows) {
+              await generateTopicClassSummaries(cls.id_class);
+            }
 
-            // Phase 5: Generate per-topic section summaries
-            // (aggregates all students in a section across all classes)
+            // Phase 5: Combine class_topic summaries into section_topic
             await generateSectionTopicSummaries();
 
             console.log('\n========================================');

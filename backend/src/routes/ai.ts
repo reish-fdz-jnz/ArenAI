@@ -702,19 +702,25 @@ router.get('/section-topic-summaries', async (req, res, next) => {
   }
 });
 
-// POST /ai/generate-section-summaries - Force real pipeline: Phase 4 (class_topic) → Phase 5 (section_topic)
+// POST /ai/generate-section-summaries - Force real pipeline
 router.post('/generate-section-summaries', async (req, res, next) => {
   try {
-    console.log('[API] /generate-section-summaries — forcing real pipeline...');
+    console.log('[API] Forcing real pipeline...');
 
-    // Phase 4: Generate class_topic summaries from real data
+    // Phase 4: Generate class_topic summaries for ALL classes that have topics
+    const allClasses = await db.query<{ id_class: number }>(
+      `SELECT DISTINCT id_class FROM class_topic`
+    );
+
     const { generateTopicClassSummaries } = await import('../services/insightService.js');
-    await generateTopicClassSummaries();
+    for (const cls of allClasses.rows) {
+      await generateTopicClassSummaries(cls.id_class);
+    }
 
     // Phase 5: Combine class_topic summaries into section_topic
     await generateSectionTopicSummaries();
 
-    // Return results from all sections that have data
+    // Return results
     const allSections = await db.query<{ id_section: number }>(
       `SELECT DISTINCT id_section FROM section_topic`
     );
@@ -727,19 +733,18 @@ router.post('/generate-section-summaries', async (req, res, next) => {
         topicId: t.id_topic,
         topicName: t.topic_name,
         score: t.score,
-        aiSummary: t.ai_summary ? (() => { try { return JSON.parse(t.ai_summary!); } catch { return t.ai_summary; } })() : null,
-        lastAnalysisAt: t.last_analysis_at
+        aiSummary: t.ai_summary ? (() => { try { return JSON.parse(t.ai_summary!); } catch { return t.ai_summary; } })() : null
       })));
     }
 
     res.json({
       success: true,
-      message: `Pipeline completo: Phase 4 (class_topic) → Phase 5 (section_topic)`,
+      message: `Resúmenes generados`,
       topicsProcessed: allTopics.length,
       topics: allTopics
     });
   } catch (error: any) {
-    console.error('Generate section summaries error:', error);
+    console.error('Generate error:', error);
     res.status(500).json({ error: error.message });
   }
 });
