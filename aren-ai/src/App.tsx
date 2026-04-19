@@ -551,7 +551,7 @@ const App: React.FC = () => {
                     </Route>
 
                     <Route path="/subject/:name" exact={true}>
-                      {userRole === "student" ? (
+                      {userRole === "student" || userRole === "professor" ? (
                         <SubjectDetail />
                       ) : (
                         <Redirect to="/login" />

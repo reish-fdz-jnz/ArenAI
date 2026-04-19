@@ -78,31 +78,51 @@ export async function findSectionByGradeAndNumber(grade: string, sectionNumber: 
 }
 
 export async function getSectionTopicProgress(sectionId: number, subjectName: string, classId?: number) {
-  const params: any[] = [sectionId, sectionId, subjectName];
-  let filterClause = '';
-  
   if (classId) {
-    filterClause = 'AND ct.id_class = ?';
-    params.push(classId);
+    // Session Mode: Show ONLY topics assigned to this class
+    // Mastery shown is the average score of all students in the section for these topics
+    // Returns NULL if no students have scores yet (to show gray 'unstarted' state)
+    const result = await db.query<any>(
+      `SELECT 
+          t.id_topic, 
+          t.name as name_topic, 
+          COALESCE(sect.score, agg.avg_score) as score,
+          sect.ai_summary
+       FROM class_topic ct
+       INNER JOIN topic t ON t.id_topic = ct.id_topic
+       INNER JOIN class c ON c.id_class = ct.id_class
+       -- Force link to the active section's permanent records
+       LEFT JOIN section_topic sect ON sect.id_section = ? AND sect.id_topic = ct.id_topic
+       -- Fallback: aggregate average from ALL classes of this specific section
+       LEFT JOIN (
+         SELECT ct2.id_topic, AVG(ct2.score_average) as avg_score
+         FROM class c2
+         INNER JOIN class_topic ct2 ON ct2.id_class = c2.id_class
+         WHERE c2.id_section = ?
+         GROUP BY ct2.id_topic
+       ) agg ON agg.id_topic = ct.id_topic
+       WHERE ct.id_class = ?
+       ORDER BY t.name`,
+      [sectionId, sectionId, classId]
+    );
+    return result.rows;
+  } else {
+    // Global/Idle Mode: Show all topics in the subject
+    const result = await db.query<any>(
+      `SELECT 
+          t.id_topic, 
+          t.name as name_topic, 
+          COALESCE(st.score, 0) as score,
+          st.ai_summary
+       FROM topic t
+       INNER JOIN subject sub ON sub.id_subject = t.id_subject
+       LEFT JOIN section_topic st ON st.id_topic = t.id_topic AND st.id_section = ?
+       WHERE sub.name_subject = ?
+       ORDER BY t.name`,
+      [sectionId, subjectName]
+    );
+    return result.rows;
   }
-
-  const result = await db.query<any>(
-    `SELECT 
-        t.id_topic, 
-        t.name as name_topic, 
-        COALESCE(st.score, AVG(ct.score_average)) as score, 
-        COALESCE(st.ai_summary, MAX(ct.ai_summary)) as ai_summary
-     FROM topic t
-     LEFT JOIN section_topic st ON st.id_topic = t.id_topic AND st.id_section = ?
-     LEFT JOIN class_topic ct ON ct.id_topic = t.id_topic
-     LEFT JOIN class c ON c.id_class = ct.id_class AND c.id_section = ?
-     INNER JOIN subject sub ON sub.id_subject = t.id_subject
-     WHERE sub.name_subject = ? ${filterClause}
-     GROUP BY t.id_topic, t.name, st.score, st.ai_summary
-     ORDER BY t.name`,
-    params
-  );
-  return result.rows;
 }
 
 // ============================================================

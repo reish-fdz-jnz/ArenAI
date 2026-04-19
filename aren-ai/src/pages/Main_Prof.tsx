@@ -35,6 +35,7 @@ import {
   bookOutline,
   pencilOutline,
   schoolOutline,
+  happyOutline,
 } from "ionicons/icons";
 import "./Main_Prof.css";
 import "../components/ProfessorHeader.css";
@@ -86,7 +87,7 @@ const Main_Prof: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
 
   const [topics, setTopics] = useState<TopicProgress[]>([]);
-  const [overallPerformance, setOverallPerformance] = useState(0);
+  const [overallPerformance, setOverallPerformance] = useState<number | null>(null);
   const animatedPerformance = useAnimatedScore(overallPerformance);
   const [viewMode, setViewMode] = useState<"state" | "que">("state");
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
@@ -104,32 +105,54 @@ const Main_Prof: React.FC = () => {
     const socket = socketService.socket;
     if (!socket) return;
 
+    // 1. Mastery & Score Updates
     socket.on('class_score_update', (data: { topicId: number; sectionMastery: number }) => {
-      console.log("[Main_Prof] Live topic score update received:", data);
-      
-      setTopics(prevTopics => {
-        return prevTopics.map(topic => {
-          if (topic.id === data.topicId) {
-            return {
-              ...topic,
-              percentage: data.sectionMastery
-            };
-          }
-          return topic;
-        });
-      });
+      setTopics(prevTopics => prevTopics.map(topic => 
+        topic.id === data.topicId ? { ...topic, percentage: data.sectionMastery } : topic
+      ));
     });
 
     socket.on('class_overall_update', (data: { classId: number; overallAverage: number }) => {
-      console.log("[Main_Prof] Live overall class score update received:", data);
       setOverallPerformance(Math.round(data.overallAverage));
+    });
+
+    // 2. Session Lifecycle (Live Sync)
+    socket.on('class_started', (data: { classId: number; sectionId: number }) => {
+      console.log("[Main_Prof] Live Class Started:", data);
+      fetchDashboardSync();
+    });
+
+    socket.on('class_finished', (data: { classId: number; sectionId: number }) => {
+      console.log("[Main_Prof] Live Class Finished:", data);
+      setActiveSession(null);
+      setFocusSession(null);
+      setTopics([]);
+      setOverallPerformance(null);
+      fetchDashboardSync();
+    });
+
+    // 3. AI Insights
+    socket.on('insight_update', (data: any) => {
+      if (data.data?.status === "report_saved" || data.data?.status === "summary_saved") {
+        fetchClassInsights(true);
+      }
+    });
+
+    // 4. Recovery Resync
+    const unregisterResync = socketService.onResync(() => {
+      console.log("[Main_Prof] Socket recovered, re-fetching...");
+      fetchDashboardSync(selectedDate);
     });
 
     return () => {
       socket.off('class_score_update');
       socket.off('class_overall_update');
+      socket.off('class_started');
+      socket.off('class_finished');
+      socket.off('insight_update');
+      unregisterResync();
     };
-  }, []);
+  }, [selectedGrade, selectedSection, selectedSubject]); // Re-bind on context change
 
   const fetchDashboardSync = async (targetDate: Date = selectedDate) => {
     try {
@@ -179,16 +202,25 @@ const Main_Prof: React.FC = () => {
       setDailySessions(merged);
 
       // 4. Update Focus Session
-      // Preference: 1. Previously selected for this date, 2. Running session, 3. First session of the day
+      // Preference: 1. Previously selected, 2. Running session, 3. First of day (if not Today)
       const storedId = localStorage.getItem(`prefSession_${dateStr}`);
-      let targetFocus = merged.find(s => String(s.id_class) === storedId);
+      const isToday = dateStr === new Date().toISOString().split('T')[0];
+      
+      let targetFocus: DailySession | null = merged.find(s => String(s.id_class) === storedId) || null;
       
       if (!targetFocus) {
-        targetFocus = merged.find(s => s.status === 'running') || merged[0] || null;
+        if (isToday) {
+          // If it's today, ONLY focus on a running session. Otherwise stay null/idle.
+          targetFocus = merged.find(s => s.status === 'running') || null;
+        } else {
+          // For past dates, fallback to the first session found
+          targetFocus = merged[0] || null;
+        }
       }
       
       updateFocus(targetFocus, false);
-      fetchSectionMastery();
+      // Fetch mastery immediately with the confirmed id_class to lock session topics
+      fetchSectionMastery(targetFocus?.id_class);
 
     } catch (err) {
       console.error("Dashboard sync error:", err);
@@ -197,31 +229,37 @@ const Main_Prof: React.FC = () => {
     }
   };
 
-  const fetchSectionMastery = async () => {
+  const fetchSectionMastery = async (classId?: number) => {
     try {
       const token = localStorage.getItem("authToken");
-      // Use classId in URL if we have a focusSession to only show topics of that session
-      const classIdParam = focusSession?.id_class ? `&classId=${focusSession.id_class}` : "";
+      // Prioritize the passed classId over the state-based focusSession to avoid race conditions
+      const targetId = classId || focusSession?.id_class;
+      const classIdParam = targetId ? `&classId=${targetId}` : "";
       const url = getApiUrl(`api/sections/progress?grade=${selectedGrade}&sectionNumber=${selectedSection}&subject=${selectedSubject}${classIdParam}`);
       
       const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
         if (data && data.length > 0) {
-          const processed = data.map((t: any) => ({
-            id: t.id_topic,
-            name: t.name_topic || t.name,
-            percentage: t.score,
-            icon: getIconForTopic(t.name_topic || t.name)
-          }));
+          const processed = data.map((t: any) => {
+            let score = t.score !== null ? Number(t.score) : null;
+            // Auto-scale fractional scores (0.35 -> 35) to match student dashboard behavior
+            if (score !== null && score > 0 && score <= 1) {
+              score = score * 100;
+            }
+            return {
+              id: t.id_topic,
+              name: t.name_topic || t.name,
+              percentage: score,
+              icon: getIconForTopic(t.name_topic || t.name)
+            };
+          });
           setTopics(processed);
           
           // Only update overall performance from progress if not in a session 
           // (Session overall is updated by its own metrics usually, but this is a good backup)
           if (!focusSession) {
-            const total = processed.reduce((acc: number, t: any) => acc + (t.percentage || 0), 0);
-            const avg = processed.length ? total / processed.length : 0;
-            setOverallPerformance(Math.round(avg));
+            setOverallPerformance(null);
           }
         }
       }
@@ -235,7 +273,7 @@ const Main_Prof: React.FC = () => {
     if (shouldCloseUI) setShowScheduleView(false);
     if (!session) {
       setTopics([]);
-      setOverallPerformance(0);
+      setOverallPerformance(null);
       return;
     }
 
@@ -243,17 +281,24 @@ const Main_Prof: React.FC = () => {
     const dateStr = new Date(session.start_time || '').toISOString().split('T')[0];
     localStorage.setItem(`prefSession_${dateStr}`, String(session.id_class));
 
-    // Update widgets
-    let rawTopics = session.topics || [];
-    const processedTopics = rawTopics.map((t: any) => ({
-      name: t.name_topic || t.name,
-      nameKey: t.name_topic || t.name,
-      percentage: 0, // Initial percentage should be 0 unless real data found
-      icon: getIconForTopic(t.name_topic || t.name),
-    }));
+    // Normalize topics from session if they have scores
+    const rawTopics = session.topics || [];
+    const processedTopics = rawTopics.map((t: any) => {
+      let score = (t.score !== undefined && t.score !== null) ? Number(t.score) : null;
+      if (score !== null && score > 0 && score <= 1) {
+        score = score * 100;
+      }
+      return {
+        id: t.id_topic || t.id,
+        name: t.name_topic || t.name,
+        nameKey: t.name_topic || t.name,
+        percentage: score,
+        icon: getIconForTopic(t.name_topic || t.name),
+      };
+    });
     
     setTopics(processedTopics);
-    setOverallPerformance(0); // Initial performance should be 0
+    setOverallPerformance(null); // Initial performance should be null (smiling face) until session scores arrive
   };
 
   // Stable Icon Mapping helper
@@ -285,7 +330,7 @@ const Main_Prof: React.FC = () => {
       setSelectedDate(date);
       setShowScheduleView(true);
       fetchDashboardSync(date);
-      fetchSectionMastery();
+      // Removed stray fetchSectionMastery() call - fetchDashboardSync handles it with proper class locking
     }
   };
 
@@ -482,56 +527,6 @@ const Main_Prof: React.FC = () => {
     fetchChatbotQuestions();
   }, [viewMode]);
 
-  // WebSocket listener for real-time report updates
-  useEffect(() => {
-    socketService.connect();
-
-    const handleInsightUpdate = (data: {
-      timestamp: string;
-      message: string;
-      data?: any;
-    }) => {
-      console.log("[Main_Prof] Insight update received:", data);
-
-      // Check if this is a class report saved - refetch for professor
-      if (
-        data.data?.status === "report_saved" ||
-        data.data?.status === "summary_saved"
-      ) {
-        console.log("[Main_Prof] New class report - refetching with animation");
-        fetchClassInsights(true); // Refetch with animation
-      }
-    };
-
-    const handleClassScoreUpdate = (data: { topicId: number; scoreAverage: number }) => {
-      console.log("[Main_Prof] Class score update received:", data);
-      // Update the specific topic in the list
-      setTopics(prev => prev.map(t => t.id === data.topicId ? { ...t, percentage: data.scoreAverage } : t));
-      
-      // Re-calculate overall performance based on current visible topics
-      setTopics(prev => {
-        const total = prev.reduce((acc, t) => acc + (t.percentage || 0), 0);
-        const avg = prev.length ? total / prev.length : 0;
-        setOverallPerformance(Math.round(avg));
-        return prev;
-      });
-    };
-
-    // Register re-sync logic for when the socket recovers from a drop
-    const unregisterResync = socketService.onResync(() => {
-      console.log("[Main_Prof] Socket recovered, re-fetching dashboard state...");
-      fetchDashboardSync(selectedDate);
-    });
-
-    socketService.socket?.on("insight_update", handleInsightUpdate);
-    socketService.socket?.on("class_score_update", handleClassScoreUpdate);
-
-    return () => {
-      unregisterResync();
-      socketService.socket?.off("insight_update", handleInsightUpdate);
-      socketService.socket?.off("class_score_update", handleClassScoreUpdate);
-    };
-  }, []);
 
   const navigateTo = (path: string) => router.push(path, 'forward', 'push');
 
@@ -543,11 +538,18 @@ const Main_Prof: React.FC = () => {
     }
   };
 
-  const getColorForPercentage = (p: number) => {
-    // Smooth HSL transition: 0 is Red, 120 is Emerald Green
-    const hue = Math.min(120, (p * 1.2)); 
-    // Saturation stays high for vibrancy, lightness adjusted for glassmorphism
-    return `hsla(${hue}, 75%, 45%, 0.85)`;
+  const getColorForPercentage = (percentage: number) => {
+    const p = Math.max(0, Math.min(100, percentage)) / 100;
+
+    // Interpolate between Red (#FF5252) and Teal (#78B8B0)
+    const startColor = { r: 255, g: 82, b: 82 }; // Red
+    const endColor = { r: 120, g: 184, b: 176 }; // #78B8B0
+
+    const r = Math.round(startColor.r + (endColor.r - startColor.r) * p);
+    const g = Math.round(startColor.g + (endColor.g - startColor.g) * p);
+    const b = Math.round(startColor.b + (endColor.b - startColor.b) * p);
+
+    return `rgb(${r}, ${g}, ${b})`;
   };
 
   return (
@@ -680,7 +682,7 @@ const Main_Prof: React.FC = () => {
                       transition: "border-color 0.5s ease"
                     }}
                   >
-                    {animatedPerformance !== null ? `${Math.round(animatedPerformance)}%` : "😊"}
+                    {animatedPerformance !== null ? `${Math.round(animatedPerformance)}%` : <IonIcon icon={happyOutline} />}
                   </div>
                 </div>
 
@@ -703,8 +705,8 @@ const Main_Prof: React.FC = () => {
                   </div>
                 </div>
               </>
-            ) : topics.length > 0 ? (
-                /* Fallback to Section Mastery (History) if no session focused */
+            ) : (topics.length > 0 && selectedDate.toDateString() !== new Date().toDateString()) ? (
+                /* Fallback to Section Mastery (History) ONLY if reviewing a past date */
                 <>
                 <div className="ms-stats-row">
                   <div className="ms-your-math-pill" style={{ fontSize: '14px', padding: '8px 16px' }}>
@@ -730,7 +732,7 @@ const Main_Prof: React.FC = () => {
                       transition: "border-color 0.5s ease"
                     }}
                   >
-                    {animatedPerformance !== null ? `${Math.round(animatedPerformance)}%` : "😊"}
+                    {animatedPerformance !== null ? `${Math.round(animatedPerformance)}%` : <IonIcon icon={happyOutline} />}
                   </div>
                 </div>
 

@@ -96,27 +96,74 @@ export async function createClass(payload: {
   institutionId?: number | null;
   status?: string;
 }) {
-  const insertResult = await db.query<ResultSetHeader>(
-    `INSERT INTO class (name_session, id_class_template, id_section, id_professor, id_institution, status, start_time)
-     VALUES (?, ?, ?, ?, ?, ?, NOW())`,
-    [
-      payload.name_session ?? null,
-      payload.templateId ?? null,
-      payload.sectionId,
-      payload.professorId,
-      payload.institutionId ?? null,
-      payload.status ?? 'scheduled'
-    ]
-  );
+  const client = await db.getClient();
+  try {
+    await client.beginTransaction();
 
-  const { rows } = await db.query<ClassRecord>(
-    `SELECT id_class, name_session, id_class_template, id_professor, id_section, id_institution, start_time, end_time, score_average, ai_summary, status
-     FROM class
-     WHERE id_class = ?`,
-    [insertResult.rows[0].insertId]
-  );
+    let sessionName = payload.name_session;
+    let templateTopicIds: number[] = [];
 
-  return rows[0];
+    // 1. If template is provided, fetch topics and name
+    if (payload.templateId) {
+      const templateRes = await client.query<{ name_template: string }>(
+        `SELECT name_template FROM class_template WHERE id_class_template = ?`,
+        [payload.templateId]
+      );
+      
+      if (templateRes.rows.length > 0) {
+        if (!sessionName) sessionName = templateRes.rows[0].name_template;
+      }
+
+      const topicsRes = await client.query<{ id_topic: number }>(
+        `SELECT id_topic FROM class_template_topic WHERE id_class_template = ?`,
+        [payload.templateId]
+      );
+      templateTopicIds = topicsRes.rows.map(r => r.id_topic);
+    }
+
+    // 2. Create the class
+    const insertResult = await client.query<ResultSetHeader>(
+      `INSERT INTO class (name_session, id_class_template, id_section, id_professor, id_institution, status, score_average, start_time)
+       VALUES (?, ?, ?, ?, ?, ?, NULL, NOW())`,
+      [
+        sessionName ?? 'New Session',
+        payload.templateId ?? null,
+        payload.sectionId,
+        payload.professorId,
+        payload.institutionId ?? null,
+        payload.status ?? 'scheduled'
+      ]
+    );
+
+    const classId = insertResult.rows[0].insertId;
+
+    // 3. Populate class_topic from template topics
+    for (const topicId of templateTopicIds) {
+      await client.query(
+        `INSERT INTO class_topic (id_class, id_topic, score_average)
+         VALUES (?, ?, 0)`,
+        [classId, topicId]
+      );
+    }
+
+    // 4. Fetch and return the full class record
+    const classRows = await client.query<ClassRecord>(
+      `SELECT id_class, name_session, id_class_template, id_professor, id_section, id_institution, start_time, end_time, score_average, ai_summary, status 
+       FROM class 
+       WHERE id_class = ?`,
+      [classId]
+    );
+
+    await client.commit();
+    return classRows.rows[0];
+
+  } catch (error) {
+    await client.rollback();
+    console.error('Error in createClass:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function updateClassStatus(classId: number, status: string, setEndTime: boolean = false) {
@@ -453,13 +500,13 @@ export async function recalculateClassAverages(classId: number) {
     await client.beginTransaction();
 
     // 1. Recalculate Class Overall Average (ONLY students with attendance = 1)
-    const overallRes = await client.query<{ avg: number }>(
+    const overallRes = await client.query<{ avg: number | null }>(
       `SELECT AVG(score_average) as avg 
        FROM class_student 
-       WHERE id_class = ? AND (attendance = 1 OR attendance = true)`,
+       WHERE id_class = ? AND (attendance = 1 OR attendance = true) AND score_average IS NOT NULL`,
       [classId]
     );
-    const newClassAvg = overallRes.rows[0]?.avg || 0;
+    const newClassAvg = overallRes.rows[0]?.avg !== null ? Math.round(overallRes.rows[0].avg) : null;
 
     await client.query(
       `UPDATE class SET score_average = ? WHERE id_class = ?`,
@@ -484,7 +531,7 @@ export async function recalculateClassAverages(classId: number) {
     const sectionId = classInfo.rows[0]?.id_section;
 
     for (const topic of topicsResult.rows) {
-      // Update class_topic table (roll-up)
+      // Update class_topic table (roll-up log for today)
       await client.query(
         `INSERT INTO class_topic (id_class, id_topic, score_average)
          VALUES (?, ?, ?)
@@ -492,26 +539,37 @@ export async function recalculateClassAverages(classId: number) {
         [classId, topic.id_topic, topic.avg_score]
       );
 
-      // Sync to permanent section mastery
+      // 2. Real-time Mastery Calculation: Average of ALL students in the section
+      let sectionAggregateScore = topic.avg_score; // Fallback
       if (sectionId) {
+        const aggregateRes = await client.query<{ avg_score: number | null }>(
+          `SELECT AVG(st.score) as avg_score
+           FROM user_section us
+           LEFT JOIN student_topic st ON st.id_user = us.id_user AND st.id_topic = ?
+           WHERE us.id_section = ?`,
+          [topic.id_topic, sectionId]
+        );
+        sectionAggregateScore = aggregateRes.rows[0]?.avg_score !== null ? aggregateRes.rows[0].avg_score : 0;
+
+        // Keep section_topic synced for historical consistency
         await syncSectionTopicMastery(sectionId, topic.id_topic, topic.avg_score, classId);
       }
 
-      // BROADCAST Live Update to Section Room
+      // BROADCAST Updated Section Mastery to the Professor Dashboard
       if (sectionId) {
         io.to(`section_${sectionId}`).emit('class_score_update', {
           classId,
           topicId: topic.id_topic,
-          sectionMastery: topic.avg_score
+          sectionMastery: sectionAggregateScore // The baseline mean of your students
         });
       }
     }
 
-    // BROADCAST Class Overall Update
+    // BROADCAST Class Overall Update (STRICT SESSION AVG)
     if (sectionId) {
       io.to(`section_${sectionId}`).emit('class_overall_update', {
         classId,
-        overallAverage: newClassAvg
+        overallAverage: newClassAvg // Uses the session-only null/0 average
       });
     }
 

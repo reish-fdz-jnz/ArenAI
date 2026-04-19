@@ -214,7 +214,17 @@ export const quizService = {
         const maxQuizScore = questionData.reduce((sum, q) => sum + Number(q.points), 0) || 100;
         const scorePercentage = (totalScore / maxQuizScore) * 100;
 
-        // A) Update Class-specific analytics
+        // A) Update Global Student Topic Mastery FIRST (The source of truth for section aggregate)
+        for (const [topicId, stats] of Object.entries(topicScores)) {
+            if (Number(topicId) === 0) continue; 
+            await studentRepo.upsertStudentTopicScore({
+                userId: studentId,
+                topicId: Number(topicId),
+                score: (stats.points / stats.maxPoints) * 100
+            });
+        }
+
+        // B) Update Class-specific analytics and trigger broadcast
         if (finalClassId) {
             console.log(`[QuizService] Recording class-specific analytics for class: ${finalClassId}`);
             // Update individual topic scores for this student in this class
@@ -234,16 +244,10 @@ export const quizService = {
 
             // Update student's overall class average score only
             await classRepo.updateClassStudentScore(finalClassId, studentId, scorePercentage);
-        }
 
-        // B) Update Global Student Topic Mastery
-        for (const [topicId, stats] of Object.entries(topicScores)) {
-            if (Number(topicId) === 0) continue; 
-            await studentRepo.upsertStudentTopicScore({
-                userId: studentId,
-                topicId: Number(topicId),
-                score: (stats.points / stats.maxPoints) * 100
-            });
+            // Real-time synchronization: Trigger class-wide roll-up and socket broadcast
+            // This now uses the updated student_topic averages for the bubbles
+            await classRepo.recalculateClassAverages(finalClassId);
         }
 
         // C) Mark Assignment Submission as SUBMITTED with score

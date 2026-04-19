@@ -56,30 +56,16 @@ export const ProfessorTopicBubble: React.FC<ProfessorTopicBubbleProps> = ({
       <div 
         className="ms-topic-fill-box"
         style={{ 
-          border: hasData ? '2px solid rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.1)',
-          boxShadow: hasData ? '0 8px 32px rgba(0,0,0,0.2)' : 'none',
+          backgroundColor: performanceColor,
+          border: hasData ? '2px solid rgba(255,255,255,0.4)' : '1px solid rgba(255,255,255,0.1)',
+          boxShadow: hasData ? '0 4px 10px rgba(0,0,0,0.1)' : 'none',
           opacity: hasData ? 1 : 0.6,
+          transition: "background-color 0.5s ease, border 0.5s ease"
         }}
       >
-        {/* LIQUID FILL LAYER */}
-        <div 
-            className="ms-topic-liquid-fill"
-            style={{ 
-                height: `${animatedPercentage || 0}%`,
-                backgroundColor: performanceColor,
-            }}
-        />
-
         <div className="ms-topic-icon">
           {topic.icon || "•"}
         </div>
-
-        {/* LIVE PERCENTAGE LABEL */}
-        {hasData && (
-            <div className="ms-topic-percentage-label">
-                {Math.round(animatedPercentage!)}%
-            </div>
-        )}
       </div>
       <span 
         className={`ms-topic-label ${expandedTopic === labelKey ? 'is-expanded' : ''}`}

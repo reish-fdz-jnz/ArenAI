@@ -32,7 +32,8 @@ router.post('/', async (req, res, next) => {
     templateId: z.number().int().positive().optional().nullable(),
     sectionId: z.number().int().positive(),
     institutionId: z.number().int().positive().optional().nullable(),
-    status: z.string().optional()
+    status: z.string().optional(),
+    name_session: z.string().optional().nullable()
   });
 
   try {
@@ -42,7 +43,8 @@ router.post('/', async (req, res, next) => {
       sectionId: body.sectionId,
       professorId: body.professorId,
       institutionId: body.institutionId,
-      status: body.status
+      status: body.status,
+      name_session: body.name_session
     });
 
     res.status(201).json(classRecord);
