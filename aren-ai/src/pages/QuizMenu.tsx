@@ -523,6 +523,7 @@ const QuizMenu: React.FC = () => {
         questions: [], // Empty - will be fetched from API
       }),
     );
+    setShowDetailModal(false);
     history.push("/page/quiz-preview");
   };
 

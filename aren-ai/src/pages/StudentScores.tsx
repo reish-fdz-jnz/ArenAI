@@ -99,6 +99,10 @@ const StudentSectionPage: React.FC = () => {
     ? Math.round(currentStudents.reduce((sum, s) => sum + s.score, 0) / currentStudents.length)
     : 0;
 
+  const sortedStudents = [...currentStudents].sort((a, b) => b.score - a.score);
+  const top3 = sortedStudents.slice(0, 3);
+  const others = sortedStudents.slice(3);
+
   return (
     <IonPage className="pst-page global-background-pattern">
       <IonHeader className="ion-no-border">
@@ -129,73 +133,101 @@ const StudentSectionPage: React.FC = () => {
 
       <IonContent fullscreen className="student-scores-content">
         <div className="dashboard-container">
-          {/* Controls / Filters */}
-          <div className="header-controls">
-            <div className="filter-card">
-              <span className="filter-label">{t('professor.studentScores.grade')}</span>
-              <IonSelect
-                value={selectedGrade}
-                onIonChange={e => setSelectedGrade(e.detail.value)}
-                interface="popover"
-                className="filter-select"
-                toggleIcon=""
-              >
-                <IonSelectOption value="7">7th</IonSelectOption>
-                <IonSelectOption value="8">8th</IonSelectOption>
-                <IonSelectOption value="9">9th</IonSelectOption>
-                <IonSelectOption value="10">10th</IonSelectOption>
-                <IonSelectOption value="11">11th</IonSelectOption>
-              </IonSelect>
+          {/* Top Row: Class Average & Filters */}
+          <div className="dashboard-top-row">
+            <div className="avg-circle-container">
+              <div className="avg-circle">
+                <span className="avg-val">{averageScore}%</span>
+                <span className="avg-lbl">{t('professor.studentScores.averageScore')}</span>
+              </div>
+              <svg className="avg-svg" viewBox="0 0 100 100">
+                <circle className="avg-track" cx="50" cy="50" r="45" />
+                <circle 
+                  className="avg-fill" 
+                  cx="50" 
+                  cy="50" 
+                  r="45" 
+                  style={{ strokeDashoffset: 283 - (283 * averageScore) / 100 }}
+                />
+              </svg>
             </div>
 
-            <div className="filter-card">
-              <span className="filter-label">{t('professor.studentScores.section')}</span>
-              <IonSelect
-                value={selectedSection}
-                onIonChange={e => setSelectedSection(e.detail.value)}
-                interface="popover"
-                className="filter-select"
-                toggleIcon=""
-              >
-                <IonSelectOption value="1">S-1</IonSelectOption>
-                <IonSelectOption value="2">S-2</IonSelectOption>
-                <IonSelectOption value="3">S-3</IonSelectOption>
-              </IonSelect>
+            <div className="header-controls">
+              <div className="filter-pill">
+                <span className="pill-label">{t('professor.studentScores.grade')}</span>
+                <IonSelect
+                  value={selectedGrade}
+                  onIonChange={e => setSelectedGrade(e.detail.value)}
+                  interface="popover"
+                  toggleIcon=""
+                >
+                  <IonSelectOption value="7">7th</IonSelectOption>
+                  <IonSelectOption value="8">8th</IonSelectOption>
+                  <IonSelectOption value="9">9th</IonSelectOption>
+                  <IonSelectOption value="10">10th</IonSelectOption>
+                  <IonSelectOption value="11">11th</IonSelectOption>
+                </IonSelect>
+              </div>
+
+              <div className="filter-pill">
+                <span className="pill-label">{t('professor.studentScores.section')}</span>
+                <IonSelect
+                  value={selectedSection}
+                  onIonChange={e => setSelectedSection(e.detail.value)}
+                  interface="popover"
+                  toggleIcon=""
+                >
+                  <IonSelectOption value="1">S-1</IonSelectOption>
+                  <IonSelectOption value="2">S-2</IonSelectOption>
+                  <IonSelectOption value="3">S-3</IonSelectOption>
+                </IonSelect>
+              </div>
             </div>
           </div>
 
-          {/* Average Score Banner */}
-          <div className="average-score-bubble">
-            <IonText>
-              <h2>
-                <IonIcon icon={trophyOutline} className="average-icon" />
-                {t('professor.studentScores.averageScore')}: {averageScore}%
-              </h2>
-            </IonText>
+          {/* Leaderboard Podium */}
+          <div className="podium-container">
+            {top3[1] && (
+              <div className="podium-spot silver" onClick={() => handleStudentClick(top3[1].username)}>
+                <div className="podium-avatar">{getInitials(top3[1].username)}</div>
+                <div className="podium-rank">2</div>
+                <div className="podium-name">{top3[1].username}</div>
+                <div className="podium-score">{top3[1].score}%</div>
+              </div>
+            )}
+            {top3[0] && (
+              <div className="podium-spot gold" onClick={() => handleStudentClick(top3[0].username)}>
+                <div className="podium-crown">👑</div>
+                <div className="podium-avatar">{getInitials(top3[0].username)}</div>
+                <div className="podium-rank">1</div>
+                <div className="podium-name">{top3[0].username}</div>
+                <div className="podium-score">{top3[0].score}%</div>
+              </div>
+            )}
+            {top3[2] && (
+              <div className="podium-spot bronze" onClick={() => handleStudentClick(top3[2].username)}>
+                <div className="podium-avatar">{getInitials(top3[2].username)}</div>
+                <div className="podium-rank">3</div>
+                <div className="podium-name">{top3[2].username}</div>
+                <div className="podium-score">{top3[2].score}%</div>
+              </div>
+            )}
           </div>
 
-          {/* Student Cards Grid */}
-          <div className="student-score-grid">
-            {currentStudents.map((student, index) => (
-              <IonCard
-                key={index}
-                className="student-bubble-card"
+          {/* Remaining Students List */}
+          <div className="others-list">
+            <h3 className="list-title">Ranking de Clase</h3>
+            {sortedStudents.slice(3).map((student, index) => (
+              <div 
+                key={index} 
+                className={`ranking-row ${getScoreClass(student.score)}`}
                 onClick={() => handleStudentClick(student.username)}
               >
-                <IonCardContent>
-                  <div className="student-info">
-                    <div className="student-avatar">
-                      {getInitials(student.username)}
-                    </div>
-                    <div className="student-name">
-                      {student.username}
-                    </div>
-                  </div>
-                  <div className={`student-score-badge ${getScoreClass(student.score)}`}>
-                    {student.score}%
-                  </div>
-                </IonCardContent>
-              </IonCard>
+                <span className="row-rank">{index + 4}</span>
+                <div className="row-avatar">{getInitials(student.username)}</div>
+                <span className="row-name">{student.username}</span>
+                <span className="row-score">{student.score}%</span>
+              </div>
             ))}
           </div>
         </div>

@@ -171,7 +171,7 @@ const ProfessorSidebar: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
     },
     {
       titleKey: "professor.sidebar.help",
-      url: "/folder/Help",
+      url: "/professor-help",
       iosIcon: helpCircleOutline,
       mdIcon: helpCircleSharp,
     },

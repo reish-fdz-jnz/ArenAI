@@ -1,17 +1,17 @@
 .daily-schedule-container {
-    background: var(--ion-color-primary);
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: color-mix(in srgb, var(--ion-color-primary) 70%, #ffffff);
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     padding: 20px;
     margin: 10px 0 20px 0;
     font-family: inherit;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(var(--ion-color-primary-rgb), 0.25);
 }
 
 .ds-header {
     font-size: 16px;
     font-weight: 600;
-    color: var(--ion-color-primary-contrast, #ffffff);
+    color: #ffffff;
     margin-bottom: 20px;
     text-align: left;
     text-transform: capitalize;
@@ -22,9 +22,10 @@
     position: relative;
     height: 600px;
     overflow-y: auto;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    background: transparent;
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(var(--ion-color-primary-rgb), 0.40);
+    border-radius: 10px;
 }
 
 .ds-time-axis {
@@ -34,7 +35,7 @@
     flex-direction: column;
     justify-content: space-between;
     padding-right: 10px;
-    border-right: 1px solid rgba(255, 255, 255, 0.2);
+    border-right: 1px solid rgba(255, 255, 255, 0.25);
     z-index: 2;
     background: transparent;
     position: sticky;
@@ -51,7 +52,7 @@
     top: -8px;
     right: 10px;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .ds-grid {
@@ -71,7 +72,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background-color: color-mix(in srgb, var(--ion-color-primary) 30%, #111);
+    background-color: var(--ion-color-primary);
     z-index: 5;
     pointer-events: none;
 }
@@ -80,8 +81,8 @@
     position: absolute;
     left: -40px;
     top: -10px;
-    background-color: color-mix(in srgb, var(--ion-color-primary) 30%, #111);
-    color: white;
+    background-color: var(--ion-color-primary);
+    color: var(--ion-color-primary-contrast, #ffffff);
     padding: 2px 6px;
     border-radius: 12px;
     font-size: 10px;
@@ -92,9 +93,9 @@
     position: absolute;
     left: 10px;
     right: 10px;
-    background-color: rgba(255, 64, 129, 0.1);
-    border: 1px solid rgba(255, 64, 129, 0.5);
-    border-left: 3px solid #ff4081;
+    background-color: var(--ion-color-primary-shade, var(--ion-color-primary));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-left: 3px solid rgba(255, 255, 255, 0.4);
     border-radius: 4px;
     padding: 6px 10px;
     overflow: hidden;
@@ -104,27 +105,27 @@
 }
 
 .ds-session-block:hover {
-    background-color: rgba(255, 64, 129, 0.15);
+    background-color: color-mix(in srgb, var(--ion-color-primary-shade) 70%, #000);
     transform: translateX(2px);
 }
 
 .ds-session-block.selected {
-    background-color: rgba(255, 64, 129, 0.25);
-    border-color: #ff4081;
-    box-shadow: 0 2px 8px rgba(255, 64, 129, 0.2);
+    background-color: color-mix(in srgb, var(--ion-color-primary-shade) 50%, #000);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .ds-session-block.running {
-    background-color: rgba(120, 184, 176, 0.15); /* Match theme secondary/teal */
-    border-color: #78B8B0;
-    border-left: 3px solid #78B8B0;
+    background-color: var(--ion-color-secondary-shade, var(--ion-color-secondary));
+    border-color: rgba(255, 255, 255, 0.1);
+    border-left: 3px solid rgba(255, 255, 255, 0.8);
 }
 
 .ds-running-badge {
     position: absolute;
     top: 6px;
     right: 10px;
-    background-color: #78B8B0;
+    background-color: var(--ion-color-secondary-shade, var(--ion-color-secondary));
     color: white;
     font-size: 8px;
     font-weight: 900;
@@ -135,9 +136,17 @@
 }
 
 @keyframes flash {
-    0% { opacity: 1; }
-    50% { opacity: 0.6; }
-    100% { opacity: 1; }
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
 .ds-session-content {
@@ -149,7 +158,7 @@
     margin: 0 0 4px 0;
     font-size: 13px;
     font-weight: 600;
-    color: var(--ion-color-primary-contrast, #ffffff);
+    color: #ffffff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -160,76 +169,88 @@
     color: rgba(255, 255, 255, 0.8);
 }
 
-/* Dark mode overrides if needed */
+/* ── Dark mode overrides — only when NOT forced to light ── */
 @media (prefers-color-scheme: dark) {
-    .daily-schedule-container {
-        background: rgba(0, 0, 0, 0.25);
-        border-color: rgba(var(--ion-color-primary-rgb), 0.1);
+    html:not([data-force-light]) .daily-schedule-container {
+        background: color-mix(in srgb, var(--ion-color-primary) 40%, #1a1a1a);
+        border-color: rgba(var(--ion-color-primary-rgb), 0.3);
     }
-    .ds-timeline-wrapper, .ds-time-axis {
-        background: transparent;
-    }
-    .ds-time-axis {
-        border-right-color: rgba(255, 255, 255, 0.15);
-    }
-    .ds-timeline-wrapper {
+
+    html:not([data-force-light]) .ds-timeline-wrapper {
+        background: rgba(var(--ion-color-primary-rgb), 0.20);
         border-top-color: rgba(255, 255, 255, 0.15);
         border-bottom-color: rgba(255, 255, 255, 0.15);
     }
-    .ds-grid-line {
+
+    html:not([data-force-light]) .ds-time-axis {
+        border-right-color: rgba(255, 255, 255, 0.15);
+    }
+
+    html:not([data-force-light]) .ds-grid-line {
         border-bottom-color: rgba(255, 255, 255, 0.15);
     }
-    .ds-header {
+
+    html:not([data-force-light]) .ds-header {
         color: #fff;
     }
-    .ds-hour-marker span {
-        color: rgba(255, 255, 255, 0.5);
+
+    html:not([data-force-light]) .ds-hour-marker span {
+        color: rgba(255, 255, 255, 0.7);
     }
-    .ds-current-time-line, .ds-current-time-indicator {
+
+    html:not([data-force-light]) .ds-current-time-line,
+    html:not([data-force-light]) .ds-current-time-indicator {
         background-color: var(--ion-color-primary);
         color: var(--ion-color-primary-contrast, #ffffff);
     }
-    .ds-session-title {
+
+    html:not([data-force-light]) .ds-session-title {
         color: #fff;
     }
-    .ds-session-time {
+
+    html:not([data-force-light]) .ds-session-time {
         color: rgba(255, 255, 255, 0.7);
     }
 }
 
-/* Forced dark mode support */
+/* ── Forced dark mode support ── */
 html[data-force-dark] .daily-schedule-container {
-    background: rgba(0, 0, 0, 0.25);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--ion-color-primary) 40%, #1a1a1a);
+    border-color: rgba(var(--ion-color-primary-rgb), 0.3);
 }
-html[data-force-dark] .ds-timeline-wrapper, 
-html[data-force-dark] .ds-time-axis {
-    background: transparent;
-}
-html[data-force-dark] .ds-time-axis {
-    border-right-color: rgba(255, 255, 255, 0.15);
-}
+
 html[data-force-dark] .ds-timeline-wrapper {
+    background: rgba(var(--ion-color-primary-rgb), 0.20);
     border-top-color: rgba(255, 255, 255, 0.15);
     border-bottom-color: rgba(255, 255, 255, 0.15);
 }
+
+html[data-force-dark] .ds-time-axis {
+    border-right-color: rgba(255, 255, 255, 0.15);
+}
+
 html[data-force-dark] .ds-grid-line {
     border-bottom-color: rgba(255, 255, 255, 0.15);
 }
+
 html[data-force-dark] .ds-header {
     color: #fff;
 }
+
 html[data-force-dark] .ds-hour-marker span {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.7);
 }
-html[data-force-dark] .ds-current-time-line, 
+
+html[data-force-dark] .ds-current-time-line,
 html[data-force-dark] .ds-current-time-indicator {
     background-color: var(--ion-color-primary);
     color: var(--ion-color-primary-contrast, #ffffff);
 }
+
 html[data-force-dark] .ds-session-title {
     color: #fff;
 }
+
 html[data-force-dark] .ds-session-time {
     color: rgba(255, 255, 255, 0.7);
 }
