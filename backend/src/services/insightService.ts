@@ -7,7 +7,8 @@ import { generateContentWithGemini } from './geminiService.js';
 import { 
     TOPIC_MASTERY_PROMPT, 
     STUDENT_INSIGHT_PROMPT, 
-    CLASS_REPORT_PROMPT 
+    CLASS_REPORT_PROMPT,
+    TOPIC_CLASS_SUMMARY_PROMPT
 } from '../config/prompts.js';
 import {
     getUsersWithUnanalyzedMessages,
@@ -24,6 +25,8 @@ import {
 } from '../repositories/insightRepository.js';
 import { getTopicById } from '../repositories/topicRepository.js';
 import { getHistoricalRecordsForTopic, updatePermanentTopicSummary } from '../repositories/studentRepository.js';
+import { getQuestionStatsByTopic, getUnsyncedQuestions, markAsSynced } from '../repositories/chatbotQuestionLogRepository.js';
+import { db } from '../db/pool.js';
 
 // Default class ID (until class system is fully implemented)
 const DEFAULT_CLASS_ID = 1;
@@ -368,3 +371,149 @@ export async function generateTopicMasteryInsight(userId: number, topicId: numbe
 
 // Aliases for backward compatibility with cron job
 export const runInsightGeneration = runStudentInsightGeneration;
+
+// ============================================================
+// Phase 4: Generate per-topic class summaries
+// Incorporates scores, correlations, chatbot questions, and chat conclusions
+// ============================================================
+export async function generateTopicClassSummaries(classId: number = DEFAULT_CLASS_ID): Promise<void> {
+    console.log(`\n=== PHASE 4: Topic Class Summaries (classId=${classId}) ===`);
+    
+    try {
+        // 1. Get all topics for this class
+        const topicResult = await db.query<any>(
+            `SELECT ct.id_topic, t.name, t.id_subject, ct.score_average
+             FROM class_topic ct
+             INNER JOIN topic t ON t.id_topic = ct.id_topic
+             WHERE ct.id_class = ?`,
+            [classId]
+        );
+
+        if (topicResult.rows.length === 0) {
+            console.log('[Phase4] No topics found for this class');
+            return;
+        }
+
+        console.log(`[Phase4] Processing ${topicResult.rows.length} topics`);
+
+        // 2. Get question stats from chatbot
+        let questionStats: any[] = [];
+        try {
+            questionStats = await getQuestionStatsByTopic(classId);
+        } catch (e) {
+            console.warn('[Phase4] chatbot_question_log table may not exist yet');
+        }
+
+        // 3. Get student class summaries (chat conclusions)
+        const summaryResult = await db.query<any>(
+            `SELECT summary_text, weaknesses, strengths
+             FROM student_class_summary
+             WHERE id_class = ?`,
+            [classId]
+        );
+        const chatConclusions = summaryResult.rows.map((s: any) => {
+            const weaknesses = typeof s.weaknesses === 'string' ? JSON.parse(s.weaknesses) : s.weaknesses;
+            return { summary: s.summary_text, weaknesses: weaknesses || [] };
+        });
+
+        // 4. Get student count
+        const studentCountResult = await db.query<any>(
+            `SELECT COUNT(DISTINCT id_user) as total FROM class_student_topic WHERE id_class = ?`,
+            [classId]
+        );
+        const totalStudents = studentCountResult.rows[0]?.total || 0;
+
+        // 5. For each topic, generate a summary
+        for (const topic of topicResult.rows) {
+            try {
+                // Get correlations for this topic
+                const correlationResult = await db.query<any>(
+                    `SELECT 
+                        CASE WHEN tfr.id_topic_father = ? THEN ts.name ELSE tf.name END as related_name,
+                        CASE WHEN tfr.id_topic_father = ? THEN 'padre_de' ELSE 'hijo_de' END as relation_type,
+                        tfr.correlation_coefficient
+                     FROM topic_father_son_relation tfr
+                     INNER JOIN topic tf ON tf.id_topic = tfr.id_topic_father
+                     INNER JOIN topic ts ON ts.id_topic = tfr.id_topic_son
+                     WHERE tfr.id_topic_father = ? OR tfr.id_topic_son = ?`,
+                    [topic.id_topic, topic.id_topic, topic.id_topic, topic.id_topic]
+                );
+
+                // Get students who completed this topic
+                const completedResult = await db.query<any>(
+                    `SELECT COUNT(DISTINCT id_user) as completed FROM class_student_topic WHERE id_class = ? AND id_topic = ? AND score IS NOT NULL`,
+                    [classId, topic.id_topic]
+                );
+                const studentsCompleted = completedResult.rows[0]?.completed || 0;
+
+                // Find question stats for this topic
+                const topicQStats = questionStats.find(qs => qs.topicId === topic.id_topic);
+
+                // Build related topics string
+                const relatedTopics = correlationResult.rows.map((r: any) =>
+                    `${r.related_name} (${r.relation_type})`
+                ).join(', ') || 'Ninguno';
+
+                const correlations = correlationResult.rows.map((r: any) =>
+                    `${r.related_name}: ${r.correlation_coefficient}`
+                ).join(', ') || 'N/A';
+
+                // Build question summary
+                const questionSummary = topicQStats
+                    ? topicQStats.sampleQuestions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n')
+                    : 'Sin preguntas registradas';
+
+                // Build chat conclusions for this topic
+                const relevantConclusions = chatConclusions
+                    .filter(c => {
+                        const weaknessesStr = JSON.stringify(c.weaknesses).toLowerCase();
+                        return weaknessesStr.includes(topic.name.toLowerCase());
+                    })
+                    .map(c => c.summary)
+                    .slice(0, 3)
+                    .join('\n') || 'Sin conclusiones específicas';
+
+                // Build prompt
+                const prompt = TOPIC_CLASS_SUMMARY_PROMPT
+                    .replace('{TOPIC_NAME}', topic.name)
+                    .replace('{TOPIC_SCORE}', String(topic.score_average || 0))
+                    .replace('{STUDENTS_COMPLETED}', String(studentsCompleted))
+                    .replace('{TOTAL_STUDENTS}', String(totalStudents))
+                    .replace('{RELATED_TOPICS}', relatedTopics)
+                    .replace('{CORRELATIONS}', correlations)
+                    .replace('{STUDENT_QUESTIONS}', questionSummary)
+                    .replace('{AVG_FRUSTRATION}', topicQStats?.avgFrustration || 'low')
+                    .replace('{CHAT_CONCLUSIONS}', relevantConclusions);
+
+                // Call Gemini
+                const response = await generateContentWithGemini(prompt);
+
+                // Save AI summary to class_topic
+                await db.query(
+                    `UPDATE class_topic SET ai_summary = ? WHERE id_class = ? AND id_topic = ?`,
+                    [response, classId, topic.id_topic]
+                );
+
+                console.log(`[Phase4] ✅ Summary generated for topic: ${topic.name}`);
+            } catch (topicErr) {
+                console.error(`[Phase4] ❌ Failed for topic ${topic.name}:`, topicErr);
+            }
+        }
+
+        // 6. Mark chatbot questions as synced
+        try {
+            const unsyncedQuestions = await getUnsyncedQuestions(classId);
+            if (unsyncedQuestions.length > 0) {
+                const ids = unsyncedQuestions.map(q => q.id_log);
+                await markAsSynced(ids);
+                console.log(`[Phase4] ✅ Marked ${ids.length} questions as synced`);
+            }
+        } catch (e) {
+            console.warn('[Phase4] ⚠️ Failed to mark questions as synced:', e);
+        }
+
+        console.log(`=== PHASE 4 COMPLETE ===\n`);
+    } catch (err) {
+        console.error('[Phase4] Fatal error:', err);
+    }
+}

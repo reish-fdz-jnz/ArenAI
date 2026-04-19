@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { getApiUrl } from '../config/api';
 import {
     IonPage,
     IonContent,
@@ -251,6 +252,10 @@ const ProfessorTopicStats: React.FC = () => {
     const [displayCount, setDisplayCount] = useState(8);
     const [expandedTopicId, setExpandedTopicId] = useState<number | null>(null);
     const [selectedRelationId, setSelectedRelationId] = useState<string | null>(null);
+    
+    // AI topic summaries from backend
+    const [topicAiSummaries, setTopicAiSummaries] = useState<Record<number, any>>({});
+    const [aiSummariesLoading, setAiSummariesLoading] = useState(false);
 
     // Map subject name → ID
     const SUBJECT_NAME_TO_ID: Record<string, number> = {
@@ -332,6 +337,38 @@ const ProfessorTopicStats: React.FC = () => {
     const handleTabChange = (tab: 'temas' | 'relaciones') => {
         setActiveTab(tab);
         setSelectedRelationId(null);
+    };
+
+    // Fetch AI topic summaries when expanding a topic
+    const handleTopicExpand = async (topicId: number) => {
+        const isCurrentlyExpanded = expandedTopicId === topicId;
+        setExpandedTopicId(isCurrentlyExpanded ? null : topicId);
+
+        // Fetch AI summaries if not already loaded
+        if (!isCurrentlyExpanded && !topicAiSummaries[topicId]) {
+            try {
+                setAiSummariesLoading(true);
+                const token = localStorage.getItem('authToken');
+                // Use a dynamic import to get the API URL
+                const response = await fetch(getApiUrl(`/ai/topic-summaries?classId=1`), {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.topics) {
+                        const summaryMap: Record<number, any> = {};
+                        data.topics.forEach((t: any) => {
+                            summaryMap[t.topicId] = t;
+                        });
+                        setTopicAiSummaries(prev => ({ ...prev, ...summaryMap }));
+                    }
+                }
+            } catch (err) {
+                console.error('[PTS] Error fetching AI summaries:', err);
+            } finally {
+                setAiSummariesLoading(false);
+            }
+        }
     };
 
     return (
@@ -427,7 +464,7 @@ const ProfessorTopicStats: React.FC = () => {
                                         <div key={topic.id} className={`pts-topic-row ${isExpanded ? 'expanded' : ''}`}>
                                             <div
                                                 className="pts-topic-summary"
-                                                onClick={() => setExpandedTopicId(isExpanded ? null : topic.id)}
+                                                onClick={() => handleTopicExpand(topic.id)}
                                             >
                                                 <span className="pts-topic-rank">{idx + 1}</span>
                                                 <div className="pts-topic-text">
@@ -492,6 +529,80 @@ const ProfessorTopicStats: React.FC = () => {
                                                             </div>
                                                         </div>
                                                     )}
+
+                                                    {/* 🤖 AI Summary Card */}
+                                                    {(() => {
+                                                        const aiData = topicAiSummaries[topic.id];
+                                                        if (aiSummariesLoading && !aiData) {
+                                                            return (
+                                                                <div style={{
+                                                                    background: 'linear-gradient(135deg, rgba(52,152,219,0.1), rgba(155,89,182,0.1))',
+                                                                    borderRadius: '12px',
+                                                                    padding: '12px 14px',
+                                                                    marginTop: '10px',
+                                                                    border: '1px solid rgba(52,152,219,0.2)'
+                                                                }}>
+                                                                    <strong style={{ fontSize: '13px' }}>🤖 Resumen IA</strong>
+                                                                    <p style={{ fontSize: '12px', opacity: 0.7, margin: '6px 0 0' }}>Cargando análisis...</p>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        if (!aiData || !aiData.aiSummary) return null;
+                                                        const summary = aiData.aiSummary;
+                                                        return (
+                                                            <div style={{
+                                                                background: 'linear-gradient(135deg, rgba(52,152,219,0.1), rgba(155,89,182,0.1))',
+                                                                borderRadius: '12px',
+                                                                padding: '12px 14px',
+                                                                marginTop: '10px',
+                                                                border: '1px solid rgba(52,152,219,0.2)'
+                                                            }}>
+                                                                <strong style={{ fontSize: '13px', display: 'block', marginBottom: '6px' }}>🤖 Resumen IA</strong>
+                                                                <p style={{ fontSize: '12px', lineHeight: '1.5', margin: '0 0 8px', color: 'var(--ion-color-dark)' }}>
+                                                                    {summary.summary}
+                                                                </p>
+                                                                {summary.correlation_impact && (
+                                                                    <p style={{ fontSize: '11px', color: 'var(--ion-color-medium)', margin: '0 0 6px', fontStyle: 'italic' }}>
+                                                                        🔗 {summary.correlation_impact}
+                                                                    </p>
+                                                                )}
+                                                                {summary.recommended_actions && summary.recommended_actions.length > 0 && (
+                                                                    <div style={{ marginTop: '6px' }}>
+                                                                        <strong style={{ fontSize: '11px', color: 'var(--ion-color-success)' }}>💡 Recomendaciones:</strong>
+                                                                        <ul style={{ margin: '4px 0 0', paddingLeft: '16px', fontSize: '11px' }}>
+                                                                            {summary.recommended_actions.map((a: string, i: number) => (
+                                                                                <li key={i} style={{ marginBottom: '2px' }}>{a}</li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    </div>
+                                                                )}
+                                                                {summary.frustration_alert && (
+                                                                    <div style={{
+                                                                        background: 'rgba(231,76,60,0.1)',
+                                                                        borderRadius: '8px',
+                                                                        padding: '6px 10px',
+                                                                        marginTop: '6px',
+                                                                        fontSize: '11px',
+                                                                        color: '#e74c3c',
+                                                                        border: '1px solid rgba(231,76,60,0.2)'
+                                                                    }}>
+                                                                        ⚠️ {summary.frustration_alert}
+                                                                    </div>
+                                                                )}
+                                                                {/* Question stats from chatbot */}
+                                                                {aiData.questionStats && aiData.questionStats.count > 0 && (
+                                                                    <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--ion-color-medium)' }}>
+                                                                        📊 {aiData.questionStats.count} preguntas de estudiantes
+                                                                        {aiData.questionStats.avgFrustration !== 'low' && (
+                                                                            <span style={{ color: aiData.questionStats.avgFrustration === 'high' ? '#e74c3c' : '#f39c12' }}>
+                                                                                {' '}• Frustración: {aiData.questionStats.avgFrustration === 'high' ? 'Alta 😰' : 'Media 😐'}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })()}
                                                 </div>
                                             )}
                                         </div>

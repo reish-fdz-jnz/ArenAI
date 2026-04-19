@@ -87,6 +87,10 @@ const Main_Prof: React.FC = () => {
   const [overallPerformance, setOverallPerformance] = useState(0);
   const [viewMode, setViewMode] = useState<"state" | "que">("state");
 
+  // Chatbot questions state
+  const [chatbotQuestions, setChatbotQuestions] = useState<any[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const issueTimeoutRefs = useRef<NodeJS.Timeout[]>([]);
 
@@ -363,6 +367,32 @@ const Main_Prof: React.FC = () => {
   useEffect(() => {
     fetchClassInsights(false);
   }, [selectedSubject]);
+
+  // Fetch chatbot questions when switching to "que" tab
+  useEffect(() => {
+    if (viewMode !== 'que') return;
+
+    const fetchChatbotQuestions = async () => {
+      setQuestionsLoading(true);
+      try {
+        const token = localStorage.getItem('authToken');
+        const url = getApiUrl(`/ai/chatbot-questions?limit=20`);
+        const response = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setChatbotQuestions(data.questions || []);
+        }
+      } catch (err) {
+        console.error('[Main_Prof] Error fetching chatbot questions:', err);
+      } finally {
+        setQuestionsLoading(false);
+      }
+    };
+
+    fetchChatbotQuestions();
+  }, [viewMode]);
 
   // WebSocket listener for real-time report updates
   useEffect(() => {
@@ -722,20 +752,58 @@ const Main_Prof: React.FC = () => {
                     <div className="ms-info-title">
                       {t("professor.dashboard.popularQuestions")}
                     </div>
-                    <div className="ms-question-carousel">
-                      <IonIcon
-                        icon={chevronBackOutline}
-                        className="ms-carousel-arrow"
-                        onClick={() => { }}
-                      />
-                      <div className="ms-info-content">
-                        How can I better explain concepts to my students?
-                      </div>
-                      <IonIcon
-                        icon={chevronForwardOutline}
-                        className="ms-carousel-arrow"
-                        onClick={() => { }}
-                      />
+                    <div className="ms-info-content" style={{ maxHeight: '180px', overflowY: 'auto', padding: '0 4px' }}>
+                      {questionsLoading ? (
+                        <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontStyle: 'italic' }}>
+                          {t('common.loading', 'Cargando...')}
+                        </p>
+                      ) : chatbotQuestions.length > 0 ? (
+                        chatbotQuestions.map((q: any, idx: number) => (
+                          <div key={q.id || idx} style={{
+                            background: 'rgba(255,255,255,0.08)',
+                            borderRadius: '12px',
+                            padding: '10px 12px',
+                            marginBottom: '8px',
+                            borderLeft: q.frustration === 'high' ? '3px solid #e74c3c'
+                              : q.frustration === 'medium' ? '3px solid #f39c12'
+                              : '3px solid #2ecc71'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                              <span style={{
+                                fontSize: '10px',
+                                background: 'rgba(255,255,255,0.15)',
+                                padding: '2px 8px',
+                                borderRadius: '10px',
+                                color: 'rgba(255,255,255,0.9)'
+                              }}>
+                                🏷️ {q.topic}
+                              </span>
+                              <span style={{ fontSize: '12px' }}>
+                                {q.frustration === 'high' ? '😰' : q.frustration === 'medium' ? '😐' : '😊'}
+                              </span>
+                              <span style={{
+                                fontSize: '10px',
+                                color: 'rgba(255,255,255,0.5)',
+                                marginLeft: 'auto'
+                              }}>
+                                {q.studentName}
+                              </span>
+                            </div>
+                            <p style={{
+                              margin: 0,
+                              fontSize: '12px',
+                              lineHeight: '1.4',
+                              color: 'rgba(255,255,255,0.85)'
+                            }}>
+                              "{q.question.length > 120 ? q.question.substring(0, 120) + '...' : q.question}"
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', fontSize: '13px' }}>
+                          {t('professor.dashboard.noQuestions', 'No hay preguntas registradas aún')}
+                        </p>
+                      )}
                     </div>
                   </>
                 )}

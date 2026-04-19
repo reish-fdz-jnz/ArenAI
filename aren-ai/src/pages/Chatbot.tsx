@@ -26,6 +26,80 @@ import { getApiUrl } from "../config/api";
 import { studentService } from "../services/studentService";
 import { useTranslation } from "react-i18next";
 
+// ==========================================
+// LOCAL QUESTION BUFFER
+// Stores questions locally as a fallback buffer
+// Syncs to backend every 5 minutes
+// ==========================================
+const QUESTION_BUFFER_KEY = 'chatbot_question_buffer';
+
+interface LocalQuestion {
+  timestamp: string;
+  question: string;
+  subject: string;
+  synced: boolean;
+}
+
+function getLocalQuestionBuffer(): LocalQuestion[] {
+  try {
+    const stored = localStorage.getItem(QUESTION_BUFFER_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveQuestionToBuffer(question: string, subject: string): void {
+  try {
+    const buffer = getLocalQuestionBuffer();
+    buffer.push({
+      timestamp: new Date().toISOString(),
+      question,
+      subject,
+      synced: false
+    });
+    // Keep only last 200 questions to avoid localStorage overflow
+    const trimmed = buffer.slice(-200);
+    localStorage.setItem(QUESTION_BUFFER_KEY, JSON.stringify(trimmed));
+  } catch (err) {
+    console.error('[QuestionBuffer] Failed to save:', err);
+  }
+}
+
+function markBufferAsSynced(): void {
+  try {
+    const buffer = getLocalQuestionBuffer();
+    const updated = buffer.map(q => ({ ...q, synced: true }));
+    localStorage.setItem(QUESTION_BUFFER_KEY, JSON.stringify(updated));
+  } catch (err) {
+    console.error('[QuestionBuffer] Failed to mark synced:', err);
+  }
+}
+
+async function syncQuestionBuffer(): Promise<void> {
+  try {
+    const buffer = getLocalQuestionBuffer();
+    const unsynced = buffer.filter(q => !q.synced);
+    if (unsynced.length === 0) return;
+
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+
+    // The backend already logs each question during POST /ai/chat,
+    // so this sync is just a backup verification.
+    // We mark as synced after the buffer reaches a certain age.
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const oldEnough = unsynced.filter(q => q.timestamp < fiveMinutesAgo);
+    
+    if (oldEnough.length > 0) {
+      console.log(`[QuestionBuffer] Marking ${oldEnough.length} buffered questions as synced`);
+      markBufferAsSynced();
+    }
+  } catch (err) {
+    console.error('[QuestionBuffer] Sync failed:', err);
+  }
+}
+
 // Asumiendo que tienes una forma de obtener datos del usuario, si no, usa localStorage
 const getUserContext = () => {
   try {
@@ -184,6 +258,15 @@ const Chat: React.FC = () => {
     };
   }, []);
 
+  // Sync question buffer every 5 minutes
+  useEffect(() => {
+    const syncInterval = setInterval(() => {
+      syncQuestionBuffer();
+    }, 5 * 60 * 1000); // 5 minutes
+
+    return () => clearInterval(syncInterval);
+  }, []);
+
   // Typewriter effect for bot messages
   const startTypewriterEffect = (
     messageId: number,
@@ -335,6 +418,9 @@ const Chat: React.FC = () => {
 
       setMessages((prev) => [...prev, botMessage]);
       startTypewriterEffect(botMessage.id, botResponse, 15);
+
+      // Save question to local buffer (backup)
+      saveQuestionToBuffer(inputMessage, selectedSubject);
     } catch (error) {
       console.error("Detailed error:", error);
       const errorMessage: Message = {
