@@ -600,134 +600,98 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
     }
 }
 // ============================================================
-// Phase 5: Generate per-topic SECTION summaries (temporal)
-// Step 1: Auto-populate section_topic from REAL data
-// Step 2: Generate AI summaries from class_topic history
+// Phase 5: Generate section_topic.ai_summary
+// Super simple: for each section_topic row, get class_topic summaries and combine
 // ============================================================
 export async function generateSectionTopicSummaries(sectionId?: number): Promise<void> {
-    console.log('[Phase 5] Section topic summaries starting...');
+    console.log('[Phase 5] START');
 
     try {
-        // ── Step 1: Populate section_topic with REAL data ──
-        // Find all section-topic pairs from real classes and calculate real avg scores
-        const realData = await db.query<{
+        // Step 1: Get all section_topic rows that need summaries
+        const condition = sectionId ? `WHERE st.id_section = ?` : '';
+        const params = sectionId ? [sectionId] : [];
+
+        const rows = await db.query<{
             id_section: number;
             id_topic: number;
-            avg_score: number;
+            topic_name: string;
+            score: number | null;
         }>(
-            `SELECT c.id_section, ct.id_topic,
-                    COALESCE(AVG(st_scores.score), ct.score_average, 0) as avg_score
-             FROM class_topic ct
-             INNER JOIN class c ON c.id_class = ct.id_class
-             LEFT JOIN (
-                SELECT stopic.id_topic, stopic.score, us.id_section
-                FROM student_topic stopic
-                INNER JOIN user_section us ON us.id_user = stopic.id_user
-                WHERE stopic.score IS NOT NULL
-             ) st_scores ON st_scores.id_topic = ct.id_topic AND st_scores.id_section = c.id_section
-             WHERE c.id_section IS NOT NULL
-             ${sectionId ? 'AND c.id_section = ?' : ''}
-             GROUP BY c.id_section, ct.id_topic`,
-            sectionId ? [sectionId] : []
+            `SELECT st.id_section, st.id_topic, t.name as topic_name, st.score
+             FROM section_topic st
+             INNER JOIN topic t ON t.id_topic = st.id_topic
+             ${condition}`,
+            params
         );
 
-        if (realData.rows.length > 0) {
-            console.log(`[Phase 5] Upserting ${realData.rows.length} real section-topic records...`);
-            for (const row of realData.rows) {
-                await db.query(
-                    `INSERT INTO section_topic (id_section, id_topic, score)
-                     VALUES (?, ?, ?)
-                     ON DUPLICATE KEY UPDATE score = VALUES(score)`,
-                    [row.id_section, row.id_topic, Math.round(row.avg_score)]
-                );
-            }
-        }
+        console.log(`[Phase 5] Found ${rows.rows.length} section_topic rows`);
+        if (rows.rows.length === 0) return;
 
-        // ── Step 2: Get sections to generate summaries for ──
-        let sectionIds: number[] = [];
-        if (sectionId) {
-            sectionIds = [sectionId];
-        } else {
-            const r = await db.query<{ id_section: number }>(`SELECT DISTINCT id_section FROM section_topic`);
-            sectionIds = r.rows.map(r => r.id_section);
-        }
+        const { SECTION_TOPIC_SUMMARY_PROMPT } = await import('../config/prompts.js');
+        let success = 0;
 
-        if (sectionIds.length === 0) { console.log('[Phase 5] No sections. Skipping.'); return; }
-        console.log(`[Phase 5] Sections to process: ${JSON.stringify(sectionIds)}`);
-
-        let totalSuccess = 0;
-
-        for (const secId of sectionIds) {
+        for (const row of rows.rows) {
             try {
-                const sectionName = `Sección ${secId}`;
+                console.log(`[Phase 5] Processing: section=${row.id_section} topic=${row.id_topic} (${row.topic_name})`);
 
-                const topics = await db.query<{ id_topic: number; topic_name: string; score: number | null }>(
-                    `SELECT st.id_topic, t.name as topic_name, st.score
-                     FROM section_topic st INNER JOIN topic t ON t.id_topic = st.id_topic
-                     WHERE st.id_section = ?`, [secId]
-                );
-                if (topics.rows.length === 0) { console.log(`[Phase 5] Section ${secId}: 0 topics, skip`); continue; }
-                console.log(`[Phase 5] Section ${secId}: ${topics.rows.length} topics`);
-
-                // Get ALL class_topic summaries for this section
-                const allCS = await db.query<{ id_topic: number; ai_summary: string }>(
-                    `SELECT ct.id_topic, ct.ai_summary
+                // Step 2: Get class_topic summaries for this specific topic in classes of this section
+                const ctRows = await db.query<{ ai_summary: string }>(
+                    `SELECT ct.ai_summary
                      FROM class_topic ct
                      INNER JOIN class c ON c.id_class = ct.id_class
-                     WHERE c.id_section = ? AND ct.ai_summary IS NOT NULL`, [secId]
+                     WHERE c.id_section = ? AND ct.id_topic = ? AND ct.ai_summary IS NOT NULL
+                     LIMIT 3`,
+                    [row.id_section, row.id_topic]
                 );
-                console.log(`[Phase 5] Found ${allCS.rows.length} class_topic summaries for section ${secId}`);
 
-                // Extract just the summary text from JSON
-                const summaryMap = new Map<number, string[]>();
-                for (const row of allCS.rows) {
-                    if (!summaryMap.has(row.id_topic)) summaryMap.set(row.id_topic, []);
-                    let text = row.ai_summary;
-                    try { text = JSON.parse(row.ai_summary)?.summary || text; } catch {}
-                    summaryMap.get(row.id_topic)!.push(text.substring(0, 120));
-                }
+                console.log(`[Phase 5]   class_topic summaries found: ${ctRows.rows.length}`);
 
-                const { SECTION_TOPIC_SUMMARY_PROMPT } = await import('../config/prompts.js');
-
-                for (const topic of topics.rows) {
+                // Extract text from JSON summaries
+                const texts: string[] = [];
+                for (const ct of ctRows.rows) {
                     try {
-                        const classSummaries = (summaryMap.get(topic.id_topic) || []).slice(0, 3).join(' | ') || 'Sin datos';
-                        console.log(`[Phase 5]   Topic ${topic.topic_name}: context="${classSummaries.substring(0, 80)}..."`);
-
-                        const prompt = SECTION_TOPIC_SUMMARY_PROMPT
-                            .replace('{TOPIC_NAME}', topic.topic_name)
-                            .replace('{SECTION_NAME}', sectionName)
-                            .replace('{TOPIC_SCORE}', String(topic.score || 0))
-                            .replace('{CLASS_SUMMARIES}', classSummaries);
-
-                        console.log(`[Phase 5]   Calling AI...`);
-                        const aiResponse = await generateContentWithGemini(`JSON breve:`, prompt);
-                        console.log(`[Phase 5]   AI response (${aiResponse.length} chars): ${aiResponse.substring(0, 100)}`);
-
-                        const parsed = parseInsightResponse(aiResponse);
-                        const summaryToSave = parsed ? JSON.stringify(parsed) : aiResponse;
-                        console.log(`[Phase 5]   Parsed OK: ${!!parsed}, saving ${summaryToSave.length} chars`);
-
-                        await db.query(
-                            `UPDATE section_topic SET ai_summary = ?, last_analysis_at = CURRENT_TIMESTAMP
-                             WHERE id_section = ? AND id_topic = ?`,
-                            [summaryToSave, secId, topic.id_topic]
-                        );
-
-                        totalSuccess++;
-                        console.log(`[Phase 5]   ✅ ${topic.topic_name} saved`);
-                    } catch (e: any) {
-                        console.error(`[Phase 5]   ❌ ${topic.topic_name}: ${e?.message || e}`);
+                        const parsed = JSON.parse(ct.ai_summary);
+                        texts.push((parsed.summary || '').substring(0, 120));
+                    } catch {
+                        texts.push(ct.ai_summary.substring(0, 120));
                     }
                 }
-            } catch (e: any) {
-                console.error(`[Phase 5] ❌ Section ${secId}: ${e?.message || e}`);
+                const classSummaries = texts.join(' | ') || 'Sin datos de clases';
+                console.log(`[Phase 5]   Context: "${classSummaries.substring(0, 80)}"`);
+
+                // Step 3: Build prompt and call AI
+                const prompt = SECTION_TOPIC_SUMMARY_PROMPT
+                    .replace('{TOPIC_NAME}', row.topic_name)
+                    .replace('{SECTION_NAME}', `Sección ${row.id_section}`)
+                    .replace('{TOPIC_SCORE}', String(row.score || 0))
+                    .replace('{CLASS_SUMMARIES}', classSummaries);
+
+                console.log(`[Phase 5]   Calling Gemini...`);
+                const aiResponse = await generateContentWithGemini(prompt, 'Responde solo JSON válido.');
+                console.log(`[Phase 5]   Response (${aiResponse.length} chars): ${aiResponse.substring(0, 120)}`);
+
+                // Step 4: Save
+                const parsed = parseInsightResponse(aiResponse);
+                const toSave = parsed ? JSON.stringify(parsed) : aiResponse;
+                console.log(`[Phase 5]   Parsed: ${!!parsed}, saving ${toSave.length} chars`);
+
+                await db.query(
+                    `UPDATE section_topic SET ai_summary = ?, last_analysis_at = NOW()
+                     WHERE id_section = ? AND id_topic = ?`,
+                    [toSave, row.id_section, row.id_topic]
+                );
+
+                success++;
+                console.log(`[Phase 5]   ✅ SAVED ${row.topic_name}`);
+            } catch (err: any) {
+                console.error(`[Phase 5]   ❌ FAILED ${row.topic_name}: ${err?.message}`);
             }
         }
 
-        console.log(`[Phase 5] Done — ${totalSuccess} summaries generated`);
+        console.log(`[Phase 5] DONE — ${success}/${rows.rows.length} saved`);
     } catch (err: any) {
-        console.error(`[Phase 5] FATAL: ${err?.message || err}`);
+        console.error(`[Phase 5] FATAL ERROR: ${err?.message}`);
+        console.error(err);
     }
 }
 
