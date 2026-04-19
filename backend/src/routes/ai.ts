@@ -12,6 +12,10 @@ import {
 import { runInsightGeneration, runClassReportGeneration } from '../services/insightService.js';
 import { db } from '../db/pool.js';
 import { getStudentTopicProgress } from '../repositories/studentRepository.js';
+import { classifyQuestion } from '../utils/questionClassifier.js';
+import { logQuestion, getQuestionsByClass } from '../repositories/chatbotQuestionLogRepository.js';
+import { findActiveClassForStudent } from '../repositories/classRepository.js';
+import { listTopicsBySubject } from '../repositories/topicRepository.js';
 
 const router = Router();
 
@@ -261,6 +265,37 @@ router.post('/chat', async (req, res, next) => {
         await logChatMessage({ userId, subjectId: effectiveSubjectId, role: 'model', content: aiResponse });
         
         console.log(`[ChatLogs] ✅ Messages saved for user ${userId}`);
+
+        // 6. Classify and log the question to chatbot_question_log
+        try {
+          // Get available topics for topic detection
+          const topicsForClassify = effectiveSubjectId
+            ? await listTopicsBySubject(effectiveSubjectId)
+            : [];
+          const topicsList = topicsForClassify.map((t: any) => ({ id: t.id_topic, name: t.name }));
+
+          // Classify the question (heuristic - no AI call)
+          const classification = classifyQuestion(prompt, aiResponse, topicsList);
+
+          // Find active class for the student
+          const activeClassId = await findActiveClassForStudent(userId);
+
+          // Log to chatbot_question_log
+          await logQuestion({
+            userId,
+            classId: activeClassId,
+            subjectId: effectiveSubjectId,
+            topicDetected: classification.topicDetected,
+            topicIdDetected: classification.topicIdDetected,
+            frustrationLevel: classification.frustrationLevel,
+            questionText: prompt,
+            aiResponseSummary: classification.aiResponseSummary
+          });
+
+          console.log(`[QuestionLog] ✅ Question classified: topic=${classification.topicDetected || 'N/A'}, frustration=${classification.frustrationLevel}`);
+        } catch (classifyErr) {
+          console.error('[QuestionLog] ⚠️ Classification failed (non-blocking):', classifyErr);
+        }
         
         // Broadcast to frontend that messages were saved (for debugging)
         try {
@@ -443,6 +478,154 @@ router.post('/generate-quiz', async (req, res, next) => {
   } catch (error) {
     console.error("Error en /ai/generate-quiz:", error);
     next(error);
+  }
+});
+
+// GET /ai/chatbot-questions - Get chatbot questions for professor dashboard
+router.get('/chatbot-questions', async (req, res, next) => {
+  try {
+    const classId = req.query.classId ? parseInt(req.query.classId as string) : null;
+    const subjectId = req.query.subjectId ? parseInt(req.query.subjectId as string) : null;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    console.log(`[API] /chatbot-questions called classId=${classId}, subjectId=${subjectId}`);
+
+    const { questions, total } = await getQuestionsByClass({
+      classId,
+      subjectId,
+      limit,
+      offset
+    });
+
+    // Format for frontend
+    const formatted = questions.map(q => ({
+      id: q.id_log,
+      studentName: [q.user_name, q.user_last_name].filter(Boolean).join(' ') || 'Estudiante',
+      topic: q.topic_detected || 'General',
+      topicId: q.id_topic_detected,
+      frustration: q.frustration_level,
+      question: q.question_text,
+      aiSummary: q.ai_response_summary,
+      timestamp: q.created_at
+    }));
+
+    res.json({
+      success: true,
+      questions: formatted,
+      total,
+      limit,
+      offset
+    });
+  } catch (error: any) {
+    console.error('Chatbot questions error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /ai/topic-summaries - Get per-topic AI summaries for a class
+router.get('/topic-summaries', async (req, res, next) => {
+  try {
+    const classId = parseInt(req.query.classId as string) || DEFAULT_CLASS_ID;
+
+    console.log(`[API] /topic-summaries called classId=${classId}`);
+
+    // Get topics with their scores and AI summaries for this class
+    const topicResult = await db.query<any>(
+      `SELECT 
+          ct.id_topic,
+          t.name as topic_name,
+          t.id_subject,
+          s.name_subject as subject_name,
+          ct.score_average,
+          ct.ai_summary,
+          COUNT(DISTINCT cst.id_user) as students_with_score
+       FROM class_topic ct
+       INNER JOIN topic t ON t.id_topic = ct.id_topic
+       INNER JOIN subject s ON s.id_subject = t.id_subject
+       LEFT JOIN class_student_topic cst ON cst.id_class = ct.id_class AND cst.id_topic = ct.id_topic
+       WHERE ct.id_class = ?
+       GROUP BY ct.id_topic, t.name, t.id_subject, s.name_subject, ct.score_average, ct.ai_summary
+       ORDER BY t.id_subject, t.name`,
+      [classId]
+    );
+
+    // Get topic relations (correlations)
+    const relationResult = await db.query<any>(
+      `SELECT 
+          tfr.id_topic_father,
+          tf.name as father_name,
+          tfr.id_topic_son,
+          ts.name as son_name,
+          tfr.correlation_coefficient
+       FROM topic_father_son_relation tfr
+       INNER JOIN topic tf ON tf.id_topic = tfr.id_topic_father
+       INNER JOIN topic ts ON ts.id_topic = tfr.id_topic_son
+       INNER JOIN class_topic ct ON (ct.id_topic = tfr.id_topic_father OR ct.id_topic = tfr.id_topic_son)
+       WHERE ct.id_class = ?
+       GROUP BY tfr.id_topic_father, tf.name, tfr.id_topic_son, ts.name, tfr.correlation_coefficient`,
+      [classId]
+    );
+
+    // Get question stats from chatbot_question_log
+    let questionStats: any[] = [];
+    try {
+      const { getQuestionStatsByTopic } = await import('../repositories/chatbotQuestionLogRepository.js');
+      questionStats = await getQuestionStatsByTopic(classId);
+    } catch (e) {
+      console.warn('[API] chatbot_question_log table may not exist yet');
+    }
+
+    // Build response
+    const topics = topicResult.rows.map((topic: any) => {
+      // Find relations for this topic
+      const relations = relationResult.rows
+        .filter((r: any) => r.id_topic_father === topic.id_topic || r.id_topic_son === topic.id_topic)
+        .map((r: any) => ({
+          relatedTopic: r.id_topic_father === topic.id_topic ? r.son_name : r.father_name,
+          relatedTopicId: r.id_topic_father === topic.id_topic ? r.id_topic_son : r.id_topic_father,
+          type: r.id_topic_father === topic.id_topic ? 'parent_of' : 'child_of',
+          correlation: r.correlation_coefficient
+        }));
+
+      // Find question stats for this topic
+      const qStats = questionStats.find(qs => qs.topicId === topic.id_topic) || null;
+
+      // Parse AI summary if it's JSON
+      let parsedSummary = null;
+      if (topic.ai_summary) {
+        try {
+          parsedSummary = JSON.parse(topic.ai_summary);
+        } catch {
+          parsedSummary = { summary: topic.ai_summary };
+        }
+      }
+
+      return {
+        topicId: topic.id_topic,
+        topicName: topic.topic_name,
+        subjectId: topic.id_subject,
+        subjectName: topic.subject_name,
+        scoreAverage: topic.score_average ? parseFloat(topic.score_average) : null,
+        studentsWithScore: topic.students_with_score,
+        aiSummary: parsedSummary,
+        relations,
+        questionStats: qStats ? {
+          count: qStats.count,
+          avgFrustration: qStats.avgFrustration,
+          sampleQuestions: qStats.sampleQuestions
+        } : null
+      };
+    });
+
+    res.json({
+      success: true,
+      classId,
+      topics
+    });
+  } catch (error: any) {
+    console.error('Topic summaries error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
