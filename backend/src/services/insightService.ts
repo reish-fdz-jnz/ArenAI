@@ -218,6 +218,12 @@ function parseInsightResponse(response: string): {
     tips?: string[];
     study_tips?: string[];
     sentiment?: string;
+    // Fields from TOPIC_CLASS_SUMMARY_PROMPT
+    key_issues?: string[];
+    correlation_impact?: string;
+    recommended_actions?: string[];
+    frustration_alert?: string | null;
+    [key: string]: any;
 } | null {
     try {
         let cleaned = response.trim();
@@ -374,14 +380,27 @@ export const runInsightGeneration = runStudentInsightGeneration;
 
 // ============================================================
 // Phase 4: Generate per-topic class summaries
-// Incorporates scores, correlations, chatbot questions, and chat conclusions
+// Follows the same pattern as Phase 2 & 3:
+//   - broadcastInsightUpdate for WebSocket
+//   - generateContentWithGemini(prompt, systemInstruction)
+//   - parseInsightResponse() to clean JSON
+//   - db.query with proper typing
+//   - Detailed console logging
 // ============================================================
 export async function generateTopicClassSummaries(classId: number = DEFAULT_CLASS_ID): Promise<void> {
-    console.log(`\n=== PHASE 4: Topic Class Summaries (classId=${classId}) ===`);
+    console.log('');
+    console.log('╔══════════════════════════════════════════════════════════════════╗');
+    console.log('║        📚 PHASE 4: TOPIC CLASS SUMMARY GENERATION               ║');
+    console.log('╚══════════════════════════════════════════════════════════════════╝');
     
     try {
-        // 1. Get all topics for this class
-        const topicResult = await db.query<any>(
+        // 1. Get all topics for this class (same pattern as Phase 3's getUnprocessedSummaries)
+        const topicResult = await db.query<{ 
+            id_topic: number; 
+            name: string; 
+            id_subject: number; 
+            score_average: number | null;
+        }>(
             `SELECT ct.id_topic, t.name, t.id_subject, ct.score_average
              FROM class_topic ct
              INNER JOIN topic t ON t.id_topic = ct.id_topic
@@ -390,44 +409,78 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
         );
 
         if (topicResult.rows.length === 0) {
-            console.log('[Phase4] No topics found for this class');
+            console.log('⏭️  No topics found for this class. Skipping Phase 4.');
+            broadcastInsightUpdate('🔍 No topics found for class', {
+                phase: 4,
+                status: 'skipped',
+                reason: 'No topics in class_topic'
+            });
             return;
         }
 
-        console.log(`[Phase4] Processing ${topicResult.rows.length} topics`);
+        console.log(`📊 Found ${topicResult.rows.length} topics to analyze`);
 
-        // 2. Get question stats from chatbot
-        let questionStats: any[] = [];
+        broadcastInsightUpdate(`📚 Phase 4 Starting: Found ${topicResult.rows.length} topics to analyze`, {
+            phase: 4,
+            status: 'started',
+            topicCount: topicResult.rows.length
+        });
+
+        // 2. Get question stats from chatbot (wrapped in try/catch since table might not exist)
+        let questionStats: Awaited<ReturnType<typeof getQuestionStatsByTopic>> = [];
         try {
             questionStats = await getQuestionStatsByTopic(classId);
+            console.log(`📝 Found question stats for ${questionStats.length} topics`);
         } catch (e) {
-            console.warn('[Phase4] chatbot_question_log table may not exist yet');
+            console.warn('⚠️  chatbot_question_log table may not exist yet - continuing without question data');
         }
 
-        // 3. Get student class summaries (chat conclusions)
-        const summaryResult = await db.query<any>(
+        // 3. Get student class summaries (chat conclusions from Phase 2)
+        //    Same query pattern as Phase 3's getUnprocessedSummaries
+        const summaryResult = await db.query<{
+            summary_text: string;
+            weaknesses: string | string[] | null;
+            strengths: string | string[] | null;
+        }>(
             `SELECT summary_text, weaknesses, strengths
              FROM student_class_summary
              WHERE id_class = ?`,
             [classId]
         );
-        const chatConclusions = summaryResult.rows.map((s: any) => {
-            const weaknesses = typeof s.weaknesses === 'string' ? JSON.parse(s.weaknesses) : s.weaknesses;
-            return { summary: s.summary_text, weaknesses: weaknesses || [] };
+
+        // Parse weaknesses the same way Phase 3 does
+        const chatConclusions = summaryResult.rows.map((s) => {
+            const weaknesses = typeof s.weaknesses === 'string'
+                ? JSON.parse(s.weaknesses)
+                : (s.weaknesses || []);
+            return { summary: s.summary_text, weaknesses: weaknesses as string[] };
         });
 
+        console.log(`📋 Loaded ${chatConclusions.length} student summaries for context`);
+
         // 4. Get student count
-        const studentCountResult = await db.query<any>(
+        const studentCountResult = await db.query<{ total: number }>(
             `SELECT COUNT(DISTINCT id_user) as total FROM class_student_topic WHERE id_class = ?`,
             [classId]
         );
         const totalStudents = studentCountResult.rows[0]?.total || 0;
 
         // 5. For each topic, generate a summary
+        let successCount = 0;
+
         for (const topic of topicResult.rows) {
             try {
+                console.log('');
+                console.log('─'.repeat(60));
+                console.log(`📘 Topic: ${topic.name} (ID: ${topic.id_topic})`);
+                console.log(`📊 Score Average: ${topic.score_average ?? 'N/A'}%`);
+
                 // Get correlations for this topic
-                const correlationResult = await db.query<any>(
+                const correlationResult = await db.query<{
+                    related_name: string;
+                    relation_type: string;
+                    correlation_coefficient: number;
+                }>(
                     `SELECT 
                         CASE WHEN tfr.id_topic_father = ? THEN ts.name ELSE tf.name END as related_name,
                         CASE WHEN tfr.id_topic_father = ? THEN 'padre_de' ELSE 'hijo_de' END as relation_type,
@@ -439,22 +492,32 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
                     [topic.id_topic, topic.id_topic, topic.id_topic, topic.id_topic]
                 );
 
+                console.log(`🔗 Correlations found: ${correlationResult.rows.length}`);
+
                 // Get students who completed this topic
-                const completedResult = await db.query<any>(
-                    `SELECT COUNT(DISTINCT id_user) as completed FROM class_student_topic WHERE id_class = ? AND id_topic = ? AND score IS NOT NULL`,
+                const completedResult = await db.query<{ completed: number }>(
+                    `SELECT COUNT(DISTINCT id_user) as completed 
+                     FROM class_student_topic 
+                     WHERE id_class = ? AND id_topic = ? AND score IS NOT NULL`,
                     [classId, topic.id_topic]
                 );
                 const studentsCompleted = completedResult.rows[0]?.completed || 0;
 
+                console.log(`👥 Students completed: ${studentsCompleted}/${totalStudents}`);
+
                 // Find question stats for this topic
                 const topicQStats = questionStats.find(qs => qs.topicId === topic.id_topic);
 
+                if (topicQStats) {
+                    console.log(`❓ Questions: ${topicQStats.count} (avg frustration: ${topicQStats.avgFrustration})`);
+                }
+
                 // Build related topics string
-                const relatedTopics = correlationResult.rows.map((r: any) =>
+                const relatedTopics = correlationResult.rows.map((r) =>
                     `${r.related_name} (${r.relation_type})`
                 ).join(', ') || 'Ninguno';
 
-                const correlations = correlationResult.rows.map((r: any) =>
+                const correlations = correlationResult.rows.map((r) =>
                     `${r.related_name}: ${r.correlation_coefficient}`
                 ).join(', ') || 'N/A';
 
@@ -463,7 +526,7 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
                     ? topicQStats.sampleQuestions.map((q: string, i: number) => `${i + 1}. ${q}`).join('\n')
                     : 'Sin preguntas registradas';
 
-                // Build chat conclusions for this topic
+                // Build chat conclusions for this topic (filter by topic name in weaknesses)
                 const relevantConclusions = chatConclusions
                     .filter(c => {
                         const weaknessesStr = JSON.stringify(c.weaknesses).toLowerCase();
@@ -473,7 +536,7 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
                     .slice(0, 3)
                     .join('\n') || 'Sin conclusiones específicas';
 
-                // Build prompt
+                // Build the prompt (same replace pattern as generateTopicMasteryInsight)
                 const prompt = TOPIC_CLASS_SUMMARY_PROMPT
                     .replace('{TOPIC_NAME}', topic.name)
                     .replace('{TOPIC_SCORE}', String(topic.score_average || 0))
@@ -485,35 +548,86 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
                     .replace('{AVG_FRUSTRATION}', topicQStats?.avgFrustration || 'low')
                     .replace('{CHAT_CONCLUSIONS}', relevantConclusions);
 
-                // Call Gemini
-                const response = await generateContentWithGemini(prompt);
+                console.log('');
+                console.log('🤖 Calling Gemini AI for topic summary...');
 
-                // Save AI summary to class_topic
-                await db.query(
-                    `UPDATE class_topic SET ai_summary = ? WHERE id_class = ? AND id_topic = ?`,
-                    [response, classId, topic.id_topic]
+                // Call Gemini (same pattern as processUserSummary)
+                const aiResponse = await generateContentWithGemini(
+                    `Analiza el estado de este tópico en la clase y genera el JSON:`,
+                    prompt
                 );
 
-                console.log(`[Phase4] ✅ Summary generated for topic: ${topic.name}`);
+                console.log('');
+                console.log('🎯 TOPIC SUMMARY RESULT:');
+                console.log('─'.repeat(40));
+                console.log(aiResponse.substring(0, 500) + (aiResponse.length > 500 ? '\n... [truncated]' : ''));
+                console.log('─'.repeat(40));
+
+                // Parse response (same pattern as processUserSummary)
+                const parsed = parseInsightResponse(aiResponse);
+                const summaryToSave = parsed ? JSON.stringify(parsed) : aiResponse;
+
+                // Save AI summary to class_topic (same UPDATE pattern as updatePermanentTopicSummary)
+                await db.query(
+                    `UPDATE class_topic 
+                     SET ai_summary = ?, last_analysis_at = CURRENT_TIMESTAMP
+                     WHERE id_class = ? AND id_topic = ?`,
+                    [summaryToSave, classId, topic.id_topic]
+                );
+
+                successCount++;
+
+                console.log('');
+                console.log(`✅ TOPIC SUMMARY SAVED for: ${topic.name}`);
+                if (parsed) {
+                    console.log(`   📖 Summary: ${(parsed.summary || '').substring(0, 100)}...`);
+                    console.log(`   ⚠️  Key Issues: ${JSON.stringify(parsed.key_issues || [])}`);
+                    console.log(`   💡 Actions: ${JSON.stringify(parsed.recommended_actions || [])}`);
+                }
+
+                // Broadcast to frontend (same pattern as Phase 2)
+                broadcastInsightUpdate(`📘 Topic Summary Generated: ${topic.name}`, {
+                    phase: 4,
+                    status: 'topic_summary_saved',
+                    topicId: topic.id_topic,
+                    topicName: topic.name,
+                    scoreAverage: topic.score_average
+                });
+
             } catch (topicErr) {
-                console.error(`[Phase4] ❌ Failed for topic ${topic.name}:`, topicErr);
+                console.error(`❌ Failed to process topic ${topic.name}:`, topicErr);
             }
         }
 
-        // 6. Mark chatbot questions as synced
+        // 6. Mark chatbot questions as synced (if the table exists)
         try {
             const unsyncedQuestions = await getUnsyncedQuestions(classId);
             if (unsyncedQuestions.length > 0) {
                 const ids = unsyncedQuestions.map(q => q.id_log);
                 await markAsSynced(ids);
-                console.log(`[Phase4] ✅ Marked ${ids.length} questions as synced`);
+                console.log(`📝 Marked ${ids.length} chatbot questions as synced`);
             }
         } catch (e) {
-            console.warn('[Phase4] ⚠️ Failed to mark questions as synced:', e);
+            // Non-fatal: table may not exist yet
+            console.warn('⚠️  Could not mark questions as synced (table may not exist)');
         }
 
-        console.log(`=== PHASE 4 COMPLETE ===\n`);
+        console.log('');
+        console.log(`✅ Phase 4 complete - ${successCount}/${topicResult.rows.length} topic summaries generated`);
+
+        broadcastInsightUpdate(`📚 Phase 4 Complete: ${successCount} topic summaries generated`, {
+            phase: 4,
+            status: 'complete',
+            successCount,
+            totalTopics: topicResult.rows.length
+        });
+
     } catch (err) {
-        console.error('[Phase4] Fatal error:', err);
+        console.error('💥 Fatal error in topic summary generation:', err);
+        broadcastInsightUpdate('💥 Phase 4 Error: Failed to generate topic summaries', {
+            phase: 4,
+            status: 'error',
+            error: String(err)
+        });
     }
 }
