@@ -841,159 +841,152 @@ const Main_Student: React.FC = () => {
                 </div>
               </>
             )}
-          </div>
 
-          {/* 🧪 Section Topic AI Summary Test Card */}
-          <div style={{
-            margin: '16px 16px 0',
-            padding: '16px',
-            borderRadius: '16px',
-            background: 'linear-gradient(135deg, rgba(155,89,182,0.15), rgba(52,152,219,0.15))',
-            border: '1px solid rgba(155,89,182,0.3)',
-            backdropFilter: 'blur(10px)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-              <span style={{ fontSize: '20px' }}>🧪</span>
-              <strong style={{ fontSize: '14px', color: 'white' }}>Test: Generar Resúmenes AI de Sección</strong>
-            </div>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: '0 0 12px', lineHeight: '1.5' }}>
-              Crea datos de prueba en <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>section_topic</code> con scores aleatorios y genera resúmenes AI para la sección 1.
-            </p>
-            <button
-              onClick={handleTestSectionSummary}
-              disabled={sectionTestLoading}
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: '12px',
-                border: 'none',
-                background: sectionTestLoading 
-                  ? 'rgba(155,89,182,0.3)' 
-                  : 'linear-gradient(135deg, #9b59b6, #3498db)',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '600',
-                cursor: sectionTestLoading ? 'not-allowed' : 'pointer',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              {sectionTestLoading ? (
-                <>
-                  <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⏳</span>
-                  Generando resúmenes con IA...
-                </>
-              ) : (
-                <>
-                  🤖 Generar Resúmenes de Sección
-                </>
-              )}
-            </button>
-
-            {sectionTestError && (
-              <div style={{
-                marginTop: '10px',
-                padding: '10px 12px',
-                borderRadius: '10px',
-                background: 'rgba(231,76,60,0.15)',
-                border: '1px solid rgba(231,76,60,0.3)',
-                fontSize: '12px',
-                color: '#e74c3c'
-              }}>
-                ❌ {sectionTestError}
+            {/* 🧪 Section Topic AI Summary Test Card */}
+            <div style={{
+              margin: '16px 16px 140px',
+              padding: '16px',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, rgba(155,89,182,0.15), rgba(52,152,219,0.15))',
+              border: '1px solid rgba(155,89,182,0.3)',
+              backdropFilter: 'blur(10px)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <span style={{ fontSize: '20px' }}>🧪</span>
+                <strong style={{ fontSize: '14px', color: 'white' }}>Test: Generar Resúmenes AI de Sección</strong>
               </div>
-            )}
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: '0 0 12px', lineHeight: '1.5' }}>
+                Crea datos de prueba en <code style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 6px', borderRadius: '4px' }}>section_topic</code> con scores aleatorios y genera resúmenes AI para la sección 1.
+              </p>
+              <button
+                onClick={handleTestSectionSummary}
+                disabled={sectionTestLoading}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: sectionTestLoading 
+                    ? 'rgba(155,89,182,0.3)' 
+                    : 'linear-gradient(135deg, #9b59b6, #3498db)',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: sectionTestLoading ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {sectionTestLoading ? (
+                  <>
+                    <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⏳</span>
+                    Generando resúmenes con IA...
+                  </>
+                ) : (
+                  <>
+                    🤖 Generar Resúmenes de Sección
+                  </>
+                )}
+              </button>
 
-            {sectionTestResult && (
-              <div style={{ marginTop: '12px' }}>
+              {sectionTestError && (
                 <div style={{
+                  marginTop: '10px',
                   padding: '10px 12px',
                   borderRadius: '10px',
-                  background: 'rgba(46,204,113,0.15)',
-                  border: '1px solid rgba(46,204,113,0.3)',
-                  marginBottom: '10px',
+                  background: 'rgba(231,76,60,0.15)',
+                  border: '1px solid rgba(231,76,60,0.3)',
                   fontSize: '12px',
-                  color: '#2ecc71'
+                  color: '#e74c3c'
                 }}>
-                  ✅ {sectionTestResult.message} — {sectionTestResult.topicsProcessed} temas procesados
+                  ❌ {sectionTestError}
                 </div>
-                
-                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                  {sectionTestResult.topics?.slice(0, 5).map((topic: any, idx: number) => {
-                    const summary = topic.aiSummary;
-                    return (
-                      <div key={idx} style={{
-                        padding: '10px 12px',
-                        borderRadius: '10px',
-                        background: 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        marginBottom: '8px'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                          <strong style={{ fontSize: '13px', color: 'white' }}>📘 {topic.topicName}</strong>
-                          <span style={{
-                            fontSize: '12px',
-                            padding: '2px 8px',
-                            borderRadius: '8px',
-                            background: (topic.score || 0) >= 80 ? 'rgba(46,204,113,0.2)' : (topic.score || 0) >= 60 ? 'rgba(243,156,18,0.2)' : 'rgba(231,76,60,0.2)',
-                            color: (topic.score || 0) >= 80 ? '#2ecc71' : (topic.score || 0) >= 60 ? '#f39c12' : '#e74c3c'
-                          }}>
-                            {topic.score || 0}%
-                          </span>
+              )}
+
+              {sectionTestResult && (
+                <div style={{ marginTop: '12px' }}>
+                  <div style={{
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    background: 'rgba(46,204,113,0.15)',
+                    border: '1px solid rgba(46,204,113,0.3)',
+                    marginBottom: '10px',
+                    fontSize: '12px',
+                    color: '#2ecc71'
+                  }}>
+                    ✅ {sectionTestResult.message} — {sectionTestResult.topicsProcessed} temas procesados
+                  </div>
+                  
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {sectionTestResult.topics?.slice(0, 5).map((topic: any, idx: number) => {
+                      const summary = topic.aiSummary;
+                      return (
+                        <div key={idx} style={{
+                          padding: '10px 12px',
+                          borderRadius: '10px',
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          marginBottom: '8px'
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <strong style={{ fontSize: '13px', color: 'white' }}>📘 {topic.topicName}</strong>
+                            <span style={{
+                              fontSize: '12px',
+                              padding: '2px 8px',
+                              borderRadius: '8px',
+                              background: (topic.score || 0) >= 80 ? 'rgba(46,204,113,0.2)' : (topic.score || 0) >= 60 ? 'rgba(243,156,18,0.2)' : 'rgba(231,76,60,0.2)',
+                              color: (topic.score || 0) >= 80 ? '#2ecc71' : (topic.score || 0) >= 60 ? '#f39c12' : '#e74c3c'
+                            }}>
+                              {topic.score || 0}%
+                            </span>
+                          </div>
+                          {summary && (
+                            <>
+                              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', margin: '0 0 6px', lineHeight: '1.5' }}>
+                                {typeof summary === 'object' ? summary.summary : summary}
+                              </p>
+                              {summary.correlation_impact && (
+                                <p style={{ fontSize: '10px', color: 'rgba(155,89,182,0.9)', margin: '0 0 6px', lineHeight: '1.4' }}>
+                                  🔗 {summary.correlation_impact}
+                                </p>
+                              )}
+                              {summary.key_issues && summary.key_issues.length > 0 && (
+                                <div style={{ marginTop: '6px' }}>
+                                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>⚠️ Problemas:</span>
+                                  <ul style={{ margin: '4px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>
+                                    {summary.key_issues.map((issue: string, i: number) => (
+                                      <li key={i} style={{ marginBottom: '2px' }}>{issue}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              {summary.recommended_actions && summary.recommended_actions.length > 0 && (
+                                <div style={{ marginTop: '6px' }}>
+                                  <span style={{ fontSize: '10px', color: 'rgba(46,204,113,0.8)' }}>💡 Acciones:</span>
+                                  <ul style={{ margin: '4px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>
+                                    {summary.recommended_actions.map((action: string, i: number) => (
+                                      <li key={i} style={{ marginBottom: '2px' }}>{action}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </>
+                          )}
                         </div>
-                        {summary && (
-                          <>
-                            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)', margin: '0 0 6px', lineHeight: '1.5' }}>
-                              {typeof summary === 'object' ? summary.summary : summary}
-                            </p>
-                            {summary.section_performance_level && (
-                              <span style={{
-                                fontSize: '10px',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                background: 'rgba(155,89,182,0.2)',
-                                color: '#9b59b6',
-                                marginRight: '6px'
-                              }}>
-                                📊 {summary.section_performance_level}
-                              </span>
-                            )}
-                            {summary.key_issues && summary.key_issues.length > 0 && (
-                              <div style={{ marginTop: '6px' }}>
-                                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>⚠️ Problemas:</span>
-                                <ul style={{ margin: '4px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>
-                                  {summary.key_issues.map((issue: string, i: number) => (
-                                    <li key={i} style={{ marginBottom: '2px' }}>{issue}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {summary.recommended_actions && summary.recommended_actions.length > 0 && (
-                              <div style={{ marginTop: '6px' }}>
-                                <span style={{ fontSize: '10px', color: 'rgba(46,204,113,0.8)' }}>💡 Acciones:</span>
-                                <ul style={{ margin: '4px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'rgba(255,255,255,0.7)' }}>
-                                  {summary.recommended_actions.map((action: string, i: number) => (
-                                    <li key={i} style={{ marginBottom: '2px' }}>{action}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                  {sectionTestResult.topics?.length > 5 && (
-                    <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textAlign: 'center', margin: '8px 0 0' }}>
-                      ... y {sectionTestResult.topics.length - 5} temas más
-                    </p>
-                  )}
+                      );
+                    })}
+                    {sectionTestResult.topics?.length > 5 && (
+                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textAlign: 'center', margin: '8px 0 0' }}>
+                        ... y {sectionTestResult.topics.length - 5} temas más
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </PageTransition>
       </IonContent>
