@@ -109,10 +109,12 @@ router.post('/:userId/topics/:topicId/score', async (req, res, next) => {
  */
 router.get('/:userId/stats', async (req, res, next) => {
     const paramsSchema = z.object({ userId: z.coerce.number().int().positive() });
-    const querySchema = z.object({ subjectId: z.coerce.number().int().positive().optional() });
     try {
         const { userId } = paramsSchema.parse(req.params);
-        const { subjectId } = querySchema.parse(req.query);
+        // Use safeParse to avoid 500 error if someone sends ?subjectId=Math
+        const querySchema = z.object({ subjectId: z.coerce.number().int().positive().optional() });
+        const queryResult = querySchema.safeParse(req.query);
+        const subjectId = queryResult.success ? queryResult.data.subjectId : undefined;
         const stats = await getStudentStats(userId, subjectId);
         res.json(stats);
     }

@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { ApiError } from '../middleware/errorHandler.js';
-import { createTopicRelation, createTopicResource, listTopicResources } from '../repositories/topicRepository.js';
+import { getTopicById, getTopicRelations, createTopicRelation, createTopicResource, listTopicResources } from '../repositories/topicRepository.js';
+import { getStudentTopicMastery, getTopicSessionHistory } from '../repositories/studentRepository.js';
+import { requireAuth } from '../middleware/auth.js';
+import { generateTopicMasteryInsight } from '../services/insightService.js';
 
 const router = Router();
 
@@ -21,6 +24,66 @@ router.post('/relations', async (req, res, next) => {
 
     const relation = await createTopicRelation(body);
     res.status(201).json(relation);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/:topicId', requireAuth, async (req, res, next) => {
+  const paramsSchema = z.object({ topicId: z.coerce.number().int().positive() });
+
+  try {
+    const { topicId } = paramsSchema.parse(req.params);
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new ApiError(401, 'User not authenticated');
+    }
+
+    // 1. Fetch Basic Topic Info
+    const topic = await getTopicById(topicId);
+    if (!topic) {
+      throw new ApiError(404, 'Topic not found');
+    }
+
+    // 2. Fetch Permanent Mastery Profile
+    const mastery = await getStudentTopicMastery(userId, topicId);
+
+    // 3. Fetch Relations (Optional)
+    let relations: any[] = [];
+    try {
+      relations = await getTopicRelations(topicId, userId);
+    } catch (e) {
+      console.warn(`[TopicDetail] Error fetching relations for topic ${topicId}:`, e);
+    }
+
+    // 4. Fetch Session History (Optional)
+    let history: any[] = [];
+    try {
+      history = await getTopicSessionHistory(userId, topicId);
+    } catch (e) {
+      console.warn(`[TopicDetail] Error fetching session history for topic ${topicId}:`, e);
+    }
+
+    // 5. Trigger Background Analysis if summary is missing
+    if (!mastery.ai_summary && history.length > 0) {
+      generateTopicMasteryInsight(userId, topicId).catch(err => {
+        console.error(`[TopicDetail] Background analysis error:`, err);
+      });
+    }
+
+    // Combine result
+    res.json({
+      id_topic: topic.id_topic,
+      name: topic.name,
+      description: topic.description,
+      subject_name: topic.subject_name,
+      permanent_score: mastery.score || 0,
+      ai_summary: mastery.ai_summary,
+      relations: relations,
+      history: history
+    });
+
   } catch (error) {
     next(error);
   }

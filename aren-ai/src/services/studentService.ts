@@ -94,18 +94,25 @@ class StudentService {
                 const data: any[] = await progressRes.json();
                 
                 const filtered = data.filter(d => 
-                    d.subject_name && subjectName && (
-                        d.subject_name.toLowerCase() === subjectName.toLowerCase() ||
-                        d.subject_name.toLowerCase().replace(/\s+/g, '') === subjectName.toLowerCase().replace(/\s+/g, '')
-                    )
+                    d.id_subject === subjectId
                 );
+                console.log(`[StudentService] Filtered topics for subject ${subjectId}:`, filtered);
 
-                const topics: TopicProgress[] = filtered.map(t => ({
-                    name: t.topic_name,
-                    nameKey: t.topic_name, 
-                    percentage: Number(t.score) || 0,
-                    icon: this.getIconForTopic(t.topic_name)
-                }));
+                const topics: TopicProgress[] = filtered.map(t => {
+                    let score = t.score !== null ? Number(t.score) : null;
+                    // Auto-scale fractional scores from backend (0.35 -> 35)
+                    if (score !== null && score > 0 && score <= 1) {
+                        score = score * 100;
+                    }
+                    
+                    return {
+                        id: t.id_topic,
+                        name: t.topic_name,
+                        nameKey: t.topic_name, 
+                        percentage: score,
+                        icon: this.getIconForTopic(t.topic_name)
+                    };
+                });
 
                 return {
                     name: subjectName,

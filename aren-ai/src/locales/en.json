@@ -48,10 +48,17 @@
         "noRequests": "No new requests"
     },
     "common": {
-        "save": "Save",
         "cancel": "Cancel",
-        "grade": "Grade",
-        "noDescription": "No description provided."
+        "save": "Save",
+        "edit": "Edit",
+        "delete": "Delete",
+        "back": "Back",
+        "close": "Close",
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "noData": "No data available",
+        "returnToToday": "Return to Today",
+        "exitReview": "Exit Review"
     },
     "professor": {
         "sidebar": {
@@ -387,6 +394,7 @@
     "mainStudent": {
         "brandSub": "Æ",
         "yourSubject": "Your {{subject}}",
+        "calendar": "Calendar",
         "recommendationsText": {
             "Math": "Focus on improving your performance in mathematics. Use targeted exercises and additional practice materials to reinforce understanding and build confidence in challenging areas like calculus and probability.",
             "Science": "Enhance science comprehension through hands-on experiments and real-world applications. You need more practice with physics concepts and chemical reactions.",
@@ -504,24 +512,24 @@
         }
     },
     "quizGenerator": {
-        "title": "Quiz Generator",
-        "pageTitle": "AI Quiz Generator",
+        "title": "AI Quiz Generator",
         "quizName": "Quiz Name",
-        "editName": "Edit Name",
-        "selectSubject": "Select Subject",
-        "selectTopics": "Select Topics",
-        "addTopics": "Add Topics",
+        "enterQuizName": "Enter Quiz Name",
+        "quizTopics": "Quiz Topics",
+        "addMore": "Add More",
+        "advancedSettings": "Advanced Settings",
+        "questions": "Questions",
         "gradeLevel": "Grade Level",
-        "questionCount": "Questions",
-        "language": "Language",
-        "customPrompt": "Custom Instructions (Optional)",
-        "customPromptPlaceholder": "Add specific instructions for the AI...",
-        "generateBtn": "Generate with AI",
-        "generating": "Generating...",
-        "namePlaceholder": "Enter quiz name...",
-        "nameHint": "Choose a descriptive name",
+        "additionalDetails": "Additional Details",
+        "numberOfQuestions": "Number of Questions",
+        "enterNumberHint": "Enter a number between 5 and 100",
+        "generating": "Generating Quiz",
+        "generatingDesc": "AI is creating your questions...",
+        "selectTopicError": "Please select at least one topic",
+        "enterNameError": "Please enter a name for the quiz",
+        "cancel": "Cancel",
         "save": "Save",
-        "cancel": "Cancel"
+        "generate": "Generate"
     },
     "quizPreview": {
         "title": "Quiz Preview",
@@ -576,16 +584,15 @@
         "assignment": "Assignment"
     },
     "studentAssignments": {
-        "pending": "Pending",
-        "start": "Start Quiz",
+        "pending": "Pending Quizzes",
+        "completedQuizzes": "Completed Quizzes",
+        "noPending": "No pending assignments",
+        "noCompleted": "No completed quizzes",
+        "searchCompleted": "Search completed...",
+        "questions": "Questions",
+        "start": "Start",
         "overdue": "Overdue",
-        "questions": "questions",
-        "noPending": "No pending assignments! You're all caught up.",
-        "searchCompleted": "Search your history...",
-        "score": "Score",
-        "viewDetails": "View Details",
-        "noCompleted": "No completed quizzes yet.",
-        "completedQuizzes": "Completed Quizzes"
+        "score": "Score"
     },
     "taskAssignment": {
         "pageTitle": "New Assignment",
@@ -701,19 +708,6 @@
             "Science": "Science",
             "ScienceDesc": "Questions about biology, chemistry and physics"
         }
-    },
-    "common": {
-        "cancel": "Cancel",
-        "save": "Save",
-        "edit": "Edit",
-        "delete": "Delete",
-        "back": "Back",
-        "close": "Close",
-        "loading": "Loading...",
-        "error": "An error occurred",
-        "noData": "No data available",
-        "returnToToday": "Return to Today",
-        "exitReview": "Exit Review"
     },
     "calendar": {
         "sun": "Sun",
@@ -1355,37 +1349,6 @@
         "saveSuccess": "Profile updated successfully",
         "nameRequired": "Name is required"
     },
-    "quizGenerator": {
-        "title": "AI Quiz Generator",
-        "quizName": "Quiz Name",
-        "enterQuizName": "Enter Quiz Name",
-        "quizTopics": "Quiz Topics",
-        "addMore": "Add More",
-        "advancedSettings": "Advanced Settings",
-        "questions": "Questions",
-        "gradeLevel": "Grade Level",
-        "additionalDetails": "Additional Details",
-        "numberOfQuestions": "Number of Questions",
-        "enterNumberHint": "Enter a number between 5 and 100",
-        "generating": "Generating Quiz",
-        "generatingDesc": "AI is creating your questions...",
-        "selectTopicError": "Please select at least one topic",
-        "enterNameError": "Please enter a name for the quiz",
-        "cancel": "Cancel",
-        "save": "Save",
-        "generate": "Generate"
-    },
-    "studentAssignments": {
-        "pending": "Pending Quizzes",
-        "completedQuizzes": "Completed Quizzes",
-        "noPending": "No pending assignments",
-        "noCompleted": "No completed quizzes",
-        "searchCompleted": "Search completed...",
-        "questions": "Questions",
-        "start": "Start",
-        "overdue": "Overdue",
-        "score": "Score"
-    },
     "auth": {
         "brandTitle": "Aren AI",
         "brandSubtitle": "Less Monologues, more Dialogs",
@@ -1421,5 +1384,22 @@
         "gradeAndSection": "Grade & Section",
         "grade": "GRADE",
         "section": "SECTION"
+    },
+    "topicDetail": {
+        "title": "Topic Profile",
+        "masteryLabel": "Goal Mastery",
+        "descriptionTitle": "Topic Description",
+        "insightTitle": "Mastery Insights",
+        "insightPlaceholder": "Our system is currently analyzing your performance. Keep practicing to unlock your cognitive profile.",
+        "historyTitle": "Class History",
+        "connectionsTitle": "Topic Connections",
+        "prerequisite": "Prerequisite",
+        "nextStep": "Next Step",
+        "emptyStateTitle": "No Experience",
+        "emptyStateDesc": "You haven’t practiced this topic in a live class session yet.",
+        "noHistoryYet": "Join a class session to track your progress here.",
+        "loading": "Analyzing mastery data...",
+        "error": "No topic information found.",
+        "pageTitle": "Topic Details"
     }
 }

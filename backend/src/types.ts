@@ -55,6 +55,7 @@ export interface ClassTemplateTopic {
 
 export interface StudentProgressRow {
   id_topic: number;
+  id_subject: number;
   topic_name: string;
   subject_name: string;
   score: string | null;

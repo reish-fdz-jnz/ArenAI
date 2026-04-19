@@ -4,7 +4,11 @@
 // Uses professor_class_report for aggregated class reports
 
 import { generateContentWithGemini } from './geminiService.js';
-import { STUDENT_INSIGHT_PROMPT, CLASS_REPORT_PROMPT } from '../config/prompts.js';
+import { 
+    TOPIC_MASTERY_PROMPT, 
+    STUDENT_INSIGHT_PROMPT, 
+    CLASS_REPORT_PROMPT 
+} from '../config/prompts.js';
 import {
     getUsersWithUnanalyzedMessages,
     getUnanalyzedMessagesByUser,
@@ -18,6 +22,8 @@ import {
     markSummariesAsProcessed,
     saveProfessorClassReport
 } from '../repositories/insightRepository.js';
+import { getTopicById } from '../repositories/topicRepository.js';
+import { getHistoricalRecordsForTopic, updatePermanentTopicSummary } from '../repositories/studentRepository.js';
 
 // Default class ID (until class system is fully implemented)
 const DEFAULT_CLASS_ID = 1;
@@ -308,6 +314,55 @@ export async function runClassReportGeneration(): Promise<void> {
 
     } catch (err) {
         console.error('💥 Fatal error in report generation:', err);
+    }
+}
+
+/**
+ * Generate a permanent historical mastery insight for a specific topic
+ */
+export async function generateTopicMasteryInsight(userId: number, topicId: number): Promise<string | null> {
+    try {
+        console.log(`[TopicMastery] 🧠 Generating permanent mastery profile for User:${userId}, Topic:${topicId}`);
+
+        // 1. Fetch Topic Info
+        const topic = await getTopicById(topicId);
+        if (!topic) return null;
+
+        // 2. Fetch Historical Records
+        const records = await getHistoricalRecordsForTopic(userId, topicId);
+
+        // 3. Build context for prompt
+        const sessionContext = records.sessions.length > 0 
+            ? records.sessions.map(s => `- Class: ${s.class_name}, Score: ${s.score}%, AI Summary: ${s.ai_summary || 'N/A'}`).join('\n')
+            : 'No class sessions recorded yet.';
+
+        const quizContext = records.quizzes.length > 0
+            ? records.quizzes.map(q => `- Quiz: ${q.quiz_name}, Score: ${q.score}%, Date: ${new Date(q.finished_at).toLocaleDateString()}`).join('\n')
+            : 'No quizzes taken yet.';
+
+        // 4. Call Gemini
+        const prompt = TOPIC_MASTERY_PROMPT
+            .replace('{TOPIC_NAME}', topic.name)
+            .replace('{SESSION_HISTORY}', sessionContext)
+            .replace('{QUIZ_HISTORY}', quizContext);
+
+        const aiResponse = await generateContentWithGemini(
+            `Analyze the student's longitudinal progress on ${topic.name}:`,
+            prompt
+        );
+
+        // 5. Parse and save
+        const parsed = parseInsightResponse(aiResponse);
+        if (parsed && parsed.summary) {
+            await updatePermanentTopicSummary(userId, topicId, parsed.summary);
+            console.log(`[TopicMastery] ✅ Permanent profile updated for ${topic.name}`);
+            return parsed.summary;
+        }
+
+        return null;
+    } catch (err) {
+        console.error(`[TopicMastery] ❌ Error generating topic insight:`, err);
+        return null;
     }
 }
 

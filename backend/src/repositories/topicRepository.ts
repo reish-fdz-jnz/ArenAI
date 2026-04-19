@@ -117,3 +117,40 @@ export async function listTopicResources(topicId: number) {
 
   return result.rows;
 }
+
+export async function getTopicById(topicId: number) {
+  const result = await db.query<Topic & { subject_name: string }>(
+    `SELECT t.id_topic, t.name, t.id_subject, t.description, s.name_subject as subject_name
+     FROM topic t
+     INNER JOIN subject s ON s.id_subject = t.id_subject
+     WHERE t.id_topic = ?`,
+    [topicId]
+  );
+
+  return result.rows[0] || null;
+}
+
+export async function getTopicRelations(topicId: number, userId: number) {
+  const result = await db.query<{
+    id_topic: number;
+    name: string;
+    type: 'father' | 'son';
+    correlation_coefficient: number | null;
+    score: number | null;
+  }>(
+    `(SELECT t.id_topic, t.name, 'father' as type, rel.correlation_coefficient, st.score
+      FROM topic_father_son_relation rel
+      INNER JOIN topic t ON t.id_topic = rel.id_topic_father
+      LEFT JOIN student_topic st ON st.id_topic = t.id_topic AND st.id_user = ?
+      WHERE rel.id_topic_son = ?)
+     UNION
+     (SELECT t.id_topic, t.name, 'son' as type, rel.correlation_coefficient, st.score
+      FROM topic_father_son_relation rel
+      INNER JOIN topic t ON t.id_topic = rel.id_topic_son
+      LEFT JOIN student_topic st ON st.id_topic = t.id_topic AND st.id_user = ?
+      WHERE rel.id_topic_father = ?)`,
+    [userId, topicId, userId, topicId]
+  );
+
+  return result.rows;
+}

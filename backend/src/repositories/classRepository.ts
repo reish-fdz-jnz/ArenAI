@@ -166,7 +166,7 @@ export async function recordClassTopics(classId: number, topics: ClassTopicPaylo
          ON DUPLICATE KEY UPDATE 
            score_average = VALUES(score_average),
            ai_summary = VALUES(ai_summary)`,
-        [classId, topic.topicId, topic.scoreAverage ?? 0, topic.aiSummary ?? null]
+        [classId, topic.topicId, topic.scoreAverage ?? null, topic.aiSummary ?? null]
       );
     }
     await client.commit();
@@ -191,7 +191,7 @@ export async function recordClassStudents(classId: number, students: ClassStuden
            score_average = VALUES(score_average),
            ai_summary = VALUES(ai_summary),
            attendance = VALUES(attendance)`,
-        [classId, student.userId, student.scoreAverage ?? 0, student.aiSummary ?? null, student.attendance ?? null]
+        [classId, student.userId, student.scoreAverage ?? null, student.aiSummary ?? null, student.attendance ?? null]
       );
     }
     await client.commit();
@@ -226,7 +226,7 @@ export async function recordClassStudentTopics(classId: number, entries: ClassSt
          ON DUPLICATE KEY UPDATE 
            score = VALUES(score),
            ai_summary = VALUES(ai_summary)`,
-        [classId, entry.userId, entry.topicId, entry.score ?? 0, entry.aiSummary ?? null]
+        [classId, entry.userId, entry.topicId, entry.score ?? null, entry.aiSummary ?? null]
       );
     }
     await client.commit();

@@ -57,3 +57,22 @@ export async function listTopicResources(topicId) {
      ORDER BY id_topic_resource`, [topicId]);
     return result.rows;
 }
+export async function getTopicById(topicId) {
+    const result = await db.query(`SELECT t.id_topic, t.name, t.id_subject, t.description, s.name_subject as subject_name
+     FROM topic t
+     INNER JOIN subject s ON s.id_subject = t.id_subject
+     WHERE t.id_topic = ?`, [topicId]);
+    return result.rows[0] || null;
+}
+export async function getTopicRelations(topicId) {
+    const result = await db.query(`(SELECT t.id_topic, t.name, 'father' as type, rel.correlation_coefficient
+      FROM topic_father_son_relation rel
+      INNER JOIN topic t ON t.id_topic = rel.id_topic_father
+      WHERE rel.id_topic_son = ?)
+     UNION
+     (SELECT t.id_topic, t.name, 'son' as type, rel.correlation_coefficient
+      FROM topic_father_son_relation rel
+      INNER JOIN topic t ON t.id_topic = rel.id_topic_son
+      WHERE rel.id_topic_father = ?)`, [topicId, topicId]);
+    return result.rows;
+}

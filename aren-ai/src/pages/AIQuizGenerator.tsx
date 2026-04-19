@@ -29,11 +29,11 @@ import { useProfessorFilters } from "../hooks/useProfessorFilters";
 
 // Subject Mapping
 const SUBJECT_MAP: { [key: string]: number } = {
-  "Math": 1,
-  "Science": 2,
+  Math: 1,
+  Science: 2,
   "Social Studies": 3,
-  "SocialStudies": 3,
-  "Spanish": 4
+  SocialStudies: 3,
+  Spanish: 4,
 };
 
 const SUBJECTS = ["Math", "Science", "Social Studies", "Spanish"];
@@ -46,10 +46,10 @@ const AIQuizGenerator: React.FC = () => {
   // Loading state for AI generation
   const [isLoading, setIsLoading] = useState(false);
 
-  const { 
-    selectedGrade: filterGrade, 
+  const {
+    selectedGrade: filterGrade,
     selectedSubject: filterSubject,
-    selectedSection: filterSection 
+    selectedSection: filterSection,
   } = useProfessorFilters();
 
   const [selectedSubject, setSelectedSubject] = useState(
@@ -58,10 +58,10 @@ const AIQuizGenerator: React.FC = () => {
 
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [addedTopics, setAddedTopics] = useState<
-    { key: string; name: string; subject: string }[]
+    { id: number; key: string; name: string; subject: string }[]
   >([]);
   const [availableTopics, setAvailableTopics] = useState<
-    { key: string; name: string; subject: string }[]
+    { id: number; key: string; name: string; subject: string }[]
   >([]);
 
   const [questionCount, setQuestionCount] = useState(5);
@@ -95,9 +95,12 @@ const AIQuizGenerator: React.FC = () => {
         if (!subjectId) return;
 
         const token = localStorage.getItem("authToken");
-        const response = await fetch(getApiUrl(`api/subjects/${subjectId}/topics`), {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await fetch(
+          getApiUrl(`api/subjects/${subjectId}/topics`),
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
 
         if (response.ok) {
           const data = await response.json();
@@ -150,8 +153,8 @@ const AIQuizGenerator: React.FC = () => {
                 name: t.name,
                 subject: selectedSubject,
               }));
-              
-              // Only pick topics that match current subject to avoid cross-pollination 
+
+              // Only pick topics that match current subject to avoid cross-pollination
               // unless we want to show all class topics regardless of subject
               setAddedTopics(sessionTopics);
               setSelectedTopics(sessionTopics.map((t: any) => t.key));
@@ -178,7 +181,9 @@ const AIQuizGenerator: React.FC = () => {
     }
   }, [filterSubject]);
 
-  const defaultTopics = useMemo<{ key: string; name: string; subject: string }[]>(() => {
+  const defaultTopics = useMemo<
+    { id: number; key: string; name: string; subject: string }[]
+  >(() => {
     return availableTopics.slice(0, 4);
   }, [availableTopics]);
 
@@ -280,11 +285,13 @@ const AIQuizGenerator: React.FC = () => {
         body: JSON.stringify({
           subject: selectedSubject,
           level: gradeLevel,
-          topics: selectedTopics.map(key => {
-            const fullTopic = [...availableTopics, ...addedTopics].find(t => t.key === key);
+          topics: selectedTopics.map((key) => {
+            const fullTopic = [...availableTopics, ...addedTopics].find(
+              (t) => t.key === key,
+            );
             return {
               id: fullTopic?.id || null,
-              name: key
+              name: key,
             };
           }),
           questionCount,

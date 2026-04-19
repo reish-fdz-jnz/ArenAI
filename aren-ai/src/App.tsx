@@ -57,6 +57,7 @@ import ChatMenu from "./pages/ChatMenu";
 import StudentChat from "./pages/StudentChat";
 import StartClassSession from "./pages/StartClassSession";
 import ArenEntityPage from "./pages/ArenEntityPage";
+import TopicDetail from "./pages/TopicDetail";
 import { socketService } from "./services/socket";
 import { chatStorage } from "./services/chatStorage";
 import { App as CapApp } from "@capacitor/app";
@@ -580,6 +581,14 @@ const App: React.FC = () => {
                     <Route path="/aren-entity" exact={true}>
                       {userRole === "student" ? (
                         <ArenEntityPage />
+                      ) : (
+                        <Redirect to="/login" />
+                      )}
+                    </Route>
+
+                    <Route path="/page/topic/:id" exact={true}>
+                      {userRole === "student" ? (
+                        <TopicDetail />
                       ) : (
                         <Redirect to="/login" />
                       )}

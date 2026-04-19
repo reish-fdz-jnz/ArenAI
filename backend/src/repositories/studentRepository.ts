@@ -19,6 +19,7 @@ export async function getStudentTopicProgress(userId: number) {
   const result = await db.query<StudentProgressRow>(
     `SELECT
         st.id_topic,
+        t.id_subject,
         t.name AS topic_name,
         s.name_subject AS subject_name,
         st.score
@@ -44,6 +45,7 @@ export async function upsertStudentTopicScore(payload: { userId: number; topicId
   const result = await db.query<StudentProgressRow>(
     `SELECT
         st.id_topic,
+        t.id_subject,
         t.name AS topic_name,
         s.name_subject AS subject_name,
         st.score
@@ -200,6 +202,73 @@ export async function listStudentSections(userId: number) {
     [userId]
   );
   return result.rows.map(r => r.id_section);
+}
+
+export async function getStudentTopicMastery(userId: number, topicId: number) {
+  const result = await db.query<{ score: number | null; ai_summary: string | null }>(
+    `SELECT score, ai_summary 
+     FROM student_topic 
+     WHERE id_user = ? AND id_topic = ?`,
+    [userId, topicId]
+  );
+  return result.rows[0] || { score: 0, ai_summary: null };
+}
+
+export async function getTopicSessionHistory(userId: number, topicId: number) {
+  const result = await db.query<{
+    id_class: number;
+    class_name: string;
+    score: number;
+    date: string;
+  }>(
+    `SELECT cst.id_class, c.name_class as class_name, cst.score, c.start_time as date
+     FROM class_student_topic cst
+     INNER JOIN class c ON c.id_class = cst.id_class
+     WHERE cst.id_user = ? AND cst.id_topic = ?
+     ORDER BY c.start_time DESC`,
+    [userId, topicId]
+  );
+  return result.rows;
+}
+
+export async function getHistoricalRecordsForTopic(userId: number, topicId: number) {
+  // Aggregate data from multiple sources for AI analysis
+  const [sessions, quizzes] = await Promise.all([
+    // 1. Session performance and summaries
+    db.query<{ class_name: string; score: number; ai_summary: string }>(
+      `SELECT c.name_class as class_name, cst.score, scs.summary_text as ai_summary
+       FROM class_student_topic cst
+       INNER JOIN class c ON c.id_class = cst.id_class
+       LEFT JOIN student_class_summary scs ON scs.id_class = c.id_class AND scs.id_user = cst.id_user
+       WHERE cst.id_user = ? AND cst.id_topic = ?
+       ORDER BY c.start_time DESC`,
+      [userId, topicId]
+    ),
+    // 2. Quiz attempts and results for this topic
+    db.query<{ quiz_name: string; score: number; finished_at: string }>(
+      `SELECT q.name as quiz_name, qa.total_score as score, qa.finished_at
+       FROM quiz_attempt qa
+       INNER JOIN quiz q ON q.id_quiz = qa.id_quiz
+       INNER JOIN quiz_topic qt ON qt.id_quiz = q.id_quiz
+       WHERE qa.id_student = ? AND qt.id_topic = ? AND qa.finished_at IS NOT NULL
+       ORDER BY qa.finished_at DESC`,
+      [userId, topicId]
+    )
+  ]);
+
+  return {
+    sessions: sessions.rows,
+    quizzes: quizzes.rows
+  };
+}
+
+export async function updatePermanentTopicSummary(userId: number, topicId: number, summary: string) {
+  await db.query(
+    `UPDATE student_topic 
+     SET ai_summary = ?, last_analysis_at = CURRENT_TIMESTAMP
+     WHERE id_user = ? AND id_topic = ?`,
+    [summary, userId, topicId]
+  );
 }
 
 

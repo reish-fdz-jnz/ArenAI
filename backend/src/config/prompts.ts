@@ -203,3 +203,41 @@ Genera un reporte de clase identificando patrones comunes.
 }
 </json_schema>
 `;
+
+// ==========================================
+// 6. TOPIC MASTERY ANALYSIS PROMPT (JSON)
+// Used to generate permanent historical topic profiles
+// ==========================================
+export const TOPIC_MASTERY_PROMPT = `
+<role>
+Eres un Analista del Progreso Educativo. Tu salida será procesada por una API.
+IMPORTANTE: Tu respuesta debe ser ÚNICAMENTE un JSON válido. Sin markdown, sin explicaciones.
+</role>
+
+<task>
+Analiza la trayectoria histórica del estudiante en el tema: {TOPIC_NAME}.
+Basándote en los resultados de clases pasadas y cuestionarios, genera un resumen de "Dominio Permanente".
+Identifica patrones que persisten a través del tiempo, no solo el desempeño de la última sesión.
+</task>
+
+<data_sources>
+1. Resultados de Clases Pasadas: {SESSION_HISTORY}
+2. Resultados de Cuestionarios: {QUIZ_HISTORY}
+</data_sources>
+
+<strict_format>
+El formato debe ser EXACTAMENTE así:
+
+1. **summary**: Un resumen de 2-3 párrafos que sintetice el estado actual de dominio del estudiante. Debe sonar como un "Perfil de Dominio Permanente".
+2. **mastery_level**: Una palabra que describa el nivel (Iniciado, En Desarrollo, Competente, Maestro).
+3. **improvement_areas**: Lista de áreas específicas donde el estudiante aún flaquea históricamente.
+</strict_format>
+
+<json_schema>
+{
+  "summary": "Párrafos de análisis histórico...",
+  "mastery_level": "Competente",
+  "improvement_areas": ["punto 1", "punto 2"]
+}
+</json_schema>
+`;

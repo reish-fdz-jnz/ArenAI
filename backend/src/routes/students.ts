@@ -78,6 +78,7 @@ router.get('/:userId/progress', async (req, res, next) => {
     res.json(
       progress.map((row) => ({
         id_topic: row.id_topic,
+        id_subject: row.id_subject,
         topic_name: row.topic_name,
         subject_name: row.subject_name,
         score: parseNumeric(row.score),

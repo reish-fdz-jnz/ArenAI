@@ -41,7 +41,7 @@ export async function getActiveSessionForStudent(req: Request, res: Response) {
         return {
           id_topic: t.id_topic,
           name_topic: t.name,
-          score: scores?.score ?? 0,
+          score: (scores && scores.score !== undefined) ? scores.score : null,
           ai_summary: scores?.ai_summary ?? null
         };
       });
@@ -164,7 +164,7 @@ export async function getStudentSessionDetail(req: Request, res: Response) {
         return {
           id_topic: t.id_topic,
           name_topic: t.name,
-          score: scores?.score ?? 0,
+          score: (scores && scores.score !== undefined) ? scores.score : null,
           ai_summary: scores?.ai_summary ?? null
         };
       });

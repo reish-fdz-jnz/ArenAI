@@ -49,10 +49,17 @@
         "noRequests": "Sin solicitudes nuevas"
     },
     "common": {
-        "save": "Guardar",
         "cancel": "Cancelar",
-        "grade": "Grado",
-        "noDescription": "Sin descripción disponible."
+        "save": "Guardar",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "back": "Volver",
+        "close": "Cerrar",
+        "loading": "Cargando...",
+        "error": "Ocurrió un error",
+        "noData": "No hay datos disponibles",
+        "returnToToday": "Volver a Hoy",
+        "exitReview": "Salir de Revisión"
     },
     "professor": {
         "sidebar": {
@@ -422,6 +429,7 @@
     "mainStudent": {
         "brandSub": "Æ",
         "yourSubject": "Tu {{subject}}",
+        "calendar": "Calendario",
         "recommendationsText": {
             "Math": "Concéntrate en mejorar tu rendimiento en matemáticas. Usa ejercicios específicos y materiales de práctica adicionales para reforzar la comprensión.",
             "Science": "Mejora la comprensión científica a través de experimentos prácticos. Necesitas más práctica con conceptos de física.",
@@ -543,24 +551,24 @@
         "backToLobby": "Volver al Lobby"
     },
     "quizGenerator": {
-        "title": "Generador de Quiz",
-        "pageTitle": "Generador de Quiz con IA",
-        "quizName": "Nombre del Quiz",
-        "editName": "Editar Nombre",
-        "selectSubject": "Seleccionar Materia",
-        "selectTopics": "Seleccionar Temas",
-        "addTopics": "Agregar Temas",
+        "title": "Generador de Quiz con IA",
+        "quizName": "Nombre del Cuestionario",
+        "enterQuizName": "Ingrese Nombre del Quiz",
+        "quizTopics": "Temas del Quiz",
+        "addMore": "Añadir Más",
+        "advancedSettings": "Configuración Avanzada",
+        "questions": "Preguntas",
         "gradeLevel": "Nivel de Grado",
-        "questionCount": "Preguntas",
-        "language": "Idioma",
-        "customPrompt": "Instrucciones Personalizadas (Opcional)",
-        "customPromptPlaceholder": "Añade instrucciones específicas para la IA...",
-        "generateBtn": "Generar con IA",
-        "generating": "Generando...",
-        "namePlaceholder": "Ingresa el nombre del quiz...",
-        "nameHint": "Elige un nombre descriptivo",
+        "additionalDetails": "Detalles Adicionales",
+        "numberOfQuestions": "Número de Preguntas",
+        "enterNumberHint": "Ingrese un número entre 5 y 100",
+        "generating": "Generando Quiz",
+        "generatingDesc": "La IA está creando tus preguntas...",
+        "selectTopicError": "Por favor seleccione al menos un tema",
+        "enterNameError": "Por favor ingrese un nombre para el quiz",
+        "cancel": "Cancelar",
         "save": "Guardar",
-        "cancel": "Cancelar"
+        "generate": "Generar"
     },
     "quizPreview": {
         "title": "Vista Previa del Quiz",
@@ -726,19 +734,6 @@
             "Science": "Ciencias",
             "ScienceDesc": "Preguntas de biología, química y física"
         }
-    },
-    "common": {
-        "cancel": "Cancelar",
-        "save": "Guardar",
-        "edit": "Editar",
-        "delete": "Eliminar",
-        "back": "Volver",
-        "close": "Cerrar",
-        "loading": "Cargando...",
-        "error": "Ocurrió un error",
-        "noData": "No hay datos disponibles",
-        "returnToToday": "Volver a Hoy",
-        "exitReview": "Salir de Revisión"
     },
     "calendar": {
         "sun": "Dom",
@@ -1373,40 +1368,6 @@
         "nameRequired": "El nombre es requerido"
     },
     "studentAssignments": {
-        "title": "Tus Asignaciones",
-        "pending": "Pendientes",
-        "completed": "Completadas",
-        "searchPending": "Buscar pendientes...",
-        "searchCompleted": "Buscar completadas...",
-        "noPending": "No hay asignaciones pendientes",
-        "noCompleted": "No hay asignaciones completadas",
-        "start": "Iniciar",
-        "overdue": "Atrasada",
-        "submitted": "Enviado",
-        "score": "Puntaje",
-        "questions": "Preguntas"
-    },
-    "quizGenerator": {
-        "title": "Generador de Quiz con IA",
-        "quizName": "Nombre del Cuestionario",
-        "enterQuizName": "Ingrese Nombre del Quiz",
-        "quizTopics": "Temas del Quiz",
-        "addMore": "Añadir Más",
-        "advancedSettings": "Configuración Avanzada",
-        "questions": "Preguntas",
-        "gradeLevel": "Nivel de Grado",
-        "additionalDetails": "Detalles Adicionales",
-        "numberOfQuestions": "Número de Preguntas",
-        "enterNumberHint": "Ingrese un número entre 5 y 100",
-        "generating": "Generando Quiz",
-        "generatingDesc": "La IA está creando tus preguntas...",
-        "selectTopicError": "Por favor seleccione al menos un tema",
-        "enterNameError": "Por favor ingrese un nombre para el quiz",
-        "cancel": "Cancelar",
-        "save": "Guardar",
-        "generate": "Generar"
-    },
-    "studentAssignments": {
         "pending": "Tareas Pendientes",
         "completedQuizzes": "Cuestionarios Completados",
         "noPending": "No hay tareas pendientes",
@@ -1452,5 +1413,22 @@
         "gradeAndSection": "Grado & Sección",
         "grade": "GRADO",
         "section": "SECCIÓN"
+    },
+    "topicDetail": {
+        "title": "Perfil del Tema",
+        "masteryLabel": "Dominio Meta",
+        "descriptionTitle": "Descripción del Tema",
+        "insightTitle": "Análisis de Maestría",
+        "insightPlaceholder": "Nuestro sistema está analizando tu desempeño. Sigue practicando para desbloquear tu perfil cognitivo.",
+        "historyTitle": "Historial de Clases",
+        "connectionsTitle": "Conexiones del Tema",
+        "prerequisite": "Pre-requisito",
+        "nextStep": "Siguiente Paso",
+        "emptyStateTitle": "Sin Experiencia",
+        "emptyStateDesc": "Todavía no has practicado este tema en una sesión de clase en vivo.",
+        "noHistoryYet": "Únete a una sesión de clase para rastrear tu progreso aquí.",
+        "loading": "Analizando datos de maestría...",
+        "error": "No se encontró información del tema.",
+        "pageTitle": "Detalle del Tema"
     }
 }

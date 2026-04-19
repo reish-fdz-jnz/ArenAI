@@ -85,7 +85,8 @@ const Main_Student: React.FC = () => {
   const [insightsLoading, setInsightsLoading] = useState(false);
 
   // Typing animation state
-  const [displayedSummary, setDisplayedSummary] = useState("");
+  const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
+  const [displayedSummary, setDisplayedSummary] = useState<string>("");
   const [displayedIssues, setDisplayedIssues] = useState<string[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -155,12 +156,20 @@ const Main_Student: React.FC = () => {
             setActiveSession(activeSessionData);
             setDailySessions([activeSessionData]);
             if (activeSessionData.topics) {
-                const formattedTopics: TopicProgress[] = activeSessionData.topics.map((t: any) => ({
-                    name: t.name_topic || t.name || "",
-                    nameKey: t.name_topic || t.name || "",
-                    percentage: t.score !== undefined ? Number(t.score) : 0,
-                    icon: "🎓"
-                }));
+                const formattedTopics: TopicProgress[] = activeSessionData.topics.map((t: any) => {
+                    let score = (t.score !== undefined && t.score !== null) ? Number(t.score) : null;
+                    // Auto-scale fractional scores (0.35 -> 35)
+                    if (score !== null && score > 0 && score <= 1) {
+                        score = score * 100;
+                    }
+                    return {
+                        id: t.id_topic,
+                        name: t.name_topic || t.name || "",
+                        nameKey: t.name_topic || t.name || "",
+                        percentage: score,
+                        icon: "🎓"
+                    };
+                });
                 // Only override standard topics if we have them
                 setTopics(formattedTopics);
                 setOverallPerformance(Number(activeSessionData.student_score_average) || 0);
@@ -235,7 +244,7 @@ const Main_Student: React.FC = () => {
   const calculateOverallPerformance = (currentTopics: TopicProgress[]) => {
     if (!currentTopics || currentTopics.length === 0) return 0;
     const sum = currentTopics.reduce(
-      (total, topic) => total + topic.percentage,
+      (total, topic) => total + (topic.percentage || 0),
       0,
     );
     return Math.round(sum / currentTopics.length);
@@ -532,7 +541,7 @@ const Main_Student: React.FC = () => {
                   <CalendarSelector
                     onDateSelect={handleDateSelect}
                     onSubjectSelect={handleCalendarSubjectSelect}
-                    title={activeSession ? activeSession.name_session : (t("Clase prototipo") || "Class Schedule")}
+                    title={activeSession ? activeSession.name_session : t("mainStudent.calendar")}
                     subjects={availableSubjects}
                     selectedSubject={selectedSubject}
                     sessionMarkers={sessionMarkers}
@@ -582,32 +591,48 @@ const Main_Student: React.FC = () => {
                     {/* Topics Grid (Swipeable) */}
                     <div className="ms-topics-scroll-container">
                       <div className="ms-topics-track">
-                        {topics.map((topic, index) => (
-                          <div
-                            key={index}
-                            className="ms-topic-btn"
-                            onClick={() =>
-                              navigateTo(`/subject/${selectedSubject}`)
-                            }
-                          >
-                            <div className="ms-topic-fill-box">
-                              <div
-                                className="ms-topic-fill"
-                                style={{
-                                  height: `${topic.percentage}%`,
-                                  backgroundColor:
-                                    topic.percentage < 60 ? "#FFC107" : "#78B8B0",
+                        {topics.map((topic, index) => {
+                          // Real topics have an ID and a non-null score.
+                          // Fallbacks or null scores are considered "No interaction" -> Grey.
+                          const hasData = topic.id && topic.percentage !== null;
+                          const performanceColor = hasData 
+                            ? getColorForPercentage(topic.percentage!) 
+                            : "#888888";
+                          
+                          return (
+                            <div
+                              key={index}
+                              className="ms-topic-btn"
+                              onClick={() =>
+                                topic.id 
+                                  ? navigateTo(`/page/topic/${topic.id}`)
+                                  : navigateTo(`/subject/${selectedSubject}`)
+                              }
+                            >
+                              <div 
+                                className="ms-topic-fill-box"
+                                style={{ 
+                                  backgroundColor: performanceColor,
+                                  border: hasData ? '2px solid rgba(255,255,255,0.4)' : 'none',
+                                  boxShadow: hasData ? '0 4px 10px rgba(0,0,0,0.1)' : 'none'
                                 }}
-                              ></div>
-                              <div className="ms-topic-icon">
-                                {topic.icon || "•"}
+                              >
+                                <div className="ms-topic-icon">
+                                  {topic.icon || "•"}
+                                </div>
                               </div>
+                              <span 
+                                className={`ms-topic-label ${expandedTopic === `${index}-${topic.name}` ? 'is-expanded' : ''}`}
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Don't navigate when tapping label
+                                  setExpandedTopic(expandedTopic === `${index}-${topic.name}` ? null : `${index}-${topic.name}`);
+                                }}
+                              >
+                                {topic.name}
+                              </span>
                             </div>
-                            <span className="ms-topic-label">
-                              {topic.name}
-                            </span>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </>

@@ -8,9 +8,10 @@ export interface StudentStats {
 }
 
 export interface TopicProgress {
+    id?: number; // Database ID for topic
     name: string; // e.g., "Algebra"
     nameKey: string; // Translation key
-    percentage: number;
+    percentage: number | null;
     icon: string;
 }
 
