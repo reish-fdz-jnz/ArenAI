@@ -591,6 +591,10 @@ router.get('/topic-summaries', async (req, res, next) => {
       // Find question stats for this topic
       const qStats = questionStats.find(qs => qs.topicId === topic.id_topic) || null;
 
+      // GET STRUGGLING STUDENTS for this topic
+      // (This could be optimized with a join, but for now we do it per topic in the map)
+      // Actually, let's do one big query for all struggling students in this class
+      
       // Parse AI summary if it's JSON
       let parsedSummary = null;
       if (topic.ai_summary) {
@@ -616,6 +620,36 @@ router.get('/topic-summaries', async (req, res, next) => {
           sampleQuestions: qStats.sampleQuestions
         } : null
       };
+    });
+
+    // NEW: Fetch ALL struggling students for this class and attach to response
+    const strugglingResult = await db.query<any>(
+        `SELECT 
+            cst.id_topic,
+            u.id_user,
+            u.name as student_name,
+            cst.score
+         FROM class_student_topic cst
+         INNER JOIN user u ON u.id_user = cst.id_user
+         WHERE cst.id_class = ? AND cst.score < 60
+         ORDER BY cst.score ASC`,
+        [classId]
+    );
+
+    // Group by topic
+    const strugglingByTopic: Record<number, any[]> = {};
+    strugglingResult.rows.forEach(s => {
+        if (!strugglingByTopic[s.id_topic]) strugglingByTopic[s.id_topic] = [];
+        strugglingByTopic[s.id_topic].push({
+            id_user: s.id_user,
+            name: s.student_name,
+            score: s.score
+        });
+    });
+
+    // Attach to topics
+    topics.forEach((t: any) => {
+        t.struggling_students = strugglingByTopic[t.topicId] || [];
     });
 
     res.json({

@@ -73,9 +73,9 @@ const BattleLobby: React.FC = () => {
     setStreak(st);
   });
 
-  // Socket - Connect Early Like ChatMenu
-  useIonViewWillEnter(() => {
-    console.log("[BattleLobby] Connecting to socket...");
+  // Socket - Connect and Listeners with proper cleanup
+  useEffect(() => {
+    console.log("[BattleLobby] Initializing socket listeners...");
     socketService.connect();
     const socket = socketService.socket;
 
@@ -83,7 +83,6 @@ const BattleLobby: React.FC = () => {
       console.log("[BattleLobby] Match found! Navigating...", data);
       setIsSearching(false);
 
-      // Use standard history push with state
       history.push({
         pathname: "/battleminigame",
         state: {
@@ -94,46 +93,55 @@ const BattleLobby: React.FC = () => {
       });
     };
 
+    const handleGamesList = (games: any[]) => {
+      console.log("[BattleLobby] Received games list:", games);
+      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+      const myName = userData.name || userData.username || "";
+      
+      // Filter out our own hosted games to prevent self-joining crashes
+      const filtered = games.filter(g => g.hostName !== myName);
+      setOpenGames(filtered);
+    };
+
     if (socket) {
-      if (socket.connected) {
-        console.log("[BattleLobby] Socket already connected:", socket.id);
-      }
-      socket.on("connect", () =>
-        console.log("[BattleLobby] Socket connected:", socket.id),
-      );
+      socket.on("connect", () => console.log("[BattleLobby] Socket connected:", socket.id));
       socket.on("match_found", handleMatchFound);
-
-      // List Listeners
-      socket.on("games_list", (games) => {
-        console.log("Received games list:", games);
-        setOpenGames(games);
+      socket.on("games_list", handleGamesList);
+      socket.on("games_list_update", handleGamesList);
+      socket.on("game_created", (data) => console.log("[BattleLobby] Game created:", data));
+      socket.on("game_error", (err: { message: string }) => {
+        console.error("[BattleLobby] Game error:", err);
+        alert(err.message);
+        setIsSearching(false);
       });
-      socket.on("games_list_update", (games) => {
-        console.log("Updated games list:", games);
-        setOpenGames(games);
-      });
-      socket.on("game_created", (data) => {
-        console.log("[BattleLobby] Game created received:", data);
-        // We stay in lobby but show "Waiting" status
-      });
-
-      socket.on("connect_error", (err) => {
-        console.error("[BattleLobby] Socket connect error:", err);
-      });
+      socket.on("connect_error", (err) => console.error("[BattleLobby] Socket connect error:", err));
 
       // Initial Fetch
       socket.emit("get_games");
+
+      return () => {
+        console.log("[BattleLobby] Cleaning up socket listeners...");
+        socket.off("match_found", handleMatchFound);
+        socket.off("games_list", handleGamesList);
+        socket.off("games_list_update", handleGamesList);
+        socket.off("game_created");
+        socket.off("game_error");
+        socket.off("connect_error");
+      };
     }
+  }, [currentAvatar, history]);
+
+  // Handle socket re-sync in a proper useEffect for cleanup
+  useEffect(() => {
+    const unregisterResync = socketService.onResync(() => {
+      console.log("[BattleLobby] Socket recovered, re-fetching games list...");
+      socketService.socket?.emit("get_games");
+    });
 
     return () => {
-      if (socket) {
-        socket.off("match_found", handleMatchFound);
-        socket.off("games_list");
-        socket.off("games_list_update");
-        socket.off("game_created");
-      }
+      unregisterResync();
     };
-  });
+  }, []);
 
   const handleStartBattle = () => {
     if (isSearching) return;

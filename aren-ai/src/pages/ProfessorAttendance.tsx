@@ -30,6 +30,7 @@ import { CalendarSelector } from '../components/CalendarSelector';
 import PageTransition from '../components/PageTransition';
 import { useProfessorFilters } from '../hooks/useProfessorFilters';
 import { getApiUrl } from '../config/api';
+import { socketService } from '../services/socket';
 import { DailyScheduleView, DailySession } from '../components/DailyScheduleView';
 import '../components/StudentHeader.css';
 import './ProfessorAttendance.css';
@@ -117,6 +118,19 @@ const ProfessorAttendance: React.FC = () => {
         fetchHistory(); // Sync calendar markers
         fetchState();   // Sync current session state
     });
+
+    useEffect(() => {
+        // Register re-sync logic for when the socket recovers from a drop
+        const unregisterResync = socketService.onResync(() => {
+            console.log("[ProfessorAttendance] Socket recovered, re-fetching session state...");
+            fetchHistory();
+            fetchState();
+        });
+
+        return () => {
+            unregisterResync();
+        };
+    }, [selectedGrade, selectedSection, selectedSubject, selectedDate]);
 
     const handleDateSelect = (date: Date) => {
         setIsManualDateSelection(true);

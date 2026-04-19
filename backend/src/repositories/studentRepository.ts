@@ -273,15 +273,29 @@ export async function updatePermanentTopicSummary(userId: number, topicId: numbe
 
 /**
  * Syncs a new session score into the permanent student_topic table.
- * If a score already exists, it averages it with the new score per user request.
+ * Uses "Base-Score Anchoring" to ensure adaptive stability.
+ * No matter how many quizzes are done in one session, the total daily contribution 
+ * is capped at 20% of the final mastery (80/20 split).
  */
-export async function syncStudentTopicMastery(userId: number, topicId: number, sessionScore: number) {
+export async function syncStudentTopicMastery(userId: number, topicId: number, sessionScore: number, classId: number) {
+  // 1. If it's a new session, update the base anchor
   await db.query(
-    `INSERT INTO student_topic (id_user, id_topic, score)
-     VALUES (?, ?, ?)
+    `UPDATE student_topic 
+     SET base_score_session = score, 
+         last_class_id = ?
+     WHERE id_user = ? AND id_topic = ? AND (last_class_id IS NULL OR last_class_id != ?)`,
+    [classId, userId, topicId, classId]
+  );
+
+  // 2. Perform the adaptive update
+  // If base_score_session is NULL (first time), it will use the raw sessionScore
+  // Formula: 80% Historical Anchor + 20% Current Session Average
+  await db.query(
+    `INSERT INTO student_topic (id_user, id_topic, score, base_score_session, last_class_id)
+     VALUES (?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE 
-       score = (score + VALUES(score)) / 2`,
-    [userId, topicId, sessionScore]
+       score = (COALESCE(base_score_session, score) * 0.8) + (VALUES(score) * 0.2)`,
+    [userId, topicId, sessionScore, sessionScore, classId]
   );
 }
 

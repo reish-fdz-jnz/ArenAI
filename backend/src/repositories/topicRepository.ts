@@ -130,7 +130,7 @@ export async function getTopicById(topicId: number) {
   return result.rows[0] || null;
 }
 
-export async function getTopicRelations(topicId: number, userId: number) {
+export async function getTopicRelations(topicId: number, userId?: number) {
   const result = await db.query<{
     id_topic: number;
     name: string;
@@ -149,7 +149,7 @@ export async function getTopicRelations(topicId: number, userId: number) {
       INNER JOIN topic t ON t.id_topic = rel.id_topic_son
       LEFT JOIN student_topic st ON st.id_topic = t.id_topic AND st.id_user = ?
       WHERE rel.id_topic_father = ?)`,
-    [userId, topicId, userId, topicId]
+    [userId || null, topicId, userId || null, topicId]
   );
 
   return result.rows;

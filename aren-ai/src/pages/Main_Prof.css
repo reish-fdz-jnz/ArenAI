@@ -197,16 +197,76 @@
 }
 
 .ms-topic-fill-box {
-  width: 50px;
-  height: 50px;
+  width: 58px;
+  height: 58px;
   background-color: var(--ion-color-secondary-soft);
-  /* Lighter bg for contrast */
-  border-radius: 12px;
+  border-radius: 16px;
   position: relative;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ms-topic-liquid-fill {
+  position: absolute;
+  bottom: 0;
+  left: -50%;
+  width: 200%;
+  height: 0%; /* Dynamic */
+  transition: height 1s cubic-bezier(0.4, 0, 0.2, 1), background-color 1s ease;
+  z-index: 1;
+}
+
+/* Wave Effect */
+.ms-topic-liquid-fill::before {
+  content: "";
+  position: absolute;
+  top: -15px;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background: inherit;
+  opacity: 0.6;
+  border-radius: 45%;
+  animation: msWave 5s linear infinite;
+}
+
+.ms-topic-liquid-fill::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background: inherit;
+  opacity: 0.4;
+  border-radius: 40%;
+  animation: msWave 7s linear infinite reverse;
+}
+
+@keyframes msWave {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(25%); }
+}
+
+.ms-topic-percentage-label {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    color: white;
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-weight: 700;
+    z-index: 10;
+    border: 0.5px solid rgba(255,255,255,0.2);
+    pointer-events: none;
 }
 
 .ms-topic-fill {

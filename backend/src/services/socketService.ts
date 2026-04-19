@@ -233,58 +233,73 @@ export const initSocket = (io: Server) => {
             socket.emit('games_list', getOpenGames());
         });
 
-        // Join Specific Game
-        socket.on('join_game', (data: { roomId: string; name: string; avatar: string }) => {
-            const game = activeGames[data.roomId];
-            if (!game) {
-                socket.emit('error', { message: 'Game not found' });
-                return;
-            }
-            if (Object.keys(game.players).length >= 2) {
-                socket.emit('error', { message: 'Game is full' });
-                return;
-            }
+            // Join Specific Game
+            socket.on('join_game', (data: { roomId: string; name: string; avatar: string }) => {
+                const game = activeGames[data.roomId];
+                if (!game) {
+                    socket.emit('game_error', { code: 'NOT_FOUND', message: 'Game not found' });
+                    return;
+                }
 
-            // Join Logic
-            const p2: Player = {
-                userId,
-                socketId: socket.id,
-                name: data.name,
-                avatar: data.avatar,
-                score: 0,
-                health: 100,
-                maxHealth: 100,
-                winStreak: 0,
-                utilizationIndex: 0,
-                isDisconnected: false,
-                hasAnswered: false
-            };
+                // Prevent self-joining
+                if (game.players[userId]) {
+                    console.log(`[Socket] User ${userId} tried to join their own game ${data.roomId}`);
+                    socket.emit('game_error', { code: 'ALREADY_IN_ROOM', message: 'You are already in this room' });
+                    return;
+                }
 
-            game.players[userId] = p2;
-            userGameMap[userId] = game.roomId;
-            socket.join(game.roomId);
+                if (Object.keys(game.players).length >= 2) {
+                    socket.emit('game_error', { code: 'FULL', message: 'Game is full' });
+                    return;
+                }
 
-            // Notify Host
-            const hostId = Object.keys(game.players).find(id => id !== userId);
-            const host = game.players[hostId!];
-            
-            // Notify both as "match_found" to transition UI
-            // P2 Perspective
-            socket.emit('match_found', {
-                roomId: game.roomId,
-                opponent: { name: host.name, avatar: host.avatar }
-            });
+                // Join Logic
+                const p2: Player = {
+                    userId,
+                    socketId: socket.id,
+                    name: data.name,
+                    avatar: data.avatar,
+                    score: 0,
+                    health: 100,
+                    maxHealth: 100,
+                    winStreak: 0,
+                    utilizationIndex: 0,
+                    isDisconnected: false,
+                    hasAnswered: false
+                };
 
-            // Host Perspective
-            if (host) {
-                 const hostSocket = io.sockets.sockets.get(host.socketId);
-                 if (hostSocket) {
-                     hostSocket.emit('match_found', {
+                game.players[userId] = p2;
+                userGameMap[userId] = game.roomId;
+                socket.join(game.roomId);
+
+                // Notify Host
+                const hostId = Object.keys(game.players).find(id => id !== userId);
+                const host = hostId ? game.players[hostId] : null;
+                
+                if (!host) {
+                    console.warn(`[Socket] Host search failed in room ${game.roomId}. This shouldn't happen.`);
+                    // Let's at least protect the joiner
+                    socket.emit('match_found', {
                         roomId: game.roomId,
-                        opponent: { name: p2.name, avatar: p2.avatar }
-                     });
-                 }
-            }
+                        opponent: { name: 'Opponent', avatar: 'axolotl' }
+                    });
+                } else {
+                    // Notify both as "match_found" to transition UI
+                    // P2 Perspective (Joiner)
+                    socket.emit('match_found', {
+                        roomId: game.roomId,
+                        opponent: { name: host.name, avatar: host.avatar }
+                    });
+
+                    // Host Perspective
+                    const hostSocket = io.sockets.sockets.get(host.socketId);
+                    if (hostSocket) {
+                        hostSocket.emit('match_found', {
+                            roomId: game.roomId,
+                            opponent: { name: p2.name, avatar: p2.avatar }
+                        });
+                    }
+                }
 
             // Start Game
             // Update List (Remove full game)

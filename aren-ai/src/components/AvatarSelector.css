@@ -1,0 +1,152 @@
+/* AvatarSelector Styles */
+.avatar-selector-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.avatar-selector-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  padding: 30px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.as-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.as-close-btn:hover {
+  opacity: 1;
+}
+
+.as-title {
+  color: white;
+  text-align: center;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.as-showcase {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.as-showcase-img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 4px solid var(--ion-color-primary);
+  object-fit: cover;
+  box-shadow: 0 0 20px rgba(var(--ion-color-primary-rgb), 0.3);
+}
+
+.as-lore-panel {
+  text-align: center;
+  color: white;
+}
+
+.as-role-title {
+  margin: 0 0 5px 0;
+  font-size: 1.2rem;
+  color: var(--ion-color-primary);
+}
+
+.as-role-desc {
+  margin: 0;
+  font-style: italic;
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+
+.as-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.as-icon-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.as-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.as-icon-btn.selected {
+  border-color: var(--ion-color-primary);
+  background: rgba(var(--ion-color-primary-rgb), 0.1);
+}
+
+.as-icon-btn img {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.as-grid-label {
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.as-select-btn {
+  background: var(--ion-color-primary);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+  margin-top: 10px;
+}
+
+.as-select-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.as-select-btn:active {
+  transform: translateY(0);
+}

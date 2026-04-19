@@ -1,4 +1,5 @@
 import { db } from '../db/pool.js';
+import { syncStudentTopicMastery } from './studentRepository.js';
 export async function listClasses(filters) {
     const conditions = [];
     const params = [];
@@ -83,18 +84,44 @@ export async function updateClassSummary(classId, summary, scoreAverage) {
     params.push(classId);
     await db.query(`UPDATE class SET ${fields.join(', ')} WHERE id_class = ?`, params);
 }
+import { io } from '../server.js';
+// ... (rest of imports)
 export async function recordClassTopics(classId, topics) {
     if (!topics.length)
         return;
     const client = await db.getClient();
     try {
         await client.beginTransaction();
+        // Get class info for section anchoring
+        const { rows: classRows } = await client.query('SELECT id_section FROM class WHERE id_class = ?', [classId]);
+        const sectionId = classRows[0]?.id_section;
         for (const topic of topics) {
-            await client.query(`INSERT INTO class_topic (id_class, id_topic, score_average, ai_summary)
-         VALUES (?, ?, ?, ?)
+            // 1. SMART AVERAGING for Class Topics
+            await client.query(`INSERT INTO class_topic (id_class, id_topic, score_average, ai_summary, attempts_count)
+         VALUES (?, ?, ?, ?, 1)
          ON DUPLICATE KEY UPDATE 
-           score_average = VALUES(score_average),
-           ai_summary = VALUES(ai_summary)`, [classId, topic.topicId, topic.scoreAverage ?? 0, topic.aiSummary ?? null]);
+           score_average = (score_average * attempts_count + VALUES(score_average)) / (attempts_count + 1),
+           attempts_count = attempts_count + 1,
+           ai_summary = VALUES(ai_summary)`, [classId, topic.topicId, topic.scoreAverage ?? null, topic.aiSummary ?? null]);
+            // 2. CALCULATE & STORE Real-Time SECTION Snapshot
+            if (sectionId && topic.scoreAverage !== null) {
+                const { rows: avgRows } = await client.query(`SELECT AVG(ct.score_average) as running_avg
+           FROM class_topic ct
+           INNER JOIN class c ON c.id_class = ct.id_class
+           WHERE c.id_section = ? AND ct.id_topic = ?`, [sectionId, topic.topicId]);
+                const currentSectionMastery = Number(avgRows[0]?.running_avg || topic.scoreAverage);
+                // Update the snapshot for the active class_topic record
+                await client.query(`UPDATE class_topic 
+           SET section_mastery_snapshot = ? 
+           WHERE id_class = ? AND id_topic = ?`, [currentSectionMastery, classId, topic.topicId]);
+                // 3. BROADCAST Live Section Update
+                io.to(`section_${sectionId}`).emit('class_score_update', {
+                    classId,
+                    topicId: topic.topicId,
+                    scoreAverage: topic.scoreAverage,
+                    sectionMastery: currentSectionMastery // Send the aggregated number for the dashboard
+                });
+            }
         }
         await client.commit();
     }
@@ -113,12 +140,18 @@ export async function recordClassStudents(classId, students) {
     try {
         await client.beginTransaction();
         for (const student of students) {
+            // Use averaging for the overall session score if it's updated multiple times
             await client.query(`INSERT INTO class_student (id_class, id_user, score_average, ai_summary, attendance)
          VALUES (?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE 
-           score_average = VALUES(score_average),
+           score_average = (COALESCE(score_average, VALUES(score_average)) + VALUES(score_average)) / 2,
            ai_summary = VALUES(ai_summary),
-           attendance = VALUES(attendance)`, [classId, student.userId, student.scoreAverage ?? 0, student.aiSummary ?? null, student.attendance ?? null]);
+           attendance = VALUES(attendance)`, [classId, student.userId, student.scoreAverage ?? null, student.aiSummary ?? null, student.attendance ?? null]);
+            // BROADCAST Live Update to specific student room
+            io.to(`user_${student.userId}`).emit('student_score_update', {
+                classId,
+                overallAverage: student.scoreAverage
+            });
         }
         await client.commit();
     }
@@ -135,7 +168,13 @@ export async function recordClassStudents(classId, students) {
 export async function updateClassStudentScore(classId, userId, scorePercentage) {
     await db.query(`INSERT INTO class_student (id_class, id_user, score_average)
      VALUES (?, ?, ?)
-     ON DUPLICATE KEY UPDATE score_average = VALUES(score_average)`, [classId, userId, scorePercentage]);
+     ON DUPLICATE KEY UPDATE 
+       score_average = (COALESCE(score_average, VALUES(score_average)) + VALUES(score_average)) / 2`, [classId, userId, scorePercentage]);
+    // BROADCAST
+    io.to(`user_${userId}`).emit('student_score_update', {
+        classId,
+        overallAverage: scorePercentage
+    });
 }
 export async function recordClassStudentTopics(classId, entries) {
     if (!entries.length)
@@ -144,11 +183,27 @@ export async function recordClassStudentTopics(classId, entries) {
     try {
         await client.beginTransaction();
         for (const entry of entries) {
-            await client.query(`INSERT INTO class_student_topic (id_class, id_user, id_topic, score, ai_summary)
-         VALUES (?, ?, ?, ?, ?)
+            // SMART AVERAGING: Uses attempts_count to ensure a true mathematical average
+            await client.query(`INSERT INTO class_student_topic (id_class, id_user, id_topic, score, ai_summary, attempts_count)
+         VALUES (?, ?, ?, ?, ?, 1)
          ON DUPLICATE KEY UPDATE 
-           score = VALUES(score),
-           ai_summary = VALUES(ai_summary)`, [classId, entry.userId, entry.topicId, entry.score ?? 0, entry.aiSummary ?? null]);
+           score = (score * attempts_count + VALUES(score)) / (attempts_count + 1),
+           attempts_count = attempts_count + 1,
+           ai_summary = VALUES(ai_summary)`, [classId, entry.userId, entry.topicId, entry.score ?? null, entry.aiSummary ?? null]);
+            // Propagate to permanent mastery using adaptive anchoring
+            if (entry.score !== null && entry.score !== undefined) {
+                // Fetch the CURRENT daily average after the update we just did
+                const { rows } = await client.query(`SELECT score FROM class_student_topic WHERE id_class = ? AND id_user = ? AND id_topic = ?`, [classId, entry.userId, entry.topicId]);
+                if (rows.length > 0) {
+                    const latestScore = Number(rows[0].score);
+                    await syncStudentTopicMastery(entry.userId, entry.topicId, latestScore, classId);
+                    // BROADCAST Live Update to specific student room
+                    io.to(`user_${entry.userId}`).emit('student_topic_update', {
+                        topicId: entry.topicId,
+                        score: latestScore
+                    });
+                }
+            }
         }
         await client.commit();
     }

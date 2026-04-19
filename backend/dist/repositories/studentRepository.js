@@ -2,6 +2,7 @@ import { db } from '../db/pool.js';
 export async function getStudentTopicProgress(userId) {
     const result = await db.query(`SELECT
         st.id_topic,
+        t.id_subject,
         t.name AS topic_name,
         s.name_subject AS subject_name,
         st.score
@@ -18,6 +19,7 @@ export async function upsertStudentTopicScore(payload) {
      ON DUPLICATE KEY UPDATE score = VALUES(score)`, [payload.userId, payload.topicId, payload.score]);
     const result = await db.query(`SELECT
         st.id_topic,
+        t.id_subject,
         t.name AS topic_name,
         s.name_subject AS subject_name,
         st.score
@@ -132,7 +134,7 @@ export async function getStudentTopicMastery(userId, topicId) {
     return result.rows[0] || { score: 0, ai_summary: null };
 }
 export async function getTopicSessionHistory(userId, topicId) {
-    const result = await db.query(`SELECT cst.id_class, c.name_class as class_name, cst.score, c.start_time as date
+    const result = await db.query(`SELECT cst.id_class, c.name_session as class_name, cst.score, c.start_time as date
      FROM class_student_topic cst
      INNER JOIN class c ON c.id_class = cst.id_class
      WHERE cst.id_user = ? AND cst.id_topic = ?
@@ -143,7 +145,7 @@ export async function getHistoricalRecordsForTopic(userId, topicId) {
     // Aggregate data from multiple sources for AI analysis
     const [sessions, quizzes] = await Promise.all([
         // 1. Session performance and summaries
-        db.query(`SELECT c.name_class as class_name, cst.score, scs.summary_text as ai_summary
+        db.query(`SELECT c.name_session as class_name, cst.score, scs.summary_text as ai_summary
        FROM class_student_topic cst
        INNER JOIN class c ON c.id_class = cst.id_class
        LEFT JOIN student_class_summary scs ON scs.id_class = c.id_class AND scs.id_user = cst.id_user
@@ -166,4 +168,24 @@ export async function updatePermanentTopicSummary(userId, topicId, summary) {
     await db.query(`UPDATE student_topic 
      SET ai_summary = ?, last_analysis_at = CURRENT_TIMESTAMP
      WHERE id_user = ? AND id_topic = ?`, [summary, userId, topicId]);
+}
+/**
+ * Syncs a new session score into the permanent student_topic table.
+ * Uses "Base-Score Anchoring" to ensure adaptive stability.
+ * No matter how many quizzes are done in one session, the total daily contribution
+ * is capped at 20% of the final mastery (80/20 split).
+ */
+export async function syncStudentTopicMastery(userId, topicId, sessionScore, classId) {
+    // 1. If it's a new session, update the base anchor
+    await db.query(`UPDATE student_topic 
+     SET base_score_session = score, 
+         last_class_id = ?
+     WHERE id_user = ? AND id_topic = ? AND (last_class_id IS NULL OR last_class_id != ?)`, [classId, userId, topicId, classId]);
+    // 2. Perform the adaptive update
+    // If base_score_session is NULL (first time), it will use the raw sessionScore
+    // Formula: 80% Historical Anchor + 20% Current Session Average
+    await db.query(`INSERT INTO student_topic (id_user, id_topic, score, base_score_session, last_class_id)
+     VALUES (?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE 
+       score = (COALESCE(base_score_session, score) * 0.8) + (VALUES(score) * 0.2)`, [userId, topicId, sessionScore, sessionScore, classId]);
 }

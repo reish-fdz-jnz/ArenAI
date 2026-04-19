@@ -1,24 +1,20 @@
 import { db } from './src/db/pool.js';
 
-async function checkSchema() {
+async function check() {
   try {
-    console.log('--- Checking student_topic table ---');
-    const studentTopicCols = await db.query('SHOW COLUMNS FROM student_topic');
-    console.log(studentTopicCols.rows);
+    console.log("Checking class_student_topic...");
+    const { rows: cst } = await db.query("DESCRIBE class_student_topic");
+    console.log(cst);
 
-    console.log('\n--- Checking topic_father_son_relation table ---');
-    try {
-      const relationCols = await db.query('SHOW COLUMNS FROM topic_father_son_relation');
-      console.log(relationCols.rows);
-    } catch (e) {
-      console.log('topic_father_son_relation table DOES NOT EXIST');
-    }
-
+    console.log("\nChecking student_topic...");
+    const { rows: st } = await db.query("DESCRIBE student_topic");
+    console.log(st);
+    
     process.exit(0);
-  } catch (error) {
-    console.error('Schema check failed:', error);
+  } catch (err) {
+    console.error(err);
     process.exit(1);
   }
 }
 
-checkSchema();
+check();

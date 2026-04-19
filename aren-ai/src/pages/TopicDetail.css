@@ -16,18 +16,22 @@
 
 /* Hide branding and default header buttons */
 .topic-profile-page .sh-brand-container-absolute,
-.topic-profile-page .sh-menu-btn-container {
+.topic-profile-page .ph-brand-container-absolute,
+.topic-profile-page .sh-menu-btn-container,
+.topic-profile-page .ph-menu-btn-container {
   display: none !important;
 }
 
-.topic-profile-page .sh-notch-container {
+.topic-profile-page .sh-notch-container,
+.topic-profile-page .ph-notch-container {
   margin-top: -72px; /* Center perfectly in the notch */
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.topic-profile-page .sh-subject-display {
+.topic-profile-page .sh-subject-display,
+.topic-profile-page .ph-subject-display {
   min-width: 260px;
   height: 52px;
   padding: 0 30px;
@@ -39,7 +43,8 @@
   justify-content: center;
 }
 
-.topic-profile-page .sh-subject-text {
+.topic-profile-page .sh-subject-text,
+.topic-profile-page .ph-subject-text {
   font-size: 20px;
   font-weight: 600; /* Matching dashboard font weight */
   color: white !important;

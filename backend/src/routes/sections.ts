@@ -1,12 +1,17 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { ApiError } from '../middleware/errorHandler.js';
-import { getSectionById, listSectionsByInstitution, listAllSections } from '../repositories/sectionRepository.js';
+import { 
+  createSection, 
+  getSectionById, 
+  listSectionsByInstitution, 
+  listAllSections, 
+  findSectionByGradeAndNumber, 
+  getSectionTopicProgress 
+} from '../repositories/sectionRepository.js';
 import { listStudentsBySection } from '../repositories/studentRepository.js';
 import { findUserByUsername } from '../repositories/userRepository.js';
 import { parseNumeric } from '../utils/transformers.js';
-
-import { createSection } from '../repositories/sectionRepository.js';
 
 const router = Router();
 
@@ -166,6 +171,44 @@ router.post('/join', async (req, res, next) => {
   } catch (error) {
     // log for debugging then forward to global error handler
     console.error('Error in POST /api/sections:', error);
+    next(error);
+  }
+});
+
+
+// ... (rest of router code)
+
+router.get('/progress', async (req, res, next) => {
+  try {
+    const { grade, sectionNumber, subject, classId } = req.query;
+    const user = req.user;
+
+    if (!grade || !sectionNumber || !subject) {
+      throw new ApiError(400, 'Missing grade, sectionNumber, or subject query parameter');
+    }
+
+    if (!user) throw new ApiError(401, 'Unauthorized');
+    const dbUser = await findUserByUsername(user.username);
+    if (!dbUser || !dbUser.id_institution) throw new ApiError(404, 'Institution not found');
+
+    const section = await findSectionByGradeAndNumber(String(grade), String(sectionNumber), dbUser.id_institution);
+    if (!section) {
+       return res.json([]); // No section found, return empty progress
+    }
+
+    const progress = await getSectionTopicProgress(
+      section.id_section, 
+      String(subject), 
+      classId ? Number(classId) : undefined
+    );
+    
+    res.json(progress.map(p => ({
+      id_topic: p.id_topic,
+      name: p.name_topic,
+      score: parseNumeric(p.score),
+      ai_summary: p.ai_summary
+    })));
+  } catch (error) {
     next(error);
   }
 });

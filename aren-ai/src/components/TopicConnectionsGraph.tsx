@@ -58,7 +58,9 @@ const TopicConnectionsGraph: React.FC<TopicConnectionsGraphProps> = ({ heroName,
   };
 
   const handleNavigate = (topicId: number) => {
-    router.push(`/page/topic/${topicId}`, 'forward', 'push');
+    const role = localStorage.getItem("userRole");
+    const path = role === "professor" ? `/page/class-topic/${topicId}` : `/page/topic/${topicId}`;
+    router.push(path, 'forward', 'push');
   };
 
   // Helper for label rendering with background and wrapping

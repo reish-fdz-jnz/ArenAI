@@ -489,13 +489,19 @@ const BattleMinigame: React.FC = () => {
       );
     }
 
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      socket?.off("sync_state");
-      socket?.off("round_result");
-      socket?.off("game_over");
-      socket?.off("sudden_death_start");
-    };
+      const unregisterResync = socketService.onResync(() => {
+        console.log("[BattleMinigame] Socket recovered, re-syncing battle state...");
+        socket?.emit("join_match_session", { roomId });
+      });
+
+      return () => {
+        unregisterResync();
+        if (timerRef.current) clearInterval(timerRef.current);
+        socket?.off("sync_state");
+        socket?.off("round_result");
+        socket?.off("game_over");
+        socket?.off("sudden_death_start");
+      };
   }, [roomId]);
 
   const startCountdown = (endTime: number) => {

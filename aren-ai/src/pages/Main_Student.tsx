@@ -26,17 +26,22 @@ import {
 } from "ionicons/icons";
 import { useTranslation } from "react-i18next";
 import "./Main_Student.css";
-import StudentMenu from "../components/StudentMenu";
-import StudentHeader from "../components/StudentHeader";
-import AnimatedMascot from "../components/AnimatedMascot";
-import { CalendarSelector } from "../components/CalendarSelector";
+import { 
+  StudentMenu, 
+  StudentHeader, 
+  AnimatedMascot, 
+  CalendarSelector, 
+  TopicBubble, 
+  PageTransition, 
+  DailyScheduleView,
+  DailySession
+} from "../components";
 import { studentService } from "../services/studentService";
 import { TopicProgress, WeekData } from "../types/student";
 import { getSubjectKey } from "../utils/subjectUtils";
-import PageTransition from "../components/PageTransition";
 import { getApiUrl } from "../config/api";
 import { socketService } from "../services/socket";
-import { DailyScheduleView, DailySession } from '../components/DailyScheduleView';
+import { useAnimatedScore } from "../hooks/useAnimatedScore";
 
 const SUBJECT_MAP: Record<string, number> = {
   Math: 1,
@@ -57,12 +62,14 @@ const Main_Student: React.FC = () => {
   // State
   const [weeks, setWeeks] = useState<WeekData[]>([]);
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
-  const [overallPerformance, setOverallPerformance] = useState(0);
+  const [overallPerformance, setOverallPerformance] = useState<number | null>(null);
+  const animatedPerformance = useAnimatedScore(overallPerformance);
   const [selectedSubject, setSelectedSubject] = useState(() => {
     return localStorage.getItem("selectedSubject") || "Math";
   });
   const [topics, setTopics] = useState<TopicProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const hasLoadedInitialData = useRef(false);
 
   // New State for Redesign
   const [viewMode, setViewMode] = useState<"insights" | "que">("insights");
@@ -139,7 +146,10 @@ const Main_Student: React.FC = () => {
 
   // Fetch Session State
   const fetchSessionState = async () => {
-    setIsLoading(true);
+    // Only show skeleton if we have no data yet and it's the first load
+    if (topics.length === 0 && !hasLoadedInitialData.current) {
+      setIsLoading(true);
+    }
     try {
       const token = localStorage.getItem('authToken');
       
@@ -227,6 +237,7 @@ const Main_Student: React.FC = () => {
       console.error("Error fetching session state:", err);
     } finally {
       setIsLoading(false);
+      hasLoadedInitialData.current = true;
     }
   };
 
@@ -417,20 +428,39 @@ const Main_Student: React.FC = () => {
       console.log("[Main_Student] Class finished notification received:", data);
       // Reset live class state without a page reload
       setActiveSession(null);
-      setTopics([]);
       setOverallPerformance(0);
       // Optional: re-fetch to see if there's another class or to update history list
       fetchSessionState();
     };
 
+    const handleTopicUpdate = (data: { topicId: number; score: number }) => {
+      console.log("[Main_Student] Topic update received:", data);
+      setTopics(prev => prev.map(t => t.id === data.topicId ? { ...t, percentage: data.score } : t));
+    };
+
+    const handleScoreUpdate = (data: { overallAverage: number }) => {
+      console.log("[Main_Student] Overall score update received:", data);
+      setOverallPerformance(data.overallAverage);
+    };
+
+    const unregisterResync = socketService.onResync(() => {
+      console.log("[Main_Student] Socket recovered, re-fetching dashboard state...");
+      loadDashboardData();
+    });
+
     socketService.socket?.on("insight_update", handleInsightUpdate);
     socketService.socket?.on("class_started", handleClassStarted);
     socketService.socket?.on("class_finished", handleClassFinished);
+    socketService.socket?.on("student_topic_update", handleTopicUpdate);
+    socketService.socket?.on("student_score_update", handleScoreUpdate);
 
     return () => {
+      unregisterResync();
       socketService.socket?.off("insight_update", handleInsightUpdate);
       socketService.socket?.off("class_started", handleClassStarted);
       socketService.socket?.off("class_finished", handleClassFinished);
+      socketService.socket?.off("student_topic_update", handleTopicUpdate);
+      socketService.socket?.off("student_score_update", handleScoreUpdate);
     };
   }, []);
 
@@ -568,10 +598,10 @@ const Main_Student: React.FC = () => {
                       <div
                         className="ms-progress-circle"
                         style={{
-                          border: `6px solid ${getColorForPercentage(
-                            overallPerformance,
-                          )}`,
-                          boxShadow: `inset 0 0 0 3px white`, // White inner outline
+                          border: (animatedPerformance !== null && animatedPerformance > 0)
+                            ? `6px solid ${getColorForPercentage(animatedPerformance)}`
+                            : `6px solid rgba(255, 255, 255, 0.2)`,
+                          boxShadow: `inset 0 0 0 3px white`, 
                           color: "white",
                           width: "70px",
                           height: "70px",
@@ -580,59 +610,34 @@ const Main_Student: React.FC = () => {
                           justifyContent: "center",
                           alignItems: "center",
                           fontWeight: "bold",
-                          fontSize: "18px",
-                          backgroundColor: "var(--ion-color-secondary)",
+                          fontSize: (animatedPerformance !== null && animatedPerformance > 0) ? "18px" : "28px",
+                          backgroundColor: (animatedPerformance !== null && animatedPerformance > 0)
+                            ? "var(--ion-color-secondary)"
+                            : "rgba(255, 255, 255, 0.1)",
+                          backdropFilter: "blur(10px)",
+                          WebkitBackdropFilter: "blur(10px)",
+                          transition: "border-color 0.5s ease"
                         }}
                       >
-                        {Math.round(overallPerformance)}%
+                        {animatedPerformance !== null ? `${Math.round(animatedPerformance)}%` : "😊"}
                       </div>
                     </div>
 
                     {/* Topics Grid (Swipeable) */}
                     <div className="ms-topics-scroll-container">
                       <div className="ms-topics-track">
-                        {topics.map((topic, index) => {
-                          // Real topics have an ID and a non-null score.
-                          // Fallbacks or null scores are considered "No interaction" -> Grey.
-                          const hasData = topic.id && topic.percentage !== null;
-                          const performanceColor = hasData 
-                            ? getColorForPercentage(topic.percentage!) 
-                            : "#888888";
-                          
-                          return (
-                            <div
-                              key={index}
-                              className="ms-topic-btn"
-                              onClick={() =>
-                                topic.id 
-                                  ? navigateTo(`/page/topic/${topic.id}`)
-                                  : navigateTo(`/subject/${selectedSubject}`)
-                              }
-                            >
-                              <div 
-                                className="ms-topic-fill-box"
-                                style={{ 
-                                  backgroundColor: performanceColor,
-                                  border: hasData ? '2px solid rgba(255,255,255,0.4)' : 'none',
-                                  boxShadow: hasData ? '0 4px 10px rgba(0,0,0,0.1)' : 'none'
-                                }}
-                              >
-                                <div className="ms-topic-icon">
-                                  {topic.icon || "•"}
-                                </div>
-                              </div>
-                              <span 
-                                className={`ms-topic-label ${expandedTopic === `${index}-${topic.name}` ? 'is-expanded' : ''}`}
-                                onClick={(e) => {
-                                  e.stopPropagation(); // Don't navigate when tapping label
-                                  setExpandedTopic(expandedTopic === `${index}-${topic.name}` ? null : `${index}-${topic.name}`);
-                                }}
-                              >
-                                {topic.name}
-                              </span>
-                            </div>
-                          );
-                        })}
+                        {topics.map((topic, index) => (
+                          <TopicBubble 
+                            key={`${index}-${topic.id}`}
+                            topic={topic}
+                            index={index}
+                            getColorForPercentage={getColorForPercentage}
+                            expandedTopic={expandedTopic}
+                            setExpandedTopic={setExpandedTopic}
+                            navigateTo={navigateTo}
+                            selectedSubject={selectedSubject}
+                          />
+                        ))}
                       </div>
                     </div>
                   </>

@@ -677,6 +677,9 @@
         "sortBy": "Ordenar por",
         "topics": "Temas"
     },
+    "battle": {
+        "title": "Batalla"
+    },
     "battleLobby": {
         "title": "Arena de Batalla",
         "welcomeTitle": "Arena de Batalla",

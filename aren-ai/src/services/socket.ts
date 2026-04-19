@@ -38,42 +38,35 @@ class SocketService {
       auth: {
         token: token
       },
-      transports: ['websocket', 'polling'], // Try websocket first, fall back to polling
-      reconnectionAttempts: 10,  // Increase attempts
+      transports: ['websocket'], // PURE websockets for Cloud Run stability
+      reconnectionAttempts: Infinity, // NEVER give up connecting
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      timeout: 20000, // Connection timeout
-      forceNew: true // Ensure a fresh connection object
+      timeout: 20000, 
+      forceNew: true 
     });
     
     this.socket.on('connect', () => {
       console.log('[SocketService] Connected to socket server', this.socket?.id);
     });
+
+    this.socket.on('reconnect', (attempt) => {
+      console.log(`[SocketService] Reconnected after ${attempt} attempts. Triggering resync...`);
+      // Notify all registered systems to re-fetch their data
+      this.syncCallbacks.forEach(cb => cb());
+    });
     
     this.socket.on('connect_error', (err) => {
         console.error('[SocketService] Socket connection error:', err.message);
-        // If auth error, maybe clear token? For now just log.
     });
 
     this.socket.on('disconnect', (reason) => {
         console.log('[SocketService] Disconnected:', reason);
-        if (reason === 'io server disconnect') {
-            // Server disconnected explicitly, maybe token invalid.
-            // Client should not auto-reconnect unless we fix token.
-        }
     });
 
-    // Handle server kicking this socket due to a duplicate connection
-    // (e.g., user opened a new tab). Don't try to reconnect — the new
-    // connection is the authoritative one.
     this.socket.on('force_disconnect', (data: { reason: string }) => {
         console.log('[SocketService] Force disconnected by server:', data.reason);
-        if (this.socket) {
-            this.socket.removeAllListeners();
-            this.socket.disconnect();
-            this.socket = null;
-            this.lastToken = null;
-        }
+        this.disconnect();
     });
 
     // Listen for insight generation updates from cron job
@@ -116,6 +109,19 @@ class SocketService {
         }
         console.log('');
     });
+  }
+
+  private syncCallbacks: (() => void)[] = [];
+
+  /**
+   * Registers a callback to be called whenever the socket reconnects.
+   * Useful for re-fetching data that might have been missed during downtime.
+   */
+  onResync(callback: () => void) {
+    this.syncCallbacks.push(callback);
+    return () => {
+      this.syncCallbacks = this.syncCallbacks.filter(cb => cb !== callback);
+    };
   }
 
   disconnect() {

@@ -16,10 +16,10 @@ io = new Server(httpServer, {
     origin: "*",
     methods: ["GET", "POST"]
   },
-  transports: ['websocket', 'polling'],
-  // Tuning for faster disconnect detection (Heartbeat)
-  pingInterval: 2000, // Send ping every 2 seconds
-  pingTimeout: 5000   // Wait 5 seconds for pong response before disconnecting
+  transports: ['websocket'], // FORCE pure websockets for Cloud Run stability
+  // Tuning for faster disconnect detection and mobile resilience
+  pingInterval: 5000, // Send ping every 5 seconds
+  pingTimeout: 10000   // Wait 10 seconds for pong response
 });
 
 // Initialize Socket Logic

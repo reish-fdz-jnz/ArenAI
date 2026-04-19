@@ -197,7 +197,15 @@ const ChatMenu: React.FC = () => {
       );
     }, 1000);
 
+    // Register re-sync logic for when the socket recovers from a drop
+    const unregisterResync = socketService.onResync(() => {
+      console.log("[ChatMenu] Socket recovered, re-fetching chats and requests...");
+      fetchChats();
+      fetchRequests();
+    });
+
     return () => {
+      unregisterResync();
       clearInterval(pollInterval);
     };
   });

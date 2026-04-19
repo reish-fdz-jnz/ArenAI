@@ -58,6 +58,7 @@ import StudentChat from "./pages/StudentChat";
 import StartClassSession from "./pages/StartClassSession";
 import ArenEntityPage from "./pages/ArenEntityPage";
 import TopicDetail from "./pages/TopicDetail";
+import ProfessorTopicDetail from "./pages/ProfessorTopicDetail";
 import { socketService } from "./services/socket";
 import { chatStorage } from "./services/chatStorage";
 import { App as CapApp } from "@capacitor/app";
@@ -91,7 +92,6 @@ import "./theme/variables.css";
 import "./i18n";
 import ProfessorStudents from "./pages/ProfessorStudents";
 import ProfessorAttendance from "./pages/ProfessorAttendance";
-import ProfessorTopicStats from "./pages/ProfessorTopicStats";
 import ProfessorQuizResults from "./pages/ProfessorQuizResults";
 import ProfessorStudentQuizDetail from "./pages/ProfessorStudentQuizDetail";
 
@@ -99,34 +99,22 @@ setupIonicReact();
 
 const App: React.FC = () => {
   const [userRole, setUserRole] = useState<"professor" | "student" | null>(
-    null,
+    () => localStorage.getItem("userRole") as "professor" | "student" | null
   );
-  const [userData, setUserData] = useState<any>(null); // Add userData state
+  const [userData, setUserData] = useState<any>(() => {
+    const data = localStorage.getItem("userData");
+    if (!data) return null;
+    try {
+      return JSON.parse(data);
+    } catch {
+      return null;
+    }
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isSessionExpired, setIsSessionExpired] = useState(false);
 
   useEffect(() => {
-    const savedRole = localStorage.getItem("userRole") as
-      | "professor"
-      | "student"
-      | null;
-    const savedUserData = localStorage.getItem("userData"); // Load user data
-
-    if (savedRole) {
-      setUserRole(savedRole);
-    } else {
-      setUserRole(null);
-    }
-
-    if (savedUserData) {
-      try {
-        setUserData(JSON.parse(savedUserData));
-      } catch (e) {
-        console.error("Failed to parse user data", e);
-        setUserData(null);
-      }
-    }
-
+    // Session is implicitly loaded from localStorage now
     setIsLoading(false);
   }, []);
 
@@ -435,13 +423,6 @@ const App: React.FC = () => {
                         <Redirect to="/login" />
                       )}
                     </Route>
-                    <Route path="/topic-stats" exact={true}>
-                      {userRole === "professor" ? (
-                        <ProfessorTopicStats />
-                      ) : (
-                        <Redirect to="/login" />
-                      )}
-                    </Route>
                     <Route path="/page/task-assignment" exact={true}>
                       {userRole === "professor" ? (
                         <TaskAssignment />
@@ -609,13 +590,37 @@ const App: React.FC = () => {
                       )}
                     </Route>
 
-                    <Route path="/page/topic/:id" exact={true}>
-                      {userRole === "student" ? (
-                        <TopicDetail />
-                      ) : (
-                        <Redirect to="/login" />
-                      )}
-                    </Route>
+                    <Route 
+                      path="/page/topic/:id" 
+                      exact={true}
+                      render={(props) => {
+                        const storedRole = localStorage.getItem("userRole");
+                        const activeRole = (userRole || storedRole || "").toLowerCase();
+                        console.log(`[App Mapping] /page/topic/:id - State: ${userRole}, Stored: ${storedRole}, Final: ${activeRole}`);
+                        
+                        if (activeRole === "student") return <TopicDetail />;
+                        if (activeRole === "professor") return <ProfessorTopicDetail />;
+                        
+                        console.warn(`[App Mapping] Topic Route Fallback: Invalid role "${activeRole}". Redirecting to login.`);
+                        return <Redirect to="/login" />;
+                      }}
+                    />
+
+                    <Route 
+                      path="/page/class-topic/:id" 
+                      exact={true}
+                      render={(props) => {
+                        const storedRole = localStorage.getItem("userRole");
+                        const activeRole = (userRole || storedRole || "").toLowerCase();
+                        console.log(`[App Mapping] /page/class-topic/:id - State: ${userRole}, Stored: ${storedRole}, Final: ${activeRole}`);
+                        
+                        if (activeRole === "professor") return <ProfessorTopicDetail />;
+                        if (activeRole === "student") return <TopicDetail />;
+                        
+                        console.warn(`[App Mapping] Class-Topic Route Fallback: Invalid role "${activeRole}". Redirecting to login.`);
+                        return <Redirect to="/login" />;
+                      }}
+                    />
 
                     <Route path="/achievements" exact={true}>
                       {userRole === "student" ? (

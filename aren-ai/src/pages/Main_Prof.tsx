@@ -8,6 +8,7 @@ import {
   IonToolbar,
   IonMenuButton,
   useIonViewWillEnter,
+  useIonRouter,
 } from "@ionic/react";
 import {
   calculator,
@@ -35,7 +36,6 @@ import {
   pencilOutline,
   schoolOutline,
 } from "ionicons/icons";
-import { useHistory } from "react-router-dom";
 import "./Main_Prof.css";
 import "../components/ProfessorHeader.css";
 import ProfessorMenu from "../components/ProfessorMenu";
@@ -48,9 +48,11 @@ import { TopicProgress } from "../types/student";
 import PageTransition from "../components/PageTransition";
 import { socketService } from "../services/socket";
 import { DailyScheduleView, DailySession } from "../components/DailyScheduleView";
+import { useAnimatedScore } from "../hooks/useAnimatedScore";
+import ProfessorTopicBubble from "../components/ProfessorTopicBubble";
 
 const Main_Prof: React.FC = () => {
-  const history = useHistory();
+  const router = useIonRouter();
   const { t } = useTranslation();
   const { getAvatarAssets } = useAvatar();
   const avatarAssets = getAvatarAssets();
@@ -85,7 +87,9 @@ const Main_Prof: React.FC = () => {
 
   const [topics, setTopics] = useState<TopicProgress[]>([]);
   const [overallPerformance, setOverallPerformance] = useState(0);
+  const animatedPerformance = useAnimatedScore(overallPerformance);
   const [viewMode, setViewMode] = useState<"state" | "que">("state");
+  const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
 
   // Chatbot questions state
   const [chatbotQuestions, setChatbotQuestions] = useState<any[]>([]);
@@ -93,6 +97,39 @@ const Main_Prof: React.FC = () => {
 
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const issueTimeoutRefs = useRef<NodeJS.Timeout[]>([]);
+
+  // --- REAL-TIME UPDATES ---
+  useEffect(() => {
+    socketService.connect();
+    const socket = socketService.socket;
+    if (!socket) return;
+
+    socket.on('class_score_update', (data: { topicId: number; sectionMastery: number }) => {
+      console.log("[Main_Prof] Live topic score update received:", data);
+      
+      setTopics(prevTopics => {
+        return prevTopics.map(topic => {
+          if (topic.id === data.topicId) {
+            return {
+              ...topic,
+              percentage: data.sectionMastery
+            };
+          }
+          return topic;
+        });
+      });
+    });
+
+    socket.on('class_overall_update', (data: { classId: number; overallAverage: number }) => {
+      console.log("[Main_Prof] Live overall class score update received:", data);
+      setOverallPerformance(Math.round(data.overallAverage));
+    });
+
+    return () => {
+      socket.off('class_score_update');
+      socket.off('class_overall_update');
+    };
+  }, []);
 
   const fetchDashboardSync = async (targetDate: Date = selectedDate) => {
     try {
@@ -151,11 +188,45 @@ const Main_Prof: React.FC = () => {
       }
       
       updateFocus(targetFocus, false);
+      fetchSectionMastery();
 
     } catch (err) {
       console.error("Dashboard sync error:", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchSectionMastery = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      // Use classId in URL if we have a focusSession to only show topics of that session
+      const classIdParam = focusSession?.id_class ? `&classId=${focusSession.id_class}` : "";
+      const url = getApiUrl(`api/sections/progress?grade=${selectedGrade}&sectionNumber=${selectedSection}&subject=${selectedSubject}${classIdParam}`);
+      
+      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.length > 0) {
+          const processed = data.map((t: any) => ({
+            id: t.id_topic,
+            name: t.name_topic || t.name,
+            percentage: t.score,
+            icon: getIconForTopic(t.name_topic || t.name)
+          }));
+          setTopics(processed);
+          
+          // Only update overall performance from progress if not in a session 
+          // (Session overall is updated by its own metrics usually, but this is a good backup)
+          if (!focusSession) {
+            const total = processed.reduce((acc: number, t: any) => acc + (t.percentage || 0), 0);
+            const avg = processed.length ? total / processed.length : 0;
+            setOverallPerformance(Math.round(avg));
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Section mastery fetch error:", err);
     }
   };
 
@@ -173,17 +244,33 @@ const Main_Prof: React.FC = () => {
     localStorage.setItem(`prefSession_${dateStr}`, String(session.id_class));
 
     // Update widgets
-    const randomIcons = ['🚀', '🌟', '🎯', '🔥', '✨', '⚡️', '💡', '💎', '🏆', '🎨', '🧩', '🔬', '🔭'];
     let rawTopics = session.topics || [];
     const processedTopics = rawTopics.map((t: any) => ({
       name: t.name_topic || t.name,
       nameKey: t.name_topic || t.name,
       percentage: 0, // Initial percentage should be 0 unless real data found
-      icon: randomIcons[Math.floor(Math.random() * randomIcons.length)],
+      icon: getIconForTopic(t.name_topic || t.name),
     }));
     
     setTopics(processedTopics);
     setOverallPerformance(0); // Initial performance should be 0
+  };
+
+  // Stable Icon Mapping helper
+  const getIconForTopic = (name: string): string => {
+    const t = (name || "").toLowerCase();
+    if (t.includes("algeb")) return "∑";
+    if (t.includes("geom")) return "📐";
+    if (t.includes("calc")) return "∫";
+    if (t.includes("stat")) return "📊";
+    if (t.includes("bio")) return "🧬";
+    if (t.includes("chem")) return "🧪";
+    if (t.includes("phys")) return "⚛️";
+    if (t.includes("hist")) return "📜";
+    if (t.includes("geo")) return "🗺️";
+    if (t.includes("voc")) return "🗣️";
+    if (t.includes("gram")) return "📝";
+    return "🎓";
   };
 
   const handleDateSelect = (date: Date) => {
@@ -198,6 +285,7 @@ const Main_Prof: React.FC = () => {
       setSelectedDate(date);
       setShowScheduleView(true);
       fetchDashboardSync(date);
+      fetchSectionMastery();
     }
   };
 
@@ -415,21 +503,51 @@ const Main_Prof: React.FC = () => {
       }
     };
 
+    const handleClassScoreUpdate = (data: { topicId: number; scoreAverage: number }) => {
+      console.log("[Main_Prof] Class score update received:", data);
+      // Update the specific topic in the list
+      setTopics(prev => prev.map(t => t.id === data.topicId ? { ...t, percentage: data.scoreAverage } : t));
+      
+      // Re-calculate overall performance based on current visible topics
+      setTopics(prev => {
+        const total = prev.reduce((acc, t) => acc + (t.percentage || 0), 0);
+        const avg = prev.length ? total / prev.length : 0;
+        setOverallPerformance(Math.round(avg));
+        return prev;
+      });
+    };
+
+    // Register re-sync logic for when the socket recovers from a drop
+    const unregisterResync = socketService.onResync(() => {
+      console.log("[Main_Prof] Socket recovered, re-fetching dashboard state...");
+      fetchDashboardSync(selectedDate);
+    });
+
     socketService.socket?.on("insight_update", handleInsightUpdate);
+    socketService.socket?.on("class_score_update", handleClassScoreUpdate);
 
     return () => {
+      unregisterResync();
       socketService.socket?.off("insight_update", handleInsightUpdate);
+      socketService.socket?.off("class_score_update", handleClassScoreUpdate);
     };
   }, []);
 
-  const navigateTo = (path: string) => history.push(path);
+  const navigateTo = (path: string) => router.push(path, 'forward', 'push');
+
+  const navigateToTopic = (topic: TopicProgress) => {
+    if (topic.id) {
+      router.push(`/page/class-topic/${topic.id}?grade=${selectedGrade}&section=${selectedSection}`, 'forward', 'push');
+    } else {
+      router.push(`/subject/${selectedSubject}`, 'forward', 'push');
+    }
+  };
 
   const getColorForPercentage = (p: number) => {
-    const ratio = Math.max(0, Math.min(100, p)) / 100;
-    const r = Math.round(255 + (120 - 255) * ratio);
-    const g = Math.round(82 + (184 - 82) * ratio);
-    const b = Math.round(82 + (176 - 82) * ratio);
-    return `rgb(${r}, ${g}, ${b})`;
+    // Smooth HSL transition: 0 is Red, 120 is Emerald Green
+    const hue = Math.min(120, (p * 1.2)); 
+    // Saturation stays high for vibrancy, lightness adjusted for glassmorphism
+    return `hsla(${hue}, 75%, 45%, 0.85)`;
   };
 
   return (
@@ -541,9 +659,9 @@ const Main_Prof: React.FC = () => {
                   <div
                     className="ms-progress-circle"
                     style={{
-                      border: `6px solid ${getColorForPercentage(
-                        overallPerformance,
-                      )}`,
+                      border: (animatedPerformance !== null && animatedPerformance > 0)
+                        ? `6px solid ${getColorForPercentage(animatedPerformance)}`
+                        : `6px solid rgba(255, 255, 255, 0.2)`,
                       boxShadow: `inset 0 0 0 3px white`,
                       color: "white",
                       width: "70px",
@@ -553,56 +671,51 @@ const Main_Prof: React.FC = () => {
                       justifyContent: "center",
                       alignItems: "center",
                       fontWeight: "bold",
-                      fontSize: "18px",
-                      backgroundColor: "var(--ion-color-secondary)",
+                      fontSize: (animatedPerformance !== null && animatedPerformance > 0) ? "18px" : "28px",
+                      backgroundColor: (animatedPerformance !== null && animatedPerformance > 0)
+                        ? "var(--ion-color-secondary)"
+                        : "rgba(255, 255, 255, 0.1)",
+                      backdropFilter: "blur(10px)",
+                      WebkitBackdropFilter: "blur(10px)",
+                      transition: "border-color 0.5s ease"
                     }}
                   >
-                    {overallPerformance}%
+                    {animatedPerformance !== null ? `${Math.round(animatedPerformance)}%` : "😊"}
                   </div>
                 </div>
 
+                {/* Topics Grid (Swipeable) */}
                 <div className="ms-topics-scroll-container">
                   <div className="ms-topics-track">
                     {topics.map((topic, index) => (
-                      <div
-                        key={index}
-                        className="ms-topic-btn"
-                        onClick={() => navigateTo(`/subject/${selectedSubject}`)}
-                      >
-                        <div className="ms-topic-fill-box">
-                          <div
-                            className="ms-topic-fill"
-                            style={{
-                              height: `${topic.percentage}%`,
-                              backgroundColor:
-                                topic.percentage < 60 ? "#FFC107" : "#78B8B0",
-                            }}
-                          ></div>
-                          <div className="ms-topic-icon" style={{ zIndex: 2 }}>
-                            {topic.icon || "•"}
-                          </div>
-                        </div>
-                        <span className="ms-topic-label">
-                          {t(topic.nameKey)}
-                        </span>
-                      </div>
+                      <ProfessorTopicBubble 
+                        key={`${index}-${topic.id}`}
+                        topic={topic}
+                        index={index}
+                        getColorForPercentage={getColorForPercentage}
+                        expandedTopic={expandedTopic}
+                        setExpandedTopic={setExpandedTopic}
+                        selectedSubject={selectedSubject}
+                        selectedGrade={selectedGrade}
+                        selectedSection={selectedSection}
+                      />
                     ))}
                   </div>
                 </div>
               </>
-            ) : focusSession ? (
-                /* Fallback if activeSession is null but we have a focusSession (history) */
+            ) : topics.length > 0 ? (
+                /* Fallback to Section Mastery (History) if no session focused */
                 <>
                 <div className="ms-stats-row">
                   <div className="ms-your-math-pill" style={{ fontSize: '14px', padding: '8px 16px' }}>
-                    {focusSession.name_session}
+                    {t("professor.dashboard.classHistory", "Class History")}
                   </div>
                   <div
                     className="ms-progress-circle"
                     style={{
-                      border: `6px solid ${getColorForPercentage(
-                        overallPerformance,
-                      )}`,
+                      border: (animatedPerformance !== null && animatedPerformance > 0)
+                        ? `6px solid ${getColorForPercentage(animatedPerformance)}`
+                        : `6px solid rgba(255, 255, 255, 0.2)`,
                       boxShadow: `inset 0 0 0 3px white`,
                       color: "white",
                       width: "70px",
@@ -612,39 +725,30 @@ const Main_Prof: React.FC = () => {
                       justifyContent: "center",
                       alignItems: "center",
                       fontWeight: "bold",
-                      fontSize: "18px",
+                      fontSize: (animatedPerformance !== null && animatedPerformance > 0) ? "18px" : "28px",
                       backgroundColor: "var(--ion-color-secondary)",
+                      transition: "border-color 0.5s ease"
                     }}
                   >
-                    {overallPerformance}%
+                    {animatedPerformance !== null ? `${Math.round(animatedPerformance)}%` : "😊"}
                   </div>
                 </div>
 
+                {/* Topics Grid (Swipeable) */}
                 <div className="ms-topics-scroll-container">
                   <div className="ms-topics-track">
                     {topics.map((topic, index) => (
-                      <div
-                        key={index}
-                        className="ms-topic-btn"
-                        onClick={() => navigateTo(`/subject/${selectedSubject}`)}
-                      >
-                        <div className="ms-topic-fill-box">
-                          <div
-                            className="ms-topic-fill"
-                            style={{
-                              height: `${topic.percentage}%`,
-                              backgroundColor:
-                                topic.percentage < 60 ? "#FFC107" : "#78B8B0",
-                            }}
-                          ></div>
-                          <div className="ms-topic-icon" style={{ zIndex: 2 }}>
-                            {topic.icon || "•"}
-                          </div>
-                        </div>
-                        <span className="ms-topic-label">
-                          {t(topic.nameKey)}
-                        </span>
-                      </div>
+                      <ProfessorTopicBubble 
+                        key={`${index}-${topic.id}`}
+                        topic={topic}
+                        index={index}
+                        getColorForPercentage={getColorForPercentage}
+                        expandedTopic={expandedTopic}
+                        setExpandedTopic={setExpandedTopic}
+                        selectedSubject={selectedSubject}
+                        selectedGrade={selectedGrade}
+                        selectedSection={selectedSection}
+                      />
                     ))}
                   </div>
                 </div>

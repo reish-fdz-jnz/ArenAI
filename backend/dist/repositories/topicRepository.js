@@ -64,15 +64,17 @@ export async function getTopicById(topicId) {
      WHERE t.id_topic = ?`, [topicId]);
     return result.rows[0] || null;
 }
-export async function getTopicRelations(topicId) {
-    const result = await db.query(`(SELECT t.id_topic, t.name, 'father' as type, rel.correlation_coefficient
+export async function getTopicRelations(topicId, userId) {
+    const result = await db.query(`(SELECT t.id_topic, t.name, 'father' as type, rel.correlation_coefficient, st.score
       FROM topic_father_son_relation rel
       INNER JOIN topic t ON t.id_topic = rel.id_topic_father
+      LEFT JOIN student_topic st ON st.id_topic = t.id_topic AND st.id_user = ?
       WHERE rel.id_topic_son = ?)
      UNION
-     (SELECT t.id_topic, t.name, 'son' as type, rel.correlation_coefficient
+     (SELECT t.id_topic, t.name, 'son' as type, rel.correlation_coefficient, st.score
       FROM topic_father_son_relation rel
       INNER JOIN topic t ON t.id_topic = rel.id_topic_son
-      WHERE rel.id_topic_father = ?)`, [topicId, topicId]);
+      LEFT JOIN student_topic st ON st.id_topic = t.id_topic AND st.id_user = ?
+      WHERE rel.id_topic_father = ?)`, [userId || null, topicId, userId || null, topicId]);
     return result.rows;
 }

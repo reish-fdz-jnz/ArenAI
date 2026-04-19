@@ -88,12 +88,6 @@ const ProfessorSidebar: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
       iosIcon: calendarOutline,
       mdIcon: calendarSharp,
     },
-    {
-      titleKey: "professor.sidebar.topicStats",
-      url: "/topic-stats",
-      iosIcon: statsChartOutline,
-      mdIcon: statsChartSharp,
-    },
 
     {
       titleKey: "professor.sidebar.assignments",

@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { ApiError } from '../middleware/errorHandler.js';
 import { getTopicById, getTopicRelations, createTopicRelation, createTopicResource, listTopicResources } from '../repositories/topicRepository.js';
 import { getStudentTopicMastery, getTopicSessionHistory } from '../repositories/studentRepository.js';
+import { findSectionByGradeAndNumber, getSectionTopicMastery, getSectionTopicHistory } from '../repositories/sectionRepository.js';
+import { findUserByUsername } from '../repositories/userRepository.js';
 import { requireAuth } from '../middleware/auth.js';
 import { generateTopicMasteryInsight } from '../services/insightService.js';
 
@@ -120,6 +122,76 @@ router.post('/:topicId/resources', async (req, res, next) => {
     });
 
     res.status(201).json(resource);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/class/:topicId', requireAuth, async (req, res, next) => {
+  const paramsSchema = z.object({ topicId: z.coerce.number().int().positive() });
+  const querySchema = z.object({
+    grade: z.string(),
+    sectionNumber: z.string()
+  });
+
+  try {
+    const { topicId } = paramsSchema.parse(req.params);
+    const { grade, sectionNumber } = querySchema.parse(req.query);
+    const userRole = req.user?.role;
+    const username = req.user?.username;
+
+    if (userRole !== 'professor') {
+      throw new ApiError(403, 'Only professors can access class-level topic data');
+    }
+
+    if (!username) throw new ApiError(401, 'Unauthorized');
+    const dbUser = await findUserByUsername(username);
+    if (!dbUser || !dbUser.id_institution) throw new ApiError(404, 'Institution not found');
+
+    const section = await findSectionByGradeAndNumber(grade, sectionNumber, dbUser.id_institution);
+    if (!section) {
+      throw new ApiError(404, 'Section not found');
+    }
+
+    const sectionId = section.id_section;
+
+    // 1. Fetch Basic Topic Info
+    const topic = await getTopicById(topicId);
+    if (!topic) {
+      throw new ApiError(404, 'Topic not found');
+    }
+
+    // 2. Fetch Section Mastery
+    const mastery = await getSectionTopicMastery(sectionId, topicId);
+
+    // 3. Fetch Relations
+    let relations: any[] = [];
+    try {
+      relations = await getTopicRelations(topicId); // Pass only topicId as userId is optional for professors
+    } catch (e) {
+      console.warn(`[ClassTopicDetail] Error fetching relations for topic ${topicId}:`, e);
+    }
+
+    // 4. Fetch Section History
+    let history: any[] = [];
+    try {
+      history = await getSectionTopicHistory(sectionId, topicId);
+    } catch (e) {
+      console.warn(`[ClassTopicDetail] Error fetching session history for topic ${topicId}:`, e);
+    }
+
+    // Combine result - 1-to-1 with student version structure
+    res.json({
+      id_topic: topic.id_topic,
+      name: topic.name,
+      description: topic.description,
+      subject_name: topic.subject_name,
+      permanent_score: mastery.score || 0,
+      ai_summary: mastery.ai_summary,
+      relations: relations,
+      history: history
+    });
+
   } catch (error) {
     next(error);
   }
