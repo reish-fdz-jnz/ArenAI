@@ -242,24 +242,37 @@ const Main_Prof: React.FC = () => {
         const data = await res.json();
         if (data && data.length > 0) {
           const processed = data.map((t: any) => {
-            let score = t.score !== null ? Number(t.score) : null;
-            // Auto-scale fractional scores (0.35 -> 35) to match student dashboard behavior
+            // Robustly extract score and ensure scale is 0-100
+            let score = (t.score !== undefined && t.score !== null) ? Number(t.score) : null;
             if (score !== null && score > 0 && score <= 1) {
               score = score * 100;
             }
+
+            // Robustly extract ID (handle id_topic OR id)
+            const topicId = t.id_topic || t.id;
+
             return {
-              id: t.id_topic,
+              id: topicId,
               name: t.name_topic || t.name,
               percentage: score,
               icon: getIconForTopic(t.name_topic || t.name)
             };
           });
+
           setTopics(processed);
           
-          // Only update overall performance from progress if not in a session 
-          // (Session overall is updated by its own metrics usually, but this is a good backup)
-          if (!focusSession) {
-            setOverallPerformance(null);
+          // SET OVERALL PERFORMANCE (Sector/Session Mastery)
+          // Priority: 1. Direct session average from class table 2. Calculated average from topics
+          if (activeSession && activeSession.score_average !== null) {
+            setOverallPerformance(Number(activeSession.score_average));
+          } else {
+            const validScores = processed.filter(p => p.percentage !== null).map(p => p.percentage!);
+            if (validScores.length > 0) {
+              const sum = validScores.reduce((acc, val) => acc + val, 0);
+              setOverallPerformance(Math.round(sum / validScores.length));
+            } else {
+              setOverallPerformance(null);
+            }
           }
         }
       }
@@ -700,17 +713,18 @@ const Main_Prof: React.FC = () => {
                         selectedSubject={selectedSubject}
                         selectedGrade={selectedGrade}
                         selectedSection={selectedSection}
+                        classId={activeSession?.id_class}
                       />
                     ))}
                   </div>
                 </div>
               </>
-            ) : (topics.length > 0 && selectedDate.toDateString() !== new Date().toDateString()) ? (
-                /* Fallback to Section Mastery (History) ONLY if reviewing a past date */
-                <>
+            ) : (topics.length > 0) ? (
+              /* SHOW SECTION MASTERY EVEN IF NO SESSION ACTIVE TODAY */
+              <>
                 <div className="ms-stats-row">
                   <div className="ms-your-math-pill" style={{ fontSize: '14px', padding: '8px 16px' }}>
-                    {t("professor.dashboard.classHistory", "Class History")}
+                    {t("professor.dashboard.sectionMastery", "Section Mastery")}
                   </div>
                   <div
                     className="ms-progress-circle"
@@ -736,7 +750,6 @@ const Main_Prof: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Topics Grid (Swipeable) */}
                 <div className="ms-topics-scroll-container">
                   <div className="ms-topics-track">
                     {topics.map((topic, index) => (
@@ -750,6 +763,7 @@ const Main_Prof: React.FC = () => {
                         selectedSubject={selectedSubject}
                         selectedGrade={selectedGrade}
                         selectedSection={selectedSection}
+                        classId={activeSession?.id_class}
                       />
                     ))}
                   </div>

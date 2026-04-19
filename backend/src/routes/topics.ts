@@ -7,6 +7,8 @@ import { findSectionByGradeAndNumber, getSectionTopicMastery, getSectionTopicHis
 import { findUserByUsername } from '../repositories/userRepository.js';
 import { requireAuth } from '../middleware/auth.js';
 import { generateTopicMasteryInsight } from '../services/insightService.js';
+import { db } from '../db/pool.js';
+
 
 const router = Router();
 
@@ -131,12 +133,13 @@ router.get('/class/:topicId', requireAuth, async (req, res, next) => {
   const paramsSchema = z.object({ topicId: z.coerce.number().int().positive() });
   const querySchema = z.object({
     grade: z.string(),
-    sectionNumber: z.string()
+    sectionNumber: z.string(),
+    classId: z.coerce.number().int().positive().optional()
   });
 
   try {
     const { topicId } = paramsSchema.parse(req.params);
-    const { grade, sectionNumber } = querySchema.parse(req.query);
+    const { grade, sectionNumber, classId } = querySchema.parse(req.query);
     const userRole = req.user?.role;
     const username = req.user?.username;
 
@@ -161,8 +164,20 @@ router.get('/class/:topicId', requireAuth, async (req, res, next) => {
       throw new ApiError(404, 'Topic not found');
     }
 
-    // 2. Fetch Section Mastery
+    // 2. Fetch Permanent Section Mastery
     const mastery = await getSectionTopicMastery(sectionId, topicId);
+
+    // 2b. Fetch Session Specific Score if classId provided
+    let sessionScore = null;
+    if (classId) {
+      const sessionResult = await db.query<any>(
+        `SELECT score_average FROM class_topic WHERE id_class = ? AND id_topic = ?`,
+        [classId, topicId]
+      );
+      if (sessionResult.rows.length > 0) {
+        sessionScore = sessionResult.rows[0].score_average;
+      }
+    }
 
     // 3. Fetch Relations
     let relations: any[] = [];
@@ -187,6 +202,7 @@ router.get('/class/:topicId', requireAuth, async (req, res, next) => {
       description: topic.description,
       subject_name: topic.subject_name,
       permanent_score: mastery.score || 0,
+      session_score: sessionScore,
       ai_summary: mastery.ai_summary,
       relations: relations,
       history: history
@@ -196,5 +212,6 @@ router.get('/class/:topicId', requireAuth, async (req, res, next) => {
     next(error);
   }
 });
+
 
 export const topicsRouter = router;

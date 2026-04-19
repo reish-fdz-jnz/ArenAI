@@ -635,4 +635,5 @@ html[data-force-dark] .ms-popup-title {
 html[data-force-dark] .ms-popup-close {
   background: rgba(var(--ion-color-primary-rgb), 0.3);
   color: white;
-}
+}
+

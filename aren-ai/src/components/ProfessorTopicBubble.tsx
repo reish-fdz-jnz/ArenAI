@@ -12,6 +12,7 @@ interface ProfessorTopicBubbleProps {
   selectedSubject: string;
   selectedGrade: number | string;
   selectedSection: string;
+  classId?: number; // Added to pass context to detail page
 }
 
 /**
@@ -26,7 +27,8 @@ export const ProfessorTopicBubble: React.FC<ProfessorTopicBubbleProps> = ({
   setExpandedTopic,
   selectedSubject,
   selectedGrade,
-  selectedSection
+  selectedSection,
+  classId
 }) => {
   const router = useIonRouter();
   const animatedPercentage = useAnimatedScore(topic.percentage);
@@ -40,8 +42,9 @@ export const ProfessorTopicBubble: React.FC<ProfessorTopicBubbleProps> = ({
 
   const handleBubbleClick = () => {
     if (topic.id) {
-        // Direct navigation to professor detail page
-        router.push(`/page/class-topic/${topic.id}?grade=${selectedGrade}&section=${selectedSection}`, 'forward', 'push');
+        // Direct navigation to professor detail page with class context if available
+        const classParam = classId ? `&classId=${classId}` : '';
+        router.push(`/page/class-topic/${topic.id}?grade=${selectedGrade}&section=${selectedSection}${classParam}`, 'forward', 'push');
     } else {
         // Fallback to subject view
         router.push(`/subject/${selectedSubject}`, 'forward', 'push');
@@ -79,5 +82,7 @@ export const ProfessorTopicBubble: React.FC<ProfessorTopicBubbleProps> = ({
     </div>
   );
 };
+
+
 
 export default ProfessorTopicBubble;

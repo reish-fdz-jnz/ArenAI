@@ -291,3 +291,19 @@
 .recharts-cartesian-axis-tick-value {
   font-weight: 500;
 }
+
+/* Mastery Context Labels (Session vs Global) */
+.td-score-context-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--ion-color-primary);
+    margin-bottom: -10px;
+    text-align: center;
+    opacity: 0.9;
+    z-index: 5;
+    position: relative;
+    text-shadow: 0 0 10px rgba(var(--ion-color-primary-rgb), 0.3);
+}
+

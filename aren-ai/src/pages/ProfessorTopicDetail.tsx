@@ -55,10 +55,12 @@ interface TopicMasteryProfile {
   description: string;
   subject_name: string;
   permanent_score: number;
+  session_score: number | null; // Added
   ai_summary: string | null;
   relations: TopicRelation[];
   history: ClassPerformance[];
 }
+
 
 // ============================================================================
 // MAIN COMPONENT
@@ -83,6 +85,8 @@ const ProfessorTopicDetail: React.FC = () => {
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- DATA FETCHING ---
+  const classId = queryParams.get("classId"); // Added
+
   useEffect(() => {
     const fetchTopicData = async () => {
       try {
@@ -98,8 +102,9 @@ const ProfessorTopicDetail: React.FC = () => {
           return;
         }
 
-        // Pulling class-level data using grade and section
-        const url = getApiUrl(`api/topics/class/${id}?grade=${activeGrade}&sectionNumber=${activeSection}`);
+        // Pulling class-level data using grade, section, and optional classId
+        const classParam = classId ? `&classId=${classId}` : '';
+        const url = getApiUrl(`api/topics/class/${id}?grade=${activeGrade}&sectionNumber=${activeSection}${classParam}`);
         const response = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -126,7 +131,7 @@ const ProfessorTopicDetail: React.FC = () => {
     return () => {
       if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
     };
-  }, [id, grade, sectionNumber]);
+  }, [id, grade, sectionNumber, classId]);
 
   // --- HELPERS (Carbon Copy of Student) ---
 
@@ -347,7 +352,12 @@ const ProfessorTopicDetail: React.FC = () => {
               renderEmptyState()
             ) : (
               <>
-                {renderMasteryHero(profile.permanent_score)}
+                <div className="td-score-context-label">
+                  {profile.session_score !== null 
+                    ? t("topicDetail.sessionMastery", "Session Mastery") 
+                    : t("topicDetail.permanentMastery", "Global Mastery")}
+                </div>
+                {renderMasteryHero(profile.session_score !== null ? profile.session_score : profile.permanent_score)}
                 {renderDescription(profile.description)}
                 {renderInsightCard()}
                 {renderConnections()}

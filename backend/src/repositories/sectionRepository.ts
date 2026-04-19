@@ -80,30 +80,18 @@ export async function findSectionByGradeAndNumber(grade: string, sectionNumber: 
 export async function getSectionTopicProgress(sectionId: number, subjectName: string, classId?: number) {
   if (classId) {
     // Session Mode: Show ONLY topics assigned to this class
-    // Mastery shown is the average score of all students in the section for these topics
-    // Returns NULL if no students have scores yet (to show gray 'unstarted' state)
+    // Returns the average score for this specific class session
     const result = await db.query<any>(
       `SELECT 
           t.id_topic, 
           t.name as name_topic, 
-          COALESCE(sect.score, agg.avg_score) as score,
-          sect.ai_summary
+          ct.score_average as score,
+          ct.ai_summary
        FROM class_topic ct
        INNER JOIN topic t ON t.id_topic = ct.id_topic
-       INNER JOIN class c ON c.id_class = ct.id_class
-       -- Force link to the active section's permanent records
-       LEFT JOIN section_topic sect ON sect.id_section = ? AND sect.id_topic = ct.id_topic
-       -- Fallback: aggregate average from ALL classes of this specific section
-       LEFT JOIN (
-         SELECT ct2.id_topic, AVG(ct2.score_average) as avg_score
-         FROM class c2
-         INNER JOIN class_topic ct2 ON ct2.id_class = c2.id_class
-         WHERE c2.id_section = ?
-         GROUP BY ct2.id_topic
-       ) agg ON agg.id_topic = ct.id_topic
        WHERE ct.id_class = ?
        ORDER BY t.name`,
-      [sectionId, sectionId, classId]
+      [classId]
     );
     return result.rows;
   } else {
@@ -112,7 +100,7 @@ export async function getSectionTopicProgress(sectionId: number, subjectName: st
       `SELECT 
           t.id_topic, 
           t.name as name_topic, 
-          COALESCE(st.score, 0) as score,
+          st.score as score,
           st.ai_summary
        FROM topic t
        INNER JOIN subject sub ON sub.id_subject = t.id_subject
@@ -124,6 +112,7 @@ export async function getSectionTopicProgress(sectionId: number, subjectName: st
     return result.rows;
   }
 }
+
 
 // ============================================================
 // Section Topic functions
