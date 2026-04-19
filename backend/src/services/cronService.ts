@@ -2,7 +2,7 @@
 // Runs insight generation and class reports on a schedule
 
 import cron from 'node-cron';
-import { runInsightGeneration, runClassReportGeneration, generateTopicClassSummaries } from './insightService.js';
+import { runInsightGeneration, runClassReportGeneration, generateTopicClassSummaries, generateSectionTopicSummaries } from './insightService.js';
 
 /**
  * Initialize all cron jobs
@@ -29,6 +29,10 @@ export function initCronJobs(): void {
             // Phase 4: Generate per-topic class summaries
             // (incorporates scores, correlations, chatbot questions, chat conclusions)
             await generateTopicClassSummaries();
+
+            // Phase 5: Generate per-topic section summaries
+            // (aggregates all students in a section across all classes)
+            await generateSectionTopicSummaries();
 
             console.log('\n========================================');
             console.log('[CRON] Scheduled job complete.');
