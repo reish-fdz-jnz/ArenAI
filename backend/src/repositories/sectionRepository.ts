@@ -93,12 +93,16 @@ export async function getSectionTopicProgress(sectionId: number, subjectName: st
                AND (cs.attendance = 1 OR cs.score_average IS NOT NULL)),
             ct.score_average
           ) as score,
+          st.base_score_session,
           ct.ai_summary
        FROM class_topic ct
        INNER JOIN topic t ON t.id_topic = ct.id_topic
+       INNER JOIN class c ON c.id_class = ct.id_class
+       INNER JOIN class_template_topic ctt ON ctt.id_class_template = c.id_class_template AND ctt.id_topic = ct.id_topic
+       LEFT JOIN section_topic st ON st.id_topic = t.id_topic AND st.id_section = ?
        WHERE ct.id_class = ?
        ORDER BY t.name`,
-      [classId]
+      [sectionId, classId]
     );
     return result.rows;
   } else {
@@ -108,6 +112,7 @@ export async function getSectionTopicProgress(sectionId: number, subjectName: st
           t.id_topic, 
           t.name as name_topic, 
           st.score as score,
+          st.base_score_session,
           st.ai_summary
        FROM topic t
        INNER JOIN subject sub ON sub.id_subject = t.id_subject

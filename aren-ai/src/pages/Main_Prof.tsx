@@ -242,7 +242,7 @@ const Main_Prof: React.FC = () => {
   const fetchSectionMastery = async (classId?: number, currentSession?: DailySession | null) => {
     try {
       const token = localStorage.getItem("authToken");
-      // Prioritize the passed classId over the state-based focusSession to avoid race conditions
+      
       const targetId = classId || focusSession?.id_class;
       const classIdParam = targetId ? `&classId=${targetId}` : "";
       const url = getApiUrl(`api/sections/progress?grade=${selectedGrade}&sectionNumber=${selectedSection}&subject=${selectedSubject}${classIdParam}`);
@@ -251,43 +251,55 @@ const Main_Prof: React.FC = () => {
       if (res.ok) {
         const data = await res.json();
         if (data && data.length > 0) {
+          // Filter: If we are in session mode, 'data' already contains only class_topics
+          // If we are in idle mode, 'data' contains all section topics.
           const processed = data.map((t: any) => {
-            // Robustly extract score and ensure scale is 0-100
             let score = (t.score !== undefined && t.score !== null) ? Number(t.score) : null;
-            if (score !== null && score > 0 && score <= 1) {
-              score = score * 100;
-            }
-
-            // Robustly extract ID (handle id_topic OR id)
-            const topicId = t.id_topic || t.id;
+            if (score !== null && score > 0 && score <= 1) score = score * 100;
 
             return {
-              id: topicId,
+              id: t.id_topic || t.id,
               name: t.name_topic || t.name,
               percentage: score,
+              base_score_session: t.base_score_session,
               icon: getIconForTopic(t.name_topic || t.name)
             };
           });
 
+          // Strict assignment to setTopics
           setTopics(processed);
           
-          // Extremely aggressive score extraction
-          const score = sessionToUse?.score_average ?? 
-                        sessionToUse?.AverageScore ?? 
-                        sessionToUse?.overallAverage ?? 
-                        sessionToUse?.overall_average ?? 
-                        sessionToUse?.student_score_average ?? 
-                        sessionToUse?.score;
-          
-          if (score !== null && score !== undefined && !isNaN(Number(score))) {
-            setOverallPerformance(Number(score));
+          // Calculate Overall Average from base_score_session as requested
+          const baseScores = data
+            .filter((t: any) => t.base_score_session !== null && t.base_score_session !== undefined)
+            .map((t: any) => {
+              let s = Number(t.base_score_session);
+              // Ensure 0-100 scale
+              return (s > 0 && s <= 1) ? s * 100 : s;
+            });
+
+          if (baseScores.length > 0) {
+            const avg = baseScores.reduce((a: number, b: number) => a + b, 0) / baseScores.length;
+            setOverallPerformance(Math.round(avg));
           } else {
-            const validScores = processed.filter(p => p.percentage !== null).map(p => p.percentage!);
-            if (validScores.length > 0) {
-              const sum = validScores.reduce((acc, val) => acc + val, 0);
-              setOverallPerformance(Math.round(sum / validScores.length));
+            // Fallback to legacy extraction if base_score_session is not yet available
+            const score = sessionToUse?.score_average ?? 
+                          sessionToUse?.AverageScore ?? 
+                          sessionToUse?.overallAverage ?? 
+                          sessionToUse?.overall_average ?? 
+                          sessionToUse?.student_score_average ?? 
+                          sessionToUse?.score;
+            
+            if (score !== null && score !== undefined && !isNaN(Number(score))) {
+              setOverallPerformance(Number(score));
             } else {
-              setOverallPerformance(0);
+              const validScores = processed.filter(p => p.percentage !== null).map(p => p.percentage!);
+              if (validScores.length > 0) {
+                const sum = validScores.reduce((acc, val) => acc + val, 0);
+                setOverallPerformance(Math.round(sum / validScores.length));
+              } else {
+                setOverallPerformance(0);
+              }
             }
           }
         } else {
