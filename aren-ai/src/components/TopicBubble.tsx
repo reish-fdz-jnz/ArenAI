@@ -22,10 +22,11 @@ export const TopicBubble: React.FC<TopicBubbleProps> = ({
   selectedSubject
 }) => {
   const animatedPercentage = useAnimatedScore(topic.percentage);
-  const hasData = topic.id && animatedPercentage !== null;
+  const hasId = topic.id !== undefined && topic.id !== null;
+  const hasData = hasId && topic.percentage !== null;
   
   const performanceColor = hasData 
-    ? getColorForPercentage(animatedPercentage!) 
+    ? getColorForPercentage(animatedPercentage ?? 0) 
     : "rgba(255, 255, 255, 0.15)";
 
   const labelKey = `${index}-${topic.name}`;
