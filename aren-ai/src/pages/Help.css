@@ -28,11 +28,13 @@
 }
 
 .help-hero-icon {
-    font-size: 80px;
-    color: rgba(255, 255, 255, 0.2);
+    font-size: 32px;
+    color: rgba(255, 255, 255, 0.4);
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 18px;
+    right: 18px;
+    pointer-events: none;
+    z-index: 1;
 }
 
 .help-hero h1 {

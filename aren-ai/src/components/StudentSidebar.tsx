@@ -60,7 +60,7 @@ const appPages: AppPage[] = [
   },
   {
     titleKey: "sidebar.assignments",
-    url: "/quiz-menu",
+    url: "/student-assignments",
     iosIcon: bookOutline,
     mdIcon: bookSharp,
   },

@@ -1392,6 +1392,18 @@
         "grade": "GRADE",
         "section": "SECTION"
     },
+    "studentAssignments": {
+        "pending": "Pending Tasks",
+        "completedQuizzes": "Completed Quizzes",
+        "noPending": "No pending tasks",
+        "noCompleted": "No completed quizzes",
+        "searchCompleted": "Search in completed...",
+        "questions": "Questions",
+        "start": "Start",
+        "overdue": "Overdue",
+        "score": "Score",
+        "viewDetails": "View Details"
+    },
     "topicDetail": {
         "title": "Topic Profile",
         "masteryLabel": "Goal Mastery",
