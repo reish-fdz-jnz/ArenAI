@@ -578,9 +578,7 @@ const Main_Student: React.FC = () => {
                 <div className="ms-week-selector">
                   <CalendarSelector
                     onDateSelect={handleDateSelect}
-                    onSubjectSelect={handleCalendarSubjectSelect}
                     title={activeSession ? activeSession.name_session : t("mainStudent.calendar")}
-                    subjects={availableSubjects}
                     selectedSubject={selectedSubject}
                     sessionMarkers={sessionMarkers}
                   />
