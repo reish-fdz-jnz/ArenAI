@@ -116,6 +116,16 @@ const Main_Prof: React.FC = () => {
       setOverallPerformance(Math.round(data.overallAverage));
     });
 
+    socket.on('class_score_update', (data: { classId: number; topicId: number; scoreAverage: number; sectionMastery: number }) => {
+      // Update individual topics in real-time
+      setTopics(prev => prev.map(topic => {
+        if (topic.id === data.topicId) {
+          return { ...topic, percentage: Math.round(data.scoreAverage) };
+        }
+        return topic;
+      }));
+    });
+
     // 2. Session Lifecycle (Live Sync)
     socket.on('class_started', (data: { classId: number; sectionId: number }) => {
       console.log("[Main_Prof] Live Class Started:", data);
@@ -261,19 +271,23 @@ const Main_Prof: React.FC = () => {
 
           setTopics(processed);
           
-          // SET OVERALL PERFORMANCE (Sector/Session Mastery)
-          // Priority: 1. Direct session average from class table 2. Calculated average from topics
-          const sessionToUse = currentSession || (activeSession?.id_class === targetId ? activeSession : focusSession);
+          // Extremely aggressive score extraction
+          const score = sessionToUse?.score_average ?? 
+                        sessionToUse?.AverageScore ?? 
+                        sessionToUse?.overallAverage ?? 
+                        sessionToUse?.overall_average ?? 
+                        sessionToUse?.student_score_average ?? 
+                        sessionToUse?.score;
           
-          if (sessionToUse && sessionToUse.score_average !== null && sessionToUse.score_average !== undefined) {
-            setOverallPerformance(Number(sessionToUse.score_average));
+          if (score !== null && score !== undefined && !isNaN(Number(score))) {
+            setOverallPerformance(Number(score));
           } else {
             const validScores = processed.filter(p => p.percentage !== null).map(p => p.percentage!);
             if (validScores.length > 0) {
               const sum = validScores.reduce((acc, val) => acc + val, 0);
               setOverallPerformance(Math.round(sum / validScores.length));
             } else {
-              setOverallPerformance(0); // Default to 0 instead of null to show "0%"
+              setOverallPerformance(0);
             }
           }
         } else {
@@ -317,7 +331,13 @@ const Main_Prof: React.FC = () => {
     setTopics(processedTopics);
     
     // Use session average if available immediately, default to 0 to ensure colored border
-    setOverallPerformance(Number(session.score_average) || 0);
+    const score = session?.score_average ?? 
+                  session?.AverageScore ?? 
+                  session?.overallAverage ?? 
+                  session?.overall_average ??
+                  session?.student_score_average ?? 
+                  session?.score;
+    setOverallPerformance(Number(score) || 0);
   };
 
   // Stable Icon Mapping helper
