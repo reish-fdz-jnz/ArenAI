@@ -8,7 +8,9 @@ import {
     TOPIC_MASTERY_PROMPT, 
     STUDENT_INSIGHT_PROMPT, 
     CLASS_REPORT_PROMPT,
-    TOPIC_CLASS_SUMMARY_PROMPT
+    TOPIC_CLASS_SUMMARY_PROMPT,
+    SECTION_TOPIC_SUMMARY_PROMPT,
+    QUESTIONS_SUMMARY_PROMPT
 } from '../config/prompts.js';
 import {
     getUsersWithUnanalyzedMessages,
@@ -468,6 +470,23 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
         // 5. For each topic, generate a summary
         let successCount = 0;
 
+        // Fetch Class Metadata for Prompt Context
+        const classMetaResult = await db.query<{ subject: string, level: string, topics: string }>(
+            `SELECT 
+                s.name_subject as subject,
+                sec.grade as level,
+                GROUP_CONCAT(DISTINCT t.name separator ', ') as topics
+             FROM class c
+             LEFT JOIN subject s ON s.id_subject = c.id_subject
+             LEFT JOIN section sec ON sec.id_section = c.id_section
+             LEFT JOIN class_topic ct ON ct.id_class = c.id_class
+             LEFT JOIN topic t ON t.id_topic = ct.id_topic
+             WHERE c.id_class = ?
+             GROUP BY c.id_class`,
+            [classId]
+        );
+        const meta = classMetaResult.rows[0] || { subject: 'General', level: 'N/A', topics: '' };
+
         for (const topic of topicResult.rows) {
             try {
                 console.log('');
@@ -536,17 +555,21 @@ export async function generateTopicClassSummaries(classId: number = DEFAULT_CLAS
                     .slice(0, 3)
                     .join('\n') || 'Sin conclusiones específicas';
 
-                // Build the prompt
+                // Build the prompt with Task Parameters
                 const prompt = TOPIC_CLASS_SUMMARY_PROMPT
                     .replace('{TOPIC_NAME}', topic.name)
                     .replace('{TOPIC_SCORE}', String(topic.score_average || 0))
                     .replace('{STUDENTS_COMPLETED}', String(studentsCompleted))
                     .replace('{TOTAL_STUDENTS}', String(totalStudents))
                     .replace('{STUDENT_QUESTIONS}', questionSummary)
-                    .replace('{AVG_FRUSTRATION}', topicQStats?.avgFrustration || 'low');
+                    .replace('{AVG_FRUSTRATION}', topicQStats?.avgFrustration || 'low')
+                    .replace('{SUBJECT}', meta.subject)
+                    .replace('{LEVEL}', meta.level)
+                    .replace('{TOPICS_LIST}', meta.topics)
+                    .replace('{LANGUAGE}', 'Spanish');
 
                 const aiResponse = await generateContentWithGemini(
-                    `JSON breve del tópico:`, prompt
+                    `JSON breve del tópico ${topic.name}:`, prompt
                 );
 
                 const parsed = parseInsightResponse(aiResponse);
@@ -660,11 +683,31 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
                 console.log(`[Phase 5]   Context: "${classSummaries.substring(0, 80)}"`);
 
                 // Step 3: Build prompt and call AI
+                // Fetch context metadata for Section
+                const sectionMetaResult = await db.query<{ subject: string, level: string, topics: string }>(
+                    `SELECT 
+                        s.name_subject as subject,
+                        sec.grade as level,
+                        GROUP_CONCAT(DISTINCT t.name separator ', ') as topics
+                     FROM section sec
+                     LEFT JOIN class c ON c.id_section = sec.id_section
+                     LEFT JOIN subject s ON s.id_subject = c.id_subject
+                     LEFT JOIN topic t ON t.id_subject = s.id_subject
+                     WHERE sec.id_section = ?
+                     GROUP BY sec.id_section`,
+                    [row.id_section]
+                );
+                const sMeta = sectionMetaResult.rows[0] || { subject: 'General', level: 'N/A', topics: '' };
+
                 const prompt = SECTION_TOPIC_SUMMARY_PROMPT
                     .replace('{TOPIC_NAME}', row.topic_name)
                     .replace('{SECTION_NAME}', `Sección ${row.id_section}`)
                     .replace('{TOPIC_SCORE}', String(row.score || 0))
-                    .replace('{CLASS_SUMMARIES}', classSummaries);
+                    .replace('{CLASS_SUMMARIES}', classSummaries)
+                    .replace('{SUBJECT}', sMeta.subject)
+                    .replace('{LEVEL}', sMeta.level)
+                    .replace('{TOPICS_LIST}', sMeta.topics)
+                    .replace('{LANGUAGE}', 'Spanish');
 
                 console.log(`[Phase 5]   Calling Gemini...`);
                 const aiResponse = await generateContentWithGemini(prompt, 'Responde solo JSON válido.');
@@ -676,7 +719,7 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
                 console.log(`[Phase 5]   Parsed: ${!!parsed}, saving ${toSave.length} chars`);
 
                 await db.query(
-                    `UPDATE section_topic SET ai_summary = ?, last_analysis_at = NOW()
+                    `UPDATE section_topic SET ai_summary = ?, last_analysis_at = CURRENT_TIMESTAMP
                      WHERE id_section = ? AND id_topic = ?`,
                     [toSave, row.id_section, row.id_topic]
                 );
@@ -692,6 +735,81 @@ export async function generateSectionTopicSummaries(sectionId?: number): Promise
     } catch (err: any) {
         console.error(`[Phase 5] FATAL ERROR: ${err?.message}`);
         console.error(err);
+    }
+}
+
+/**
+ * Phase 4.5: Generate AI summary of student questions for a specific class
+ */
+export async function generateClassQuestionsSummary(classId: number): Promise<void> {
+    console.log(`[Phase 4.5] ❓ Summarizing questions for class ${classId}`);
+    try {
+        // 1. Get recent questions
+        const questions = await db.query<{ question_text: string; topic_detected: string | null; frustration_level: string }>(
+            `SELECT question_text, topic_detected, frustration_level 
+             FROM chatbot_question_log WHERE id_class = ? ORDER BY created_at DESC LIMIT 20`,
+            [classId]
+        );
+        if (questions.rows.length === 0) {
+            console.log(`[Phase 4.5] No questions found for class ${classId}`);
+            return;
+        }
+
+        // 2. Fetch class metadata
+        const classMetaResult = await db.query<{ subject: string, level: string, topics: string }>(
+            `SELECT 
+                s.name_subject as subject,
+                sec.grade as level,
+                GROUP_CONCAT(DISTINCT t.name separator ', ') as topics
+             FROM class c
+             LEFT JOIN subject s ON s.id_subject = c.id_subject
+             LEFT JOIN section sec ON sec.id_section = c.id_section
+             LEFT JOIN class_topic ct ON ct.id_class = c.id_class
+             LEFT JOIN topic t ON t.id_topic = ct.id_topic
+             WHERE c.id_class = ?
+             GROUP BY c.id_class`,
+            [classId]
+        );
+        const meta = classMetaResult.rows[0] || { subject: 'General', level: 'N/A', topics: '' };
+
+        // 3. Prep context
+        const questionList = questions.rows.map(q => 
+            `[${q.frustration_level}] ${q.topic_detected || '?'}: ${q.question_text.substring(0, 80)}`
+        ).join('\n');
+
+        // 4. Call AI
+        const prompt = QUESTIONS_SUMMARY_PROMPT
+            .replace('{SUBJECT}', meta.subject)
+            .replace('{LEVEL}', meta.level)
+            .replace('{TOPICS_LIST}', meta.topics)
+            .replace('{QUESTION_COUNT}', String(questions.rows.length))
+            .replace('{LANGUAGE}', 'Spanish')
+            .replace('{QUESTION_LIST}', questionList);
+
+        const aiResp = await generateContentWithGemini(prompt, 'Responde solo JSON.');
+        const parsed = parseInsightResponse(aiResp);
+
+        if (!parsed) {
+            console.error(`[Phase 4.5] Failed to parse AI response for class ${classId}`);
+            return;
+        }
+
+        // 5. Save to DB
+        await db.query(
+            `INSERT INTO class_questions_summary (id_class, questions_summary, top_doubts, total_questions, avg_frustration, generated_at)
+             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+            [
+                classId, 
+                parsed.questions_summary, 
+                JSON.stringify(parsed.top_doubts || []), 
+                questions.rows.length, 
+                parsed.avg_frustration || 'media'
+            ]
+        );
+
+        console.log(`[Phase 4.5] ✅ Questions summary saved for class ${classId}`);
+    } catch (err: any) {
+        console.error(`[Phase 4.5] ❌ Error in questions summary:`, err?.message);
     }
 }
 

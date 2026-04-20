@@ -636,4 +636,69 @@ html[data-force-dark] .ms-popup-close {
   background: rgba(var(--ion-color-primary-rgb), 0.3);
   color: white;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Topic Summary Popup (IA)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.ms-topic-summary-popup {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  background: white;
+  border-radius: 16px;
+  padding: 12px;
+  width: 200px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  z-index: 1000;
+  animation: msPopupSlideIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.ms-summary-text {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #444;
+  margin: 0 0 8px 0;
+  text-align: left;
+}
+
+.ms-summary-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ms-summary-tag {
+  font-size: 10px;
+  background: #fff5f5;
+  color: #ff5252;
+  padding: 2px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 82, 82, 0.2);
+  white-space: nowrap;
+}
+
+@keyframes msPopupSlideIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(0px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(10px); }
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-force-light]) .ms-topic-summary-popup {
+    background: #2a2a2a;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  }
+  
+  html:not([data-force-light]) .ms-summary-text {
+    color: #eee;
+  }
+
+  html:not([data-force-light]) .ms-summary-tag {
+    background: rgba(255, 82, 82, 0.15);
+    color: #ff8e8e;
+    border-color: rgba(255, 82, 82, 0.3);
+  }
+}
 

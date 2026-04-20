@@ -63,6 +63,30 @@ export const TopicBubble: React.FC<TopicBubbleProps> = ({
       >
         {topic.name}
       </span>
+
+      {expandedTopic === labelKey && topic.aiSummary && (
+        <div className="ms-topic-summary-popup">
+          {(() => {
+            try {
+              const parsed = typeof topic.aiSummary === 'string' ? JSON.parse(topic.aiSummary) : topic.aiSummary;
+              return (
+                <>
+                  <p className="ms-summary-text">{parsed.summary || parsed}</p>
+                  {parsed.key_issues && parsed.key_issues.length > 0 && (
+                    <div className="ms-summary-tags">
+                      {parsed.key_issues.map((issue: string, i: number) => (
+                        <span key={i} className="ms-summary-tag">⚠️ {issue}</span>
+                      ))}
+                    </div>
+                  )}
+                </>
+              );
+            } catch (e) {
+              return <p className="ms-summary-text">{topic.aiSummary}</p>;
+            }
+          })()}
+        </div>
+      )}
     </div>
   );
 };

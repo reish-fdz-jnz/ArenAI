@@ -10,6 +10,12 @@ export interface DailySession {
     status: string;
     name_template?: string;
     topics?: any[];
+    score_average?: number | string | null;
+    AverageScore?: number | string | null;
+    overallAverage?: number | string | null;
+    overall_average?: number | string | null;
+    student_score_average?: number | string | null;
+    score?: number | string | null;
 }
 
 interface DailyScheduleViewProps {

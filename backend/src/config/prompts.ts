@@ -247,15 +247,24 @@ El formato debe ser EXACTAMENTE así:
 // Per-topic class summaries — CONCISE
 // ==========================================
 export const TOPIC_CLASS_SUMMARY_PROMPT = `
-<role>
-Analista Educativo. Responde SOLO con JSON válido. Sin markdown. MUY BREVE.
-</role>
-
 <task>
-Resumen BREVE del tópico "{TOPIC_NAME}" en la clase. Score: {TOPIC_SCORE}%.
-Estudiantes: {STUDENTS_COMPLETED}/{TOTAL_STUDENTS}. Frustración: {AVG_FRUSTRATION}.
-Preguntas: {STUDENT_QUESTIONS}
+Resumen BREVE del tópico "{TOPIC_NAME}" en la clase. 
+Score promedio alcanzado: {TOPIC_SCORE}%.
+Estudiantes que completaron: {STUDENTS_COMPLETED}/{TOTAL_STUDENTS}.
+Promedio de frustración en chat: {AVG_FRUSTRATION}.
 </task>
+
+<task_parameters>
+- Materia: {SUBJECT}
+- Nivel Educativo: Grado {LEVEL}
+- Temas: {TOPICS_LIST}
+- Idioma: {LANGUAGE}
+</task_parameters>
+
+<context_data>
+Preguntas de los estudiantes:
+{STUDENT_QUESTIONS}
+</context_data>
 
 <rules>
 - summary: MÁXIMO 2 oraciones (30 palabras máx)
@@ -282,13 +291,21 @@ Eres un sintetizador de datos educativos. Responde SOLO con JSON válido. Sin ma
 </role>
 
 <task>
-COMBINA los siguientes resúmenes de clase en UN resumen general del tópico "{TOPIC_NAME}" en la sección. Score promedio: {TOPIC_SCORE}%.
-
-Resúmenes de las clases:
-{CLASS_SUMMARIES}
-
-NO inventes datos. Solo sintetiza lo que dicen los resúmenes de clase.
+COMBINA los resúmenes de clase en UN resumen general del tópico "{TOPIC_NAME}" para la sección. 
+Score promedio de la sección: {TOPIC_SCORE}%.
 </task>
+
+<task_parameters>
+- Materia: {SUBJECT}
+- Nivel Educativo: Grado {LEVEL}
+- Temas: {TOPICS_LIST}
+- Idioma: {LANGUAGE}
+</task_parameters>
+
+<context_data>
+Resúmenes de las clases individuales:
+{CLASS_SUMMARIES}
+</context_data>
 
 <rules>
 - summary: MÁXIMO 2 oraciones que COMBINEN los resúmenes de clase (40 palabras máx)
@@ -303,6 +320,47 @@ NO inventes datos. Solo sintetiza lo que dicen los resúmenes de clase.
   "strengths": ["del resumen 1"],
   "weaknesses": ["del resumen 2"],
   "trend": "estable"
+}
+</json_schema>
+`;
+
+// ==========================================
+// 9. QUESTIONS SUMMARY PROMPT (JSON)
+// Summarizes what students are asking the chatbot
+// ==========================================
+export const QUESTIONS_SUMMARY_PROMPT = `
+<role>
+Asistente de Análisis de Dudas. Responde SOLO con JSON válido. Sin markdown.
+</role>
+
+<task>
+Resume las principales dudas y el sentimiento general de los estudiantes basándote en sus preguntas recientes.
+</task>
+
+<task_parameters>
+- Materia: {SUBJECT}
+- Nivel Educativo: Grado {LEVEL}
+- Temas: {TOPICS_LIST}
+- Cantidad de preguntas analizadas: {QUESTION_COUNT}
+- Idioma: {LANGUAGE}
+</task_parameters>
+
+<context_data>
+Lista de preguntas (con nivel de frustración):
+{QUESTION_LIST}
+</context_data>
+
+<rules>
+- questions_summary: Resumen de 2 oraciones sobre qué están preguntando (30 palabras máx).
+- top_doubts: Lista de las 3 dudas más recurrentes o críticas (10 palabras c/u máx).
+- avg_frustration: Refleja el sentimiento predominante ("baja", "media", "alta").
+</rules>
+
+<json_schema>
+{
+  "questions_summary": "Los estudiantes tienen dudas sobre...",
+  "top_doubts": ["Duda 1", "Duda 2", "Duda 3"],
+  "avg_frustration": "media"
 }
 </json_schema>
 `;

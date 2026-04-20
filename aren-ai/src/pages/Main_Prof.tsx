@@ -92,9 +92,15 @@ const Main_Prof: React.FC = () => {
   const [viewMode, setViewMode] = useState<"state" | "que">("state");
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
 
-  // Chatbot questions state
+  // Chatbot questions & summary state
   const [chatbotQuestions, setChatbotQuestions] = useState<any[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [questionsSummary, setQuestionsSummary] = useState<{
+    summary: string;
+    topDoubts: string[];
+    avgFrustration: string;
+    generatedAt: string;
+  } | null>(null);
 
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const issueTimeoutRefs = useRef<NodeJS.Timeout[]>([]);
@@ -243,7 +249,8 @@ const Main_Prof: React.FC = () => {
     try {
       const token = localStorage.getItem("authToken");
       
-      const targetId = classId || focusSession?.id_class;
+      const sessionToUse = activeSession || focusSession;
+      const targetId = classId || sessionToUse?.id_class;
       const classIdParam = targetId ? `&classId=${targetId}` : "";
       const url = getApiUrl(`api/sections/progress?grade=${selectedGrade}&sectionNumber=${selectedSection}&subject=${selectedSubject}${classIdParam}`);
       
@@ -293,9 +300,9 @@ const Main_Prof: React.FC = () => {
             if (score !== null && score !== undefined && !isNaN(Number(score))) {
               setOverallPerformance(Number(score));
             } else {
-              const validScores = processed.filter(p => p.percentage !== null).map(p => p.percentage!);
+              const validScores = processed.filter((p: any) => p.percentage !== null).map((p: any) => p.percentage!);
               if (validScores.length > 0) {
-                const sum = validScores.reduce((acc, val) => acc + val, 0);
+                const sum = validScores.reduce((acc: number, val: number) => acc + val, 0);
                 setOverallPerformance(Math.round(sum / validScores.length));
               } else {
                 setOverallPerformance(0);
@@ -480,7 +487,13 @@ const Main_Prof: React.FC = () => {
     setInsightsLoading(true);
     try {
       const token = localStorage.getItem("authToken");
-      const url = getApiUrl(`/ai/class-insights?classId=1`);
+      const targetId = activeSession?.id_class || focusSession?.id_class;
+      if (!targetId) {
+        setInsightsLoading(false);
+        return;
+      }
+      
+      const url = getApiUrl(`/ai/class-insights?classId=${targetId}`);
       console.log("[Debug] Fetching:", url);
 
       const response = await fetch(url, {
@@ -552,31 +565,82 @@ const Main_Prof: React.FC = () => {
     fetchClassInsights(false);
   }, [selectedSubject]);
 
-  // Fetch chatbot questions when switching to "que" tab
+  // Fetch chatbot questions and summary when switching to "que" tab
   useEffect(() => {
     if (viewMode !== 'que') return;
 
-    const fetchChatbotQuestions = async () => {
+    const targetId = activeSession?.id_class || focusSession?.id_class;
+
+    const fetchData = async () => {
       setQuestionsLoading(true);
       try {
         const token = localStorage.getItem('authToken');
-        const url = getApiUrl(`/ai/chatbot-questions?limit=20`);
-        const response = await fetch(url, {
+        
+        // 1. Fetch raw questions
+        const qUrl = getApiUrl(`/ai/chatbot-questions?limit=20${targetId ? `&classId=${targetId}` : ''}`);
+        const qRes = await fetch(qUrl, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        if (response.ok) {
-          const data = await response.json();
-          setChatbotQuestions(data.questions || []);
+        if (qRes.ok) {
+          const qData = await qRes.json();
+          setChatbotQuestions(qData.questions || []);
+        }
+
+        // 2. Fetch AI Questions Summary
+        if (targetId) {
+          const sUrl = getApiUrl(`/ai/questions-summary?classId=${targetId}`);
+          const sRes = await fetch(sUrl, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            if (sData.success) {
+              setQuestionsSummary({
+                summary: sData.summary,
+                topDoubts: sData.topDoubts,
+                avgFrustration: sData.avgFrustration,
+                generatedAt: sData.generatedAt
+              });
+            } else {
+              setQuestionsSummary(null);
+            }
+          }
         }
       } catch (err) {
-        console.error('[Main_Prof] Error fetching chatbot questions:', err);
+        console.error('[Main_Prof] Error fetching chatbot data:', err);
       } finally {
         setQuestionsLoading(false);
       }
     };
 
-    fetchChatbotQuestions();
-  }, [viewMode]);
+    fetchData();
+  }, [viewMode, activeSession, focusSession]);
+
+  const handleGenerateAIReport = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      const url = getApiUrl('/ai/generate-section-summaries'); // This triggers full pipeline (Phase 4, 4.5, 5)
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        console.log("AI Report triggered successfully");
+        // Reload insights and questions summary
+        await fetchClassInsights(true);
+        if (viewMode === 'que') {
+          // Re-trigger the useEffect for questions
+          setViewMode('state');
+          setTimeout(() => setViewMode('que'), 100);
+        }
+      }
+    } catch (err) {
+      console.error("Error generating AI report:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   const navigateTo = (path: string) => router.push(path, 'forward', 'push');
@@ -801,7 +865,7 @@ const Main_Prof: React.FC = () => {
                         selectedSubject={selectedSubject}
                         selectedGrade={selectedGrade}
                         selectedSection={selectedSection}
-                        classId={activeSession?.id_class}
+                        classId={focusSession?.id_class}
                       />
                     ))}
                   </div>
@@ -894,14 +958,61 @@ const Main_Prof: React.FC = () => {
                               )}
                             </ul>
                           )}
+                          
+                          <button 
+                            className="ms-generate-ai-btn"
+                            onClick={handleGenerateAIReport}
+                            style={{
+                              marginTop: '20px',
+                              padding: '8px 16px',
+                              borderRadius: '20px',
+                              background: 'linear-gradient(45deg, #FF6B6B, #FF8E53)',
+                              border: 'none',
+                              color: 'white',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              boxShadow: '0 4px 15px rgba(255, 107, 107, 0.3)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              margin: '20px auto 0'
+                            }}
+                          >
+                            <IonIcon icon={planetOutline} />
+                            {t("professor.dashboard.generateReport", "Generar Reporte AI")}
+                          </button>
                         </>
                       ) : (
-                        <p style={{ fontStyle: "italic", opacity: 0.9, color: "white", textAlign: "center", width: "100%" }}>
-                          {t(
-                            "professor.dashboard.nothingToSummarize",
-                            "Nothing to summarize yet",
-                          )}
-                        </p>
+                        <div style={{ textAlign: 'center' }}>
+                          <p style={{ fontStyle: "italic", opacity: 0.9, color: "white", textAlign: "center", width: "100%", marginBottom: '16px' }}>
+                            {t(
+                              "professor.dashboard.nothingToSummarize",
+                              "Nothing to summarize yet",
+                            )}
+                          </p>
+                          <button 
+                            className="ms-generate-ai-btn"
+                            onClick={handleGenerateAIReport}
+                            style={{
+                              padding: '8px 16px',
+                              borderRadius: '20px',
+                              background: 'linear-gradient(45deg, #6B6BFF, #8E53FF)',
+                              border: 'none',
+                              color: 'white',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              margin: '0 auto'
+                            }}
+                          >
+                            <IonIcon icon={planetOutline} />
+                            {t("professor.dashboard.startAnalysis", "Iniciar Análisis AI")}
+                          </button>
+                        </div>
                       )}
                     </div>
                   </>
@@ -915,7 +1026,53 @@ const Main_Prof: React.FC = () => {
                         <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontStyle: 'italic' }}>
                           {t('common.loading', 'Cargando...')}
                         </p>
-                      ) : chatbotQuestions.length > 0 ? (
+                      ) : (
+                        <>
+                          {questionsSummary && (
+                            <div style={{
+                              background: 'rgba(107, 107, 255, 0.15)',
+                              borderRadius: '16px',
+                              padding: '12px 14px',
+                              marginBottom: '14px',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              backdropFilter: 'blur(5px)'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                                <IonIcon icon={planetOutline} style={{ color: '#8E53FF', fontSize: '18px' }} />
+                                <span style={{ fontWeight: '700', fontSize: '13px', color: 'white' }}>Resumen de Dudas (IA)</span>
+                                <span style={{ 
+                                  marginLeft: 'auto', 
+                                  fontSize: '10px', 
+                                  background: questionsSummary.avgFrustration === 'high' ? '#e74c3c' : questionsSummary.avgFrustration === 'medium' ? '#f39c12' : '#2ecc71',
+                                  padding: '2px 6px',
+                                  borderRadius: '6px',
+                                  color: 'white'
+                                }}>
+                                  Frustración: {questionsSummary.avgFrustration}
+                                </span>
+                              </div>
+                              <p style={{ fontSize: '12px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)', margin: '0 0 8px 0' }}>
+                                {questionsSummary.summary}
+                              </p>
+                              {questionsSummary.topDoubts.length > 0 && (
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                  {questionsSummary.topDoubts.map((doubt, i) => (
+                                    <span key={i} style={{ 
+                                      fontSize: '10px', 
+                                      background: 'rgba(255,255,255,0.1)', 
+                                      padding: '3px 8px', 
+                                      borderRadius: '10px',
+                                      color: 'rgba(255,255,255,0.8)'
+                                    }}>
+                                      ⚠️ {doubt}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {chatbotQuestions.length > 0 ? (
                         chatbotQuestions.map((q: any, idx: number) => (
                           <div key={q.id || idx} style={{
                             background: 'rgba(255,255,255,0.08)',
@@ -956,11 +1113,12 @@ const Main_Prof: React.FC = () => {
                               "{q.question.length > 120 ? q.question.substring(0, 120) + '...' : q.question}"
                             </p>
                           </div>
-                        ))
-                      ) : (
-                        <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', fontSize: '13px' }}>
-                          {t('professor.dashboard.noQuestions', 'No hay preguntas registradas aún')}
-                        </p>
+                        ))) : (
+                          <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', fontSize: '13px' }}>
+                            {t('professor.dashboard.noQuestions', 'No hay preguntas registradas aún')}
+                          </p>
+                        )}
+                        </>
                       )}
                     </div>
                   </>

@@ -13,6 +13,7 @@ export interface TopicProgress {
     nameKey: string; // Translation key
     percentage: number | null;
     icon: string;
+    aiSummary?: string | null;
 }
 
 export interface SubjectData {

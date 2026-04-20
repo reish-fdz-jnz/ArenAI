@@ -179,7 +179,8 @@ const Main_Student: React.FC = () => {
                         name: t.name_topic || t.name || "",
                         nameKey: t.name_topic || t.name || "",
                         percentage: score,
-                        icon: "🎓"
+                        icon: "🎓",
+                        aiSummary: t.ai_summary || null
                     };
                 });
                 // Only override standard topics if we have them
@@ -841,7 +842,8 @@ const Main_Student: React.FC = () => {
                               name: t.name_topic || t.name || "",
                               nameKey: t.name_topic || t.name || "",
                               percentage: t.score !== undefined ? Number(t.score) : 0,
-                              icon: "🎓"
+                              icon: "🎓",
+                              aiSummary: t.ai_summary || null
                           }));
                           setTopics(formattedTopics);
                           setOverallPerformance(Number((session as any).student_score_average) || 0);
