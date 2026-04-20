@@ -177,8 +177,9 @@ const Main_Student: React.FC = () => {
                     if (score !== null && score > 0 && score <= 1) {
                         score = score * 100;
                     }
+                    const topicId = t.id_topic || t.id;
                     return {
-                        id: t.id_topic,
+                        id: topicId,
                         name: t.name_topic || t.name || "",
                         nameKey: t.name_topic || t.name || "",
                         percentage: score,
@@ -434,7 +435,17 @@ const Main_Student: React.FC = () => {
 
     const handleTopicUpdate = (data: { topicId: number; score: number }) => {
       console.log("[Main_Student] Topic update received:", data);
-      setTopics(prev => prev.map(t => t.id === data.topicId ? { ...t, percentage: data.score } : t));
+      setTopics(prev => prev.map(t => {
+        if (t.id === data.topicId) {
+          let newScore = data.score;
+          // Scale fractional scores if needed
+          if (newScore !== null && newScore > 0 && newScore <= 1) {
+            newScore = newScore * 100;
+          }
+          return { ...t, percentage: newScore };
+        }
+        return t;
+      }));
     };
 
     const handleScoreUpdate = (data: { overallAverage: number }) => {
