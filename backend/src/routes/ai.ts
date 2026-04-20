@@ -9,7 +9,7 @@ import {
   getChatHistory,
   getSubjectIdByName
 } from '../repositories/chatLogRepository.js';
-import { runInsightGeneration, runClassReportGeneration, generateSectionTopicSummaries } from '../services/insightService.js';
+import { runStudentInsightGeneration, runClassReportGeneration, generateSectionTopicSummaries } from '../services/insightService.js';
 import { getSectionTopics } from '../repositories/sectionRepository.js';
 import { db } from '../db/pool.js';
 import { getStudentTopicProgress } from '../repositories/studentRepository.js';
