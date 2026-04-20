@@ -26,6 +26,20 @@ router.post('/', async (req, res, next) => {
             winBattleRequirement,
             minBattleWins,
         });
+
+        // NOTIFY STUDENTS IN THE SECTION
+        // We broadcast to the section room so all students in that class get a real-time alert
+        const { io } = await import('../server.js');
+        if (io) {
+            io.to(`section_${sectionId}`).emit('new_assignment', {
+                id,
+                title: title || 'Nueva Tarea',
+                description,
+                quizId
+            });
+            console.log(`[Socket] Broadcasted new_assignment to section_${sectionId}`);
+        }
+
         console.log('Assignment created with ID:', id);
         res.status(201).json({ success: true, id });
     } catch (err: any) {

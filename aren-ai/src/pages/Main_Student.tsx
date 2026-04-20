@@ -8,6 +8,7 @@ import {
   useIonRouter,
   IonSkeletonText,
   useIonViewWillEnter,
+  useIonToast,
 } from "@ionic/react";
 import {
   trophyOutline,
@@ -16,16 +17,17 @@ import {
   americanFootballOutline,
   peopleOutline,
   schoolOutline,
+  bookOutline,
 } from "ionicons/icons";
 import { useTranslation } from "react-i18next";
 import "./Main_Student.css";
-import { 
-  StudentMenu, 
-  StudentHeader, 
-  AnimatedMascot, 
-  CalendarSelector, 
-  TopicBubble, 
-  PageTransition, 
+import {
+  StudentMenu,
+  StudentHeader,
+  AnimatedMascot,
+  CalendarSelector,
+  TopicBubble,
+  PageTransition,
   DailyScheduleView,
   DailySession
 } from "../components";
@@ -48,6 +50,7 @@ const SUBJECT_MAP: Record<string, number> = {
 
 const Main_Student: React.FC = () => {
   const router = useIonRouter();
+  const [present] = useIonToast();
   const { t } = useTranslation();
   const { getAvatarAssets } = useAvatar();
   const avatarAssets = getAvatarAssets();
@@ -146,7 +149,7 @@ const Main_Student: React.FC = () => {
     }
     try {
       const token = localStorage.getItem('authToken');
-      
+
       let activeSessionData: any = null;
       if (!isManualDateSelection) {
         const activeRes = await fetch(getApiUrl(`api/student-sessions/active`), {
@@ -155,50 +158,51 @@ const Main_Student: React.FC = () => {
         if (activeRes.ok) {
           const result = await activeRes.json();
           activeSessionData = result.data;
-          
+
           if (activeSessionData && activeSessionData.id_class) {
             setActiveSession(activeSessionData);
             setDailySessions([activeSessionData]);
             if (activeSessionData.topics) {
-                const formattedTopics: TopicProgress[] = activeSessionData.topics.map((t: any) => {
-                    let score = (t.score !== undefined && t.score !== null) ? Number(t.score) : null;
-                    // Auto-scale fractional scores (0.35 -> 35)
-                    if (score !== null && score > 0 && score <= 1) {
-                        score = score * 100;
-                    }
-                    const topicId = t.id_topic || t.id;
-                    return {
-                        id: topicId,
-                        name: t.name_topic || t.name || "",
-                        nameKey: t.name_topic || t.name || "",
-                        percentage: score,
-                        icon: "🎓",
-                        aiSummary: t.ai_summary || null
-                    };
-                });
-                // Only override standard topics if we have them
-                setTopics(formattedTopics);
-                setOverallPerformance(Number(activeSessionData.student_score_average) || 0);
+              const formattedTopics: TopicProgress[] = activeSessionData.topics.map((t: any) => {
+                let score = (t.score !== undefined && t.score !== null) ? Number(t.score) : null;
+                let mastery = (t.mastery !== undefined && t.mastery !== null) ? Number(t.mastery) : null;
 
-                let summaryText = activeSessionData.student_ai_summary || activeSessionData.class_ai_summary || "Class is active. Monitoring your progress...";
-                let weaknesses: string[] = [];
+                // Auto-scale fractional scores
+                if (score !== null && score > 0 && score <= 1) score = score * 100;
+                if (mastery !== null && mastery > 0 && mastery <= 1) mastery = mastery * 100;
 
-                // Parallel robust parsing logic for active session summaries
-                if (typeof summaryText === 'string' && summaryText.trim().startsWith('{')) {
-                    try {
-                        const parsed = JSON.parse(summaryText);
-                        summaryText = parsed.summary || parsed.general_summary || summaryText;
-                        if (parsed.key_issues && Array.isArray(parsed.key_issues)) {
-                            weaknesses = parsed.key_issues;
-                        }
-                    } catch (e) { /* ignore */ }
-                }
+                const topicId = t.id_topic || t.id;
+                return {
+                  id: topicId,
+                  name: t.name_topic || t.name || "",
+                  nameKey: t.name_topic || t.name || "",
+                  percentage: score !== null ? score : mastery, // Use historical mastery if session score is null
+                  icon: "🎓",
+                  aiSummary: t.ai_summary || null
+                };
+              });
+              setTopics(formattedTopics);
+              setOverallPerformance(Number(activeSessionData.student_score_average) || Number(activeSessionData.section_mastery_average) || 0);
 
-                setStudentInsights({ summary: summaryText, issues: weaknesses });
-                setDisplayedSummary(summaryText);
-                setDisplayedIssues(weaknesses);
-                setIsLoading(false);
-                return; // Skip normal fetching if active session is present!
+              let summaryText = activeSessionData.student_ai_summary || activeSessionData.class_ai_summary || "Class is active. Monitoring your progress...";
+              let weaknesses: string[] = [];
+
+              // Parallel robust parsing logic for active session summaries
+              if (typeof summaryText === 'string' && summaryText.trim().startsWith('{')) {
+                try {
+                  const parsed = JSON.parse(summaryText);
+                  summaryText = parsed.summary || parsed.general_summary || summaryText;
+                  if (parsed.key_issues && Array.isArray(parsed.key_issues)) {
+                    weaknesses = parsed.key_issues;
+                  }
+                } catch (e) { /* ignore */ }
+              }
+
+              setStudentInsights({ summary: summaryText, issues: weaknesses });
+              setDisplayedSummary(summaryText);
+              setDisplayedIssues(weaknesses);
+              setIsLoading(false);
+              return; // Skip normal fetching if active session is present!
             }
           } else {
             setActiveSession(null);
@@ -221,11 +225,11 @@ const Main_Student: React.FC = () => {
       });
       const sessionsObj = await sessionRes.json();
       const sessions: DailySession[] = Array.isArray(sessionsObj) ? sessionsObj : (sessionsObj && sessionsObj.id_class ? [sessionsObj] : []);
-      
+
       setDailySessions(prev => {
         const merged = [...sessions];
         if (activeSessionData && !merged.some(s => s.id_class === activeSessionData.id_class)) {
-            merged.push(activeSessionData);
+          merged.push(activeSessionData);
         }
         return merged;
       });
@@ -236,10 +240,10 @@ const Main_Student: React.FC = () => {
 
       // Fallback: Fetch regular subject data if NOT looking at a specific session
       if (!activeSessionData) {
-          const sId = SUBJECT_MAP[selectedSubject] || 1;
-          const subjectData = await studentService.getSubjectDetails(sId, selectedSubject);
-          setTopics(subjectData.topics);
-          setOverallPerformance(subjectData.overallAverage);
+        const sId = SUBJECT_MAP[selectedSubject] || 1;
+        const subjectData = await studentService.getSubjectDetails(sId, selectedSubject);
+        setTopics(subjectData.topics);
+        setOverallPerformance(subjectData.overallAverage);
       }
 
     } catch (err) {
@@ -273,7 +277,7 @@ const Main_Student: React.FC = () => {
   // Helper for color interpolation (Red to Teal)
   const getColorForPercentage = (percentage: number) => {
     const p = Math.max(0, Math.min(100, percentage));
-    
+
     if (p >= 80) return "#2ecc71"; // Success Green
     if (p >= 60) return "#f39c12"; // Warning Orange/Yellow
     return "#FF5252"; // Danger Red
@@ -355,7 +359,7 @@ const Main_Student: React.FC = () => {
 
         if (response.ok) {
           const data = await response.json();
-          
+
           if (data.insights && data.insights.length > 0) {
             const raw = data.insights[0];
             let summaryText = raw.summary || "";
@@ -363,15 +367,15 @@ const Main_Student: React.FC = () => {
 
             // Robust parsing if the summary itself is a JSON string
             if (typeof summaryText === 'string' && summaryText.trim().startsWith('{')) {
-                try {
-                    const parsed = JSON.parse(summaryText);
-                    summaryText = parsed.summary || parsed.general_summary || summaryText;
-                    if (parsed.key_issues && Array.isArray(parsed.key_issues)) {
-                        weaknesses = [...new Set([...weaknesses, ...parsed.key_issues])];
-                    }
-                } catch (e) {
-                    // Fallback to raw text
+              try {
+                const parsed = JSON.parse(summaryText);
+                summaryText = parsed.summary || parsed.general_summary || summaryText;
+                if (parsed.key_issues && Array.isArray(parsed.key_issues)) {
+                  weaknesses = [...new Set([...weaknesses, ...parsed.key_issues])];
                 }
+              } catch (e) {
+                // Fallback to raw text
+              }
             }
 
             const newInsights = {
@@ -436,11 +440,11 @@ const Main_Student: React.FC = () => {
           fetchStudentInsights(true);
         }
       }
-      
+
       // Also refresh session state if the pipeline just finished a pass
       if (data.data?.status === "pipeline_complete" || data.data?.status === "report_saved") {
-          console.log("[Main_Student] Global pipeline update - refreshing session state");
-          fetchSessionState();
+        console.log("[Main_Student] Global pipeline update - refreshing session state");
+        fetchSessionState();
       }
     };
 
@@ -463,17 +467,25 @@ const Main_Student: React.FC = () => {
 
     const handleTopicUpdate = (data: { topicId: number; score: number }) => {
       console.log("[Main_Student] Topic update received:", data);
-      setTopics(prev => prev.map(t => {
-        if (t.id === data.topicId) {
-          let newScore = data.score;
-          // Scale fractional scores if needed
-          if (newScore !== null && newScore > 0 && newScore <= 1) {
-            newScore = newScore * 100;
-          }
-          return { ...t, percentage: newScore };
+      setTopics(prev => {
+        const index = prev.findIndex(t => Number(t.id) === Number(data.topicId));
+        if (index === -1) {
+          console.warn(`[Main_Student] Topic ID ${data.topicId} not found in current topics list.`);
+          return prev;
         }
-        return t;
-      }));
+
+        const newTopics = [...prev];
+        let newScore = data.score;
+
+        // Scale fractional scores if needed
+        if (newScore !== null && newScore > 0 && newScore <= 1) {
+          newScore = newScore * 100;
+        }
+
+        newTopics[index] = { ...newTopics[index], percentage: newScore };
+        console.log(`[Main_Student] Updated topic ${data.topicId} to ${newScore}%`);
+        return newTopics;
+      });
     };
 
     const handleScoreUpdate = (data: { overallAverage: number }) => {
@@ -481,16 +493,62 @@ const Main_Student: React.FC = () => {
       setOverallPerformance(data.overallAverage);
     };
 
+    const handleTopicFocus = (data: { topicId: number; topicName: string }) => {
+      console.log("[Main_Student] Professor focused on topic:", data.topicName);
+      // We use the same key logic as the TopicBubble component: `${index}-${topic.name}`
+      setTopics(prev => {
+        const index = prev.findIndex(t => Number(t.id) === Number(data.topicId));
+        if (index !== -1) {
+          setExpandedTopic(`${index}-${data.topicName}`);
+        } else {
+          setExpandedTopic(String(data.topicId));
+        }
+        return prev;
+      });
+
+      // Optional: Visual feedback or scroll to topic
+      const element = document.getElementById(`topic-bubble-${data.topicId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    };
+
     const unregisterResync = socketService.onResync(() => {
       console.log("[Main_Student] Socket recovered, re-fetching dashboard state...");
       loadDashboardData();
     });
+
+    const handleNewAssignment = (data: { title: string; id: number }) => {
+      console.log("[Main_Student] New assignment received:", data);
+      present({
+        message: `📚 ${t("mainStudent.newAssignmentAlert") || "¡Nueva tarea asignada!"}: ${data.title}`,
+        duration: 5000,
+        position: 'top',
+        buttons: [
+          {
+            text: t("common.view") || "Ver",
+            handler: () => {
+              // Optionally navigate to assignments or the specific one
+              // For now, refresh session state to show indicators
+              fetchSessionState();
+            }
+          }
+        ],
+        color: 'secondary',
+        cssClass: 'aren-toast'
+      });
+      
+      // Update session markers or state if needed
+      fetchSessionState();
+    };
 
     socketService.socket?.on("insight_update", handleInsightUpdate);
     socketService.socket?.on("class_started", handleClassStarted);
     socketService.socket?.on("class_finished", handleClassFinished);
     socketService.socket?.on("student_topic_update", handleTopicUpdate);
     socketService.socket?.on("student_score_update", handleScoreUpdate);
+    socketService.socket?.on("topic_focus", handleTopicFocus);
+    socketService.socket?.on("new_assignment", handleNewAssignment);
 
     return () => {
       unregisterResync();
@@ -499,6 +557,8 @@ const Main_Student: React.FC = () => {
       socketService.socket?.off("class_finished", handleClassFinished);
       socketService.socket?.off("student_topic_update", handleTopicUpdate);
       socketService.socket?.off("student_score_update", handleScoreUpdate);
+      socketService.socket?.off("topic_focus", handleTopicFocus);
+      socketService.socket?.off("new_assignment", handleNewAssignment);
     };
   }, []);
 
@@ -524,9 +584,9 @@ const Main_Student: React.FC = () => {
   // Handlers
   const handleDateSelect = (date: Date) => {
     const today = new Date();
-    const isToday = date.getDate() === today.getDate() && 
-                    date.getMonth() === today.getMonth() && 
-                    date.getFullYear() === today.getFullYear();
+    const isToday = date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
 
     setIsManualDateSelection(!isToday);
     setSelectedDate(date);
@@ -614,7 +674,7 @@ const Main_Student: React.FC = () => {
                     sessionMarkers={sessionMarkers}
                   />
                   {isManualDateSelection && (
-                    <div 
+                    <div
                       className="ms-return-today-pill"
                       onClick={handleReturnToToday}
                     >
@@ -635,10 +695,10 @@ const Main_Student: React.FC = () => {
                       <div
                         className="ms-progress-circle"
                         style={{
-                          border: (animatedPerformance !== null) 
-                            ? `6px solid ${getColorForPercentage(animatedPerformance)}` 
+                          border: (animatedPerformance !== null)
+                            ? `6px solid ${getColorForPercentage(animatedPerformance)}`
                             : `6px solid rgba(255, 255, 255, 0.2)`,
-                          boxShadow: `inset 0 0 0 3px white`, 
+                          boxShadow: `inset 0 0 0 3px white`,
                           color: "white",
                           width: "70px",
                           height: "70px",
@@ -664,7 +724,7 @@ const Main_Student: React.FC = () => {
                     <div className="ms-topics-scroll-container">
                       <div className="ms-topics-track">
                         {topics.map((topic, index) => (
-                          <TopicBubble 
+                          <TopicBubble
                             key={`${index}-${topic.id}`}
                             topic={topic}
                             index={index}
@@ -735,17 +795,15 @@ const Main_Student: React.FC = () => {
                       }}
                     ></div>
                     <div
-                      className={`ms-switch-option ${
-                        viewMode === "insights" ? "active" : ""
-                      }`}
+                      className={`ms-switch-option ${viewMode === "insights" ? "active" : ""
+                        }`}
                       onClick={() => setViewMode("insights")}
                     >
                       {t("mainStudent.myProgress", "My Progress")}
                     </div>
                     <div
-                      className={`ms-switch-option ${
-                        viewMode === "que" ? "active" : ""
-                      }`}
+                      className={`ms-switch-option ${viewMode === "que" ? "active" : ""
+                        }`}
                       onClick={() => setViewMode("que")}
                     >
                       {t("mainStudent.questions")}
@@ -860,42 +918,42 @@ const Main_Student: React.FC = () => {
               <button className="ms-popup-close" onClick={() => setShowScheduleView(false)}>Cerrar</button>
             </div>
             <div className="ms-popup-body">
-              <DailyScheduleView 
-                  date={selectedDate}
-                  sessions={dailySessions}
-                  onSessionSelect={(session) => {
-                      setActiveSession(session);
-                      setShowScheduleView(false);
-                      if (session.topics) {
-                          const formattedTopics: TopicProgress[] = session.topics.map((t: any) => ({
-                              name: t.name_topic || t.name || "",
-                              nameKey: t.name_topic || t.name || "",
-                              percentage: t.score !== undefined ? Number(t.score) : 0,
-                              icon: "🎓",
-                              aiSummary: t.ai_summary || null
-                          }));
-                          setTopics(formattedTopics);
-                          setOverallPerformance(Number((session as any).student_score_average) || 0);
-                          
-                          let summaryText = (session as any).student_ai_summary || (session as any).ai_summary || "Session details loaded.";
-                          let weaknesses: string[] = [];
+              <DailyScheduleView
+                date={selectedDate}
+                sessions={dailySessions}
+                onSessionSelect={(session) => {
+                  setActiveSession(session);
+                  setShowScheduleView(false);
+                  if (session.topics) {
+                    const formattedTopics: TopicProgress[] = session.topics.map((t: any) => ({
+                      name: t.name_topic || t.name || "",
+                      nameKey: t.name_topic || t.name || "",
+                      percentage: t.score !== undefined ? Number(t.score) : 0,
+                      icon: "🎓",
+                      aiSummary: t.ai_summary || null
+                    }));
+                    setTopics(formattedTopics);
+                    setOverallPerformance(Number((session as any).student_score_average) || 0);
 
-                          if (typeof summaryText === 'string' && summaryText.trim().startsWith('{')) {
-                              try {
-                                  const parsed = JSON.parse(summaryText);
-                                  summaryText = parsed.summary || parsed.general_summary || summaryText;
-                                  if (parsed.key_issues && Array.isArray(parsed.key_issues)) {
-                                      weaknesses = parsed.key_issues;
-                                  }
-                              } catch (e) { /* ignore */ }
-                          }
+                    let summaryText = (session as any).student_ai_summary || (session as any).ai_summary || "Session details loaded.";
+                    let weaknesses: string[] = [];
 
-                          setStudentInsights({ summary: summaryText, issues: weaknesses });
-                          setDisplayedSummary(summaryText);
-                          setDisplayedIssues(weaknesses);
-                      }
-                  }}
-                  selectedSessionId={activeSession?.id_class}
+                    if (typeof summaryText === 'string' && summaryText.trim().startsWith('{')) {
+                      try {
+                        const parsed = JSON.parse(summaryText);
+                        summaryText = parsed.summary || parsed.general_summary || summaryText;
+                        if (parsed.key_issues && Array.isArray(parsed.key_issues)) {
+                          weaknesses = parsed.key_issues;
+                        }
+                      } catch (e) { /* ignore */ }
+                    }
+
+                    setStudentInsights({ summary: summaryText, issues: weaknesses });
+                    setDisplayedSummary(summaryText);
+                    setDisplayedIssues(weaknesses);
+                  }
+                }}
+                selectedSessionId={activeSession?.id_class}
               />
             </div>
           </div>

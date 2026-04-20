@@ -5,6 +5,7 @@ import { getUserChats } from '../repositories/chatRepository.js';
 import { getRandomQuiz, getQuizQuestions } from '../repositories/quizRepository.js';
 import { getUserGrade } from '../repositories/userRepository.js';
 import { listStudentSections } from '../repositories/studentRepository.js';
+import { listProfessorSections } from '../repositories/sectionRepository.js';
 
 // --- Interfaces ---
 
@@ -57,7 +58,11 @@ export const initSocket = (io: Server) => {
         if (token) {
             try {
                 const payload = jwt.verify(token, appConfig.auth.jwtSecret) as any;
-                socket.data.user = { id: String(payload.sub), username: payload.username };
+                socket.data.user = { 
+                    id: String(payload.sub || payload.userId), 
+                    username: payload.username,
+                    role: payload.role
+                };
             } catch (e) {
                 // Invalid token? behave as guest/socket-only? 
                 // For this app, let's enforce randomness if invalid, or error.
@@ -85,23 +90,31 @@ export const initSocket = (io: Server) => {
             // Only join if user has a real ID (not guest)
             if (!userId.startsWith('guest_')) {
                 const userIdNum = parseInt(userId);
+                const role = socket.data.user.role;
+
                 if (!isNaN(userIdNum)) {
+                    // 1. Auto-join Chat Rooms (All roles)
                     const chats = await getUserChats(userIdNum);
                     chats.forEach((chat: any) => {
-                        const roomName = `chat_${chat.id}`;
-                        socket.join(roomName);
-                        console.log(`[Socket] Auto-joined ${userId} to room: ${roomName}`);
+                        socket.join(`chat_${chat.id}`);
                     });
 
-                    // Join Section Rooms
-                    const sectionIds = await listStudentSections(userIdNum);
+                    // 2. Auto-join Section Rooms (Role dependent)
+                    let sectionIds: number[] = [];
+                    if (role === 'professor') {
+                        sectionIds = await listProfessorSections(userIdNum);
+                        console.log(`[Socket] Professor ${userId} joining ${sectionIds.length} managed sections.`);
+                    } else {
+                        sectionIds = await listStudentSections(userIdNum);
+                    }
+
                     sectionIds.forEach(sectionId => {
                         const roomName = `section_${sectionId}`;
                         socket.join(roomName);
-                        console.log(`[Socket] Auto-joined ${userId} to section room: ${roomName}`);
+                        console.log(`[Socket] ${role} ${userId} auto-joined section room: ${roomName}`);
                     });
                     
-                    console.log(`[Socket] ${userId} joined ${chats.length} chat rooms and ${sectionIds.length} section rooms automatically`);
+                    console.log(`[Socket] ${userId} (${role}) initialized with ${chats.length} chats and ${sectionIds.length} sections.`);
                 }
             }
         } catch (error) {
@@ -125,7 +138,8 @@ export const initSocket = (io: Server) => {
             if (game) {
                 console.log(`[Socket] Game found. Players: ${Object.keys(game.players).join(', ')}`);
                 if (game.players[userId]) {
-                     console.log(`[Socket] Player authorized. Resyncing...`);
+                     console.log(`[Socket] Player authorized. Joining room and resyncing...`);
+                     socket.join(data.roomId); // FORCE JOIN ROOM
                      handleReconnection(io, socket, game, userId);
                 } else {
                      console.log(`[Socket] Player NOT in game players list.`);
@@ -272,40 +286,19 @@ export const initSocket = (io: Server) => {
                 userGameMap[userId] = game.roomId;
                 socket.join(game.roomId);
 
-                // Notify Host
-                const hostId = Object.keys(game.players).find(id => id !== userId);
-                const host = hostId ? game.players[hostId] : null;
-                
-                if (!host) {
-                    console.warn(`[Socket] Host search failed in room ${game.roomId}. This shouldn't happen.`);
-                    // Let's at least protect the joiner
-                    socket.emit('match_found', {
-                        roomId: game.roomId,
-                        opponent: { name: 'Opponent', avatar: 'axolotl' }
-                    });
-                } else {
-                    // Notify both as "match_found" to transition UI
-                    // P2 Perspective (Joiner)
-                    socket.emit('match_found', {
-                        roomId: game.roomId,
-                        opponent: { name: host.name, avatar: host.avatar }
-                    });
+                // Notify both as "match_found" to transition UI
+                io.to(game.roomId).emit('match_found', {
+                    roomId: game.roomId,
+                    players: game.players
+                });
 
-                    // Host Perspective
-                    const hostSocket = io.sockets.sockets.get(host.socketId);
-                    if (hostSocket) {
-                        hostSocket.emit('match_found', {
-                            roomId: game.roomId,
-                            opponent: { name: p2.name, avatar: p2.avatar }
-                        });
-                    }
-                }
-
-            // Start Game
+            // Start Game with a small delay to ensure UI transition and room joining
+            setTimeout(() => {
+                startRound(io, game);
+            }, 800);
+            
             // Update List (Remove full game)
             io.emit('games_list_update', getOpenGames());
-            
-            startRound(io, game);
         });
 
         // Cancel Game (Host abandons before match starts)
@@ -421,6 +414,16 @@ export const initSocket = (io: Server) => {
                 timestamp: new Date().toISOString()
             });
             console.log(`[Socket] Message in ${roomName} from ${userId}: ${text}`);
+        });
+
+        // --- 6. CLASSROOM LIVE SYNC ---
+        socket.on('set_topic_focus', (data: { sectionId: number; topicId: number; topicName: string }) => {
+            console.log(`[Socket] Topic focus update for Section ${data.sectionId}: ${data.topicName} (${data.topicId})`);
+            io.to(`section_${data.sectionId}`).emit('topic_focus', {
+                topicId: data.topicId,
+                topicName: data.topicName,
+                professorId: userId
+            });
         });
     });
 };

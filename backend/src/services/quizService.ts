@@ -43,7 +43,10 @@ export const quizService = {
             if (!finalTopicId && q.topicName) {
                 // STRICT LOOKUP: No new topics created
                 console.log(`[QuizService] Mapping topic name: "${q.topicName}"`);
-                finalTopicId = (await topicRepo.findTopicIdByName(q.topicName, payload.subjectId)) || undefined;
+                // Case-insensitive lookup and trimming
+                const normalizedSearch = q.topicName.trim();
+                finalTopicId = (await topicRepo.findTopicIdByName(normalizedSearch, payload.subjectId)) || undefined;
+                
                 if (finalTopicId) {
                     console.log(`[QuizService] Successfully mapped to ID: ${finalTopicId}`);
                 } else {

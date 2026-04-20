@@ -112,7 +112,7 @@ export async function createClass(payload: {
         `SELECT name_template FROM class_template WHERE id_class_template = ?`,
         [payload.templateId]
       );
-      
+
       if (templateRes.rows.length > 0) {
         if (!sessionName) sessionName = templateRes.rows[0].name_template;
       }
@@ -213,9 +213,9 @@ export async function recordClassTopics(classId: number, topics: ClassTopicPaylo
   const client = await db.getClient();
   try {
     await client.beginTransaction();
-    
+
     // Get class info for section anchoring
-    const { rows: classRows } = await client.query<{id_section: number}>(
+    const { rows: classRows } = await client.query<{ id_section: number }>(
       'SELECT id_section FROM class WHERE id_class = ?', [classId]
     );
     const sectionId = classRows[0]?.id_section;
@@ -234,7 +234,7 @@ export async function recordClassTopics(classId: number, topics: ClassTopicPaylo
 
       // 2. CALCULATE & STORE Real-Time SECTION Snapshot
       if (sectionId && topic.scoreAverage !== null) {
-        const { rows: avgRows } = await client.query<{running_avg: number}>(
+        const { rows: avgRows } = await client.query<{ running_avg: number }>(
           `SELECT AVG(ct.score_average) as running_avg
            FROM class_topic ct
            INNER JOIN class c ON c.id_class = ct.id_class
@@ -284,7 +284,7 @@ export async function recordClassStudents(classId: number, students: ClassStuden
         `INSERT INTO class_student (id_class, id_user, score_average, ai_summary, attendance)
          VALUES (?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE 
-           score_average = (COALESCE(score_average, VALUES(score_average)) + VALUES(score_average)) / 2,
+           score_average = VALUES(score_average),
            ai_summary = VALUES(ai_summary),
            attendance = VALUES(attendance)`,
         [classId, student.userId, student.scoreAverage ?? null, student.aiSummary ?? null, student.attendance ?? null]
@@ -297,10 +297,10 @@ export async function recordClassStudents(classId: number, students: ClassStuden
       });
     }
     await client.commit();
-    
+
     // Trigger roll-up to class/section mastery
     recalculateClassAverages(classId).catch(err => console.error("Roll-up error:", err));
-    
+
   } catch (error) {
     await client.rollback();
     throw error;
@@ -316,10 +316,10 @@ export async function updateClassStudentScore(classId: number, userId: number, s
     `INSERT INTO class_student (id_class, id_user, score_average)
      VALUES (?, ?, ?)
      ON DUPLICATE KEY UPDATE 
-       score_average = (COALESCE(score_average, VALUES(score_average)) + VALUES(score_average)) / 2`,
+       score_average = VALUES(score_average)`,
     [classId, userId, scorePercentage]
   );
-  
+
   // BROADCAST
   io.to(`user_${userId}`).emit('student_score_update', {
     classId,
@@ -350,15 +350,15 @@ export async function recordClassStudentTopics(classId: number, entries: ClassSt
       // Propagate to permanent mastery using adaptive anchoring
       if (entry.score !== null && entry.score !== undefined) {
         // Fetch the CURRENT daily average after the update we just did
-        const { rows } = await client.query<{score: number}>(
+        const { rows } = await client.query<{ score: number }>(
           `SELECT score FROM class_student_topic WHERE id_class = ? AND id_user = ? AND id_topic = ?`,
           [classId, entry.userId, entry.topicId]
         );
-        
+
         if (rows.length > 0) {
           const latestScore = Number(rows[0].score);
           await syncStudentTopicMastery(entry.userId, entry.topicId, latestScore, classId);
-          
+
           // BROADCAST Live Update to specific student room
           io.to(`user_${entry.userId}`).emit('student_topic_update', {
             topicId: entry.topicId,
@@ -558,12 +558,13 @@ export async function recalculateClassAverages(classId: number) {
         await syncSectionTopicMastery(sectionId, topic.id_topic, topic.avg_score, classId);
       }
 
-      // BROADCAST Updated Section Mastery to the Professor Dashboard
+      // BROADCAST Updated Scores to the Professor Dashboard
       if (sectionId) {
         io.to(`section_${sectionId}`).emit('class_score_update', {
           classId,
           topicId: topic.id_topic,
-          sectionMastery: sectionAggregateScore // The baseline mean of your students
+          sessionAverage: topic.avg_score, // REAL-TIME SESSION SCORE
+          sectionMastery: sectionAggregateScore // HISTORICAL BASELINE
         });
       }
     }

@@ -85,6 +85,7 @@ const BattleMinigame: React.FC = () => {
   const [winnerId, setWinnerId] = useState<string | null>(null);
   const [battleStats, setBattleStats] = useState({ winRate: 0, streak: 0 });
   const [xpGained, setXpGained] = useState(0);
+  const [showEmergencyExit, setShowEmergencyExit] = useState(false);
 
   // Animation Triggers
   const [playerAttackAnim, setPlayerAttackAnim] = useState(false);
@@ -269,19 +270,23 @@ const BattleMinigame: React.FC = () => {
       socket.on("sync_state", (state: GameSnapshot) => {
         console.log("[Sync] Received Snapshot:", state);
 
-        // Deduce ID logic (Same as before)
-        const myP = Object.values(state.players).find(
-          (p) => p.socketId === socket.id,
-        );
-        if (myP) setMyId(myP.userId);
+        // Robust ID Deduction
+        const storedUserData = JSON.parse(localStorage.getItem("userData") || "{}");
+        const myStoredId = String(storedUserData.id || "");
+        
+        // 1. Try by stored User ID (Best)
+        if (state.players[myStoredId]) {
+          setMyId(myStoredId);
+        } 
+        // 2. Try by Socket ID (Reconnection)
         else {
-          const localUser = JSON.parse(
-            localStorage.getItem("userData") || "{}",
-          );
-          const matchName = Object.values(state.players).find(
-            (p) => p.name === localUser.name,
-          );
-          if (matchName) setMyId(matchName.userId);
+          const myP = Object.values(state.players).find(p => p.socketId === socket.id);
+          if (myP) setMyId(myP.userId);
+          // 3. Try by Name (Last resort)
+          else {
+            const matchName = Object.values(state.players).find(p => p.name === storedUserData.name);
+            if (matchName) setMyId(matchName.userId);
+          }
         }
 
         // Apply State
@@ -504,6 +509,20 @@ const BattleMinigame: React.FC = () => {
       };
   }, [roomId]);
 
+  // --- RECONNECTION HEARTBEAT ---
+  useEffect(() => {
+    if (status === "finished") return;
+    
+    const heartbeat = setInterval(() => {
+      if ((!me || !opponent) && socketService.socket?.connected) {
+        console.log("[BattleMinigame] State missing, requesting emergency sync...");
+        socketService.socket.emit("join_match_session", { roomId });
+      }
+    }, 2000);
+
+    return () => clearInterval(heartbeat);
+  }, [me, opponent, roomId, status]);
+
   const startCountdown = (endTime: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
 
@@ -533,11 +552,25 @@ const BattleMinigame: React.FC = () => {
   };
 
   if (!me || !opponent) {
+    // Show emergency exit after 5 seconds of "Connecting..."
+    if (!showEmergencyExit) {
+      setTimeout(() => setShowEmergencyExit(true), 5000);
+    }
+
     return (
       <IonPage>
         <div className="disconnect-overlay">
           <div className="disconnect-spinner"></div>
           <div className="disconnect-message">Connecting...</div>
+          {showEmergencyExit && (
+            <IonButton 
+              fill="outline" 
+              style={{ marginTop: '20px', '--color': 'white', '--border-color': 'white' }}
+              onClick={() => history.replace("/page/student")}
+            >
+              Return to Lobby
+            </IonButton>
+          )}
         </div>
       </IonPage>
     );

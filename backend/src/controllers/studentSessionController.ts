@@ -36,12 +36,21 @@ export async function getActiveSessionForStudent(req: Request, res: Response) {
       const studentTopicScores = await getStudentClassTopics(activeSession.id_class, userId);
       const scoreMap = new Map(studentTopicScores.map((t: any) => [t.id_topic, t]));
 
+      // Get student's historical mastery for these topics
+      const masteryRes = await db.query<{ id_topic: number, score: number }>(
+        `SELECT id_topic, score FROM student_topic WHERE id_user = ?`,
+        [userId]
+      );
+      const masteryMap = new Map(masteryRes.rows.map(m => [m.id_topic, m.score]));
+
       activeSession.topics = templateTopics.map(t => {
         const scores = scoreMap.get(t.id_topic);
+        const histMastery = masteryMap.get(t.id_topic);
         return {
           id_topic: t.id_topic,
           name_topic: t.name,
           score: (scores && scores.score !== undefined) ? scores.score : null,
+          mastery: histMastery !== undefined ? histMastery : null,
           ai_summary: scores?.ai_summary ?? null
         };
       });
@@ -159,12 +168,20 @@ export async function getStudentSessionDetail(req: Request, res: Response) {
       const studentTopicScores = await getStudentClassTopics(classId, userId);
       const scoreMap = new Map(studentTopicScores.map((t: any) => [t.id_topic, t]));
 
+      const masteryRes = await db.query<{ id_topic: number, score: number }>(
+        `SELECT id_topic, score FROM student_topic WHERE id_user = ?`,
+        [userId]
+      );
+      const masteryMap = new Map(masteryRes.rows.map(m => [m.id_topic, m.score]));
+
       session.topics = templateTopics.map(t => {
         const scores = scoreMap.get(t.id_topic);
+        const histMastery = masteryMap.get(t.id_topic);
         return {
           id_topic: t.id_topic,
           name_topic: t.name,
           score: (scores && scores.score !== undefined) ? scores.score : null,
+          mastery: histMastery !== undefined ? histMastery : null,
           ai_summary: scores?.ai_summary ?? null
         };
       });

@@ -52,6 +52,11 @@ export const TopicBubble: React.FC<TopicBubbleProps> = ({
       >
         <div className="ms-topic-icon">
           {topic.icon || "•"}
+          {topic.percentage !== null && (
+            <div className="ms-topic-percentage-badge">
+              {Math.round(topic.percentage)}%
+            </div>
+          )}
         </div>
       </div>
       <span 

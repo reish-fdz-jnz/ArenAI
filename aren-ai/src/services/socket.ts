@@ -39,10 +39,10 @@ class SocketService {
         token: token
       },
       transports: ['websocket'], // PURE websockets for Cloud Run stability
-      reconnectionAttempts: Infinity, // NEVER give up connecting
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      timeout: 20000, 
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 500, // Try every half second
+      reconnectionDelayMax: 2000, // Max wait 2 seconds
+      timeout: 10000, 
       forceNew: true 
     });
     

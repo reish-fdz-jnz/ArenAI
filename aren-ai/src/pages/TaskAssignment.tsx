@@ -10,6 +10,7 @@ import {
   IonToolbar,
   IonMenuButton,
   useIonToast,
+  useIonViewWillEnter,
 } from "@ionic/react";
 import {
   createOutline,
@@ -26,6 +27,7 @@ import { getApiUrl } from "../config/api";
 import "./TaskAssignment.css";
 import "../components/ProfessorHeader.css";
 import { useProfessorFilters } from "../hooks/useProfessorFilters";
+import { socketService } from "../services/socket";
 
 // Section interface for API data
 interface Section {
@@ -207,71 +209,80 @@ const TaskAssignment: React.FC = () => {
   }, [selectedGrade, selectedSection]);
 
   // Fetch Quizzes from API (Professor's quizzes)
-  useEffect(() => {
-    const fetchQuizzes = async () => {
-      setLoadingQuizzes(true);
-      try {
-        const token =
-          localStorage.getItem("authToken") || localStorage.getItem("token");
-        const userStr =
-          localStorage.getItem("userData") || localStorage.getItem("user");
-        const user = userStr ? JSON.parse(userStr) : null;
+  const fetchQuizzes = async () => {
+    setLoadingQuizzes(true);
+    try {
+      const token =
+        localStorage.getItem("authToken") || localStorage.getItem("token");
+      const userStr =
+        localStorage.getItem("userData") || localStorage.getItem("user");
+      const user = userStr ? JSON.parse(userStr) : null;
 
-        if (token && user?.id) {
-          // Fetch professor's own quizzes
-          // Use same endpoint as QuizMenu: /api/quizzes/professor/:id
-          const response = await fetch(
-            getApiUrl(`/api/quizzes/professor/${user.id}`),
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            },
-          );
+      if (token && user?.id) {
+        // Fetch professor's own quizzes
+        const response = await fetch(
+          getApiUrl(`/api/quizzes/professor/${user.id}`),
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
 
-          if (response.ok) {
-            const data = await response.json();
-            if (data.quizzes) {
-              const transformed: Quiz[] = data.quizzes.map((q: any) => ({
-                id: String(q.id_quiz),
-                name: q.quiz_name,
-                subject:
-                  q.id_subject === 1
-                    ? "Math"
-                    : q.id_subject === 2
-                      ? "Science"
-                      : q.id_subject === 3
-                        ? "Spanish"
-                        : q.id_subject === 4
-                          ? "Social Studies"
-                          : "General", // Default
-                grade: 7, // Default as backend might not return grade in list view?? QuizMenu hardcodes 7?
-                // Wait, Quiz table has 'level' or 'grade'?
-                // QuizRoute creates with 'level'. Let's check QuizMenu logic again.
-                // QuizMenu map: `grade: 7`. It seems backend doesn't return grade in the list view query?
-                // Let's rely on what we get. If missing, default to 7 or filter logic might break.
-                // Actually, let's try to map 'level' if present.
-                // data.quizzes query: SELECT q.* ...
-                // 'level' column exists in createFullQuiz.
-                description: q.description || "",
-                topics: q.topics ? q.topics.split(",") : [], // Parse comma-separated topics
-                questions: Array(q.question_count || 0).fill({
-                  text: "Question",
-                  points: 1,
-                }),
-                createdAt: q.created_at || new Date().toISOString(),
-                creatorId: String(q.id_professor),
-              }));
-              setQuizzes(transformed);
-            }
+        if (response.ok) {
+          const data = await response.json();
+          if (data.quizzes) {
+            const transformed: Quiz[] = data.quizzes.map((q: any) => ({
+              id: String(q.id_quiz),
+              name: q.quiz_name,
+              subject:
+                q.id_subject === 1
+                  ? "Math"
+                  : q.id_subject === 2
+                    ? "Science"
+                    : q.id_subject === 3
+                      ? "Spanish"
+                      : q.id_subject === 4
+                        ? "Social Studies"
+                        : "General",
+              grade: 7,
+              description: q.description || "",
+              topics: q.topics ? q.topics.split(",") : [],
+              questions: Array(q.question_count || 0).fill({
+                text: "Question",
+                points: 1,
+              }),
+              createdAt: q.created_at || new Date().toISOString(),
+              creatorId: String(q.id_professor),
+            }));
+            setQuizzes(transformed);
           }
         }
-      } catch (error) {
-        console.error("Error fetching quizzes:", error);
-      } finally {
-        setLoadingQuizzes(false);
       }
-    };
+    } catch (error) {
+      console.error("Error fetching quizzes:", error);
+    } finally {
+      setLoadingQuizzes(false);
+    }
+  };
+
+  useIonViewWillEnter(() => {
     fetchQuizzes();
-  }, []); // Run once on mount
+  });
+
+  // Listen for real-time quiz creation
+  useEffect(() => {
+    const socket = socketService.socket;
+    if (!socket) return;
+
+    const handleQuizCreated = (data: any) => {
+      console.log("[TaskAssignment] New quiz created, refreshing list...", data);
+      fetchQuizzes();
+    };
+
+    socket.on('quiz_created', handleQuizCreated);
+    return () => {
+      socket.off('quiz_created', handleQuizCreated);
+    };
+  }, []);
 
   // Fetch students when a section is selected
   const fetchStudentsForSection = async (sectionId: number) => {

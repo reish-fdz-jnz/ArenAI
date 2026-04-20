@@ -280,3 +280,14 @@ export async function upsertSectionTopic(sectionId: number, topicId: number, sco
     [sectionId, topicId, score ?? null]
   );
 }
+
+/**
+ * Returns all unique section IDs that a professor has taught classes in.
+ */
+export async function listProfessorSections(professorId: number): Promise<number[]> {
+  const result = await db.query<{ id_section: number }>(
+    `SELECT DISTINCT id_section FROM class WHERE id_professor = ?`,
+    [professorId]
+  );
+  return result.rows.map(r => r.id_section);
+}

@@ -34,6 +34,12 @@ router.post('/', async (req, res, next) => {
             })),
         });
 
+        // Emit socket event so the UI can refresh immediately
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('quiz_created', { quizId, professorId, name });
+        }
+
         res.status(201).json({ success: true, quizId });
     } catch (err) {
         next(err);

@@ -79,15 +79,22 @@ const BattleLobby: React.FC = () => {
     socketService.connect();
     const socket = socketService.socket;
 
-    const handleMatchFound = (data: { roomId: string; opponent: any }) => {
-      console.log("[BattleLobby] Match found! Navigating...", data);
+    const handleMatchFound = (data: { roomId: string; players: any }) => {
+      console.log("[BattleLobby] Match found! Syncing players...", data);
       setIsSearching(false);
+
+      // Identify opponent from the players map
+      const storedUserData = JSON.parse(localStorage.getItem("userData") || "{}");
+      const myId = String(storedUserData.id || "");
+      
+      const opponentId = Object.keys(data.players).find(id => id !== myId);
+      const opponent = opponentId ? data.players[opponentId] : Object.values(data.players)[0];
 
       history.push({
         pathname: "/battleminigame",
         state: {
           roomId: data.roomId,
-          opponent: data.opponent,
+          opponent: opponent,
           myAvatar: currentAvatar,
         },
       });

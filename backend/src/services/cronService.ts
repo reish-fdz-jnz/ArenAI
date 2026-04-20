@@ -46,6 +46,6 @@ export function initCronJobs(): void {
     }
   });
 
-  console.log('[CRON] ✅ Scheduled: Active class insights every 5 minutes');
+  console.log('[CRON] ✅ Scheduled: Active class insights every 2 minutes');
 }
 

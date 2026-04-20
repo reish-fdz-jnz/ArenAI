@@ -93,6 +93,20 @@ const Main_Prof: React.FC = () => {
   const [viewMode, setViewMode] = useState<"state" | "que">("state");
   const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
 
+  // Notify students when a topic is focused/expanded
+  useEffect(() => {
+    if (expandedTopic && selectedSection) {
+      const topic = topics.find(t => String(t.id) === expandedTopic);
+      if (topic) {
+        socketService.socket?.emit('set_topic_focus', {
+          sectionId: selectedSection,
+          topicId: topic.id,
+          topicName: topic.name
+        });
+      }
+    }
+  }, [expandedTopic, selectedSection, topics]);
+
   // Chatbot questions & summary state
   const [chatbotQuestions, setChatbotQuestions] = useState<any[]>([]);
   const [questionsLoading, setQuestionsLoading] = useState(false);
@@ -117,7 +131,7 @@ const Main_Prof: React.FC = () => {
         fetchDashboardSync(selectedDate),
         fetchClassInsights(false)
       ]);
-      
+
       // If we are in the questions tab, the existing useEffect on 'viewMode' 
       // might need a nudge or we can just let it be if it's already reactive.
       // But for "perfection", we ensure it refreshes if visible.
@@ -139,24 +153,21 @@ const Main_Prof: React.FC = () => {
     if (!socket) return;
 
     // 1. Mastery & Score Updates
-    socket.on('class_score_update', (data: { topicId: number; sectionMastery: number }) => {
-      setTopics(prevTopics => prevTopics.map(topic => 
-        topic.id === data.topicId ? { ...topic, percentage: data.sectionMastery } : topic
-      ));
-    });
-
-    socket.on('class_overall_update', (data: { classId: number; overallAverage: number }) => {
-      setOverallPerformance(Math.round(data.overallAverage));
-    });
-
-    socket.on('class_score_update', (data: { classId: number; topicId: number; scoreAverage: number; sectionMastery: number }) => {
-      // Update individual topics in real-time
-      setTopics(prev => prev.map(topic => {
-        if (topic.id === data.topicId) {
-          return { ...topic, percentage: Math.round(data.scoreAverage) };
+    socket.on('class_score_update', (data: { topicId: number; sectionMastery: number; sessionAverage?: number }) => {
+      console.log("[Main_Prof] Topic score update received:", data);
+      setTopics(prevTopics => prevTopics.map(topic => {
+        if (Number(topic.id) === Number(data.topicId)) {
+          // Use sessionAverage (real-time) or fallback to sectionMastery (historical baseline)
+          const newScore = data.sessionAverage !== undefined ? data.sessionAverage : data.sectionMastery;
+          return { ...topic, percentage: Math.round(newScore) };
         }
         return topic;
       }));
+    });
+
+    socket.on('class_overall_update', (data: { classId: number; overallAverage: number }) => {
+      console.log("[Main_Prof] Overall score update received:", data);
+      setOverallPerformance(Math.round(data.overallAverage));
     });
 
     // 2. Session Lifecycle (Live Sync)
@@ -165,7 +176,7 @@ const Main_Prof: React.FC = () => {
       // Clear current focus preference to ensure it jumps to the new session
       const dateStr = new Date().toISOString().split('T')[0];
       localStorage.removeItem(`prefSession_${dateStr}`);
-      
+
       setTopics([]); // Clear old topics immediately
       setOverallPerformance(null);
       fetchDashboardSync();
@@ -208,7 +219,7 @@ const Main_Prof: React.FC = () => {
       setIsLoading(true);
       const token = localStorage.getItem("authToken");
       const offset = new Date().getTimezoneOffset();
-      
+
       const dateStr = [
         targetDate.getFullYear(),
         String(targetDate.getMonth() + 1).padStart(2, '0'),
@@ -254,21 +265,21 @@ const Main_Prof: React.FC = () => {
       // Preference: 1. Previously selected, 2. Running session, 3. First of day (if not Today)
       const storedId = localStorage.getItem(`prefSession_${dateStr}`);
       const isToday = dateStr === new Date().toISOString().split('T')[0];
-      
+
       // Force focus on running session if it's today
       let targetFocus: DailySession | null = null;
       if (isToday) {
         targetFocus = merged.find(s => s.status === 'running') || null;
       }
-      
+
       if (!targetFocus) {
         targetFocus = merged.find(s => String(s.id_class) === storedId) || null;
       }
-      
+
       if (!targetFocus && !isToday) {
         targetFocus = merged[0] || null;
       }
-      
+
       updateFocus(targetFocus, false);
       // Fetch mastery immediately with the confirmed id_class to lock session topics
       fetchSectionMastery(targetFocus?.id_class, targetFocus);
@@ -283,12 +294,12 @@ const Main_Prof: React.FC = () => {
   const fetchSectionMastery = async (classId?: number, currentSession?: DailySession | null) => {
     try {
       const token = localStorage.getItem("authToken");
-      
+
       const sessionToUse = activeSession || focusSession;
       const targetId = classId || sessionToUse?.id_class;
       const classIdParam = targetId ? `&classId=${targetId}` : "";
       const url = getApiUrl(`api/sections/progress?grade=${selectedGrade}&sectionNumber=${selectedSection}&subject=${selectedSubject}${classIdParam}`);
-      
+
       const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
@@ -311,7 +322,7 @@ const Main_Prof: React.FC = () => {
 
           // Strict assignment to setTopics
           setTopics(processed);
-          
+
           // Calculate Overall Average from base_score_session as requested
           const baseScores = data
             .filter((t: any) => t.base_score_session !== null && t.base_score_session !== undefined)
@@ -326,13 +337,13 @@ const Main_Prof: React.FC = () => {
             setOverallPerformance(Math.round(avg));
           } else {
             // Fallback to legacy extraction if base_score_session is not yet available
-            const score = sessionToUse?.score_average ?? 
-                          sessionToUse?.AverageScore ?? 
-                          sessionToUse?.overallAverage ?? 
-                          sessionToUse?.overall_average ?? 
-                          sessionToUse?.student_score_average ?? 
-                          sessionToUse?.score;
-            
+            const score = sessionToUse?.score_average ??
+              sessionToUse?.AverageScore ??
+              sessionToUse?.overallAverage ??
+              sessionToUse?.overall_average ??
+              sessionToUse?.student_score_average ??
+              sessionToUse?.score;
+
             if (score !== null && score !== undefined && !isNaN(Number(score))) {
               setOverallPerformance(Number(score));
             } else {
@@ -383,16 +394,16 @@ const Main_Prof: React.FC = () => {
         icon: getIconForTopic(t.name_topic || t.name),
       };
     });
-    
+
     setTopics(processedTopics);
-    
+
     // Use session average if available immediately, default to 0 to ensure colored border
-    const score = session?.score_average ?? 
-                  session?.AverageScore ?? 
-                  session?.overallAverage ?? 
-                  session?.overall_average ??
-                  session?.student_score_average ?? 
-                  session?.score;
+    const score = session?.score_average ??
+      session?.AverageScore ??
+      session?.overallAverage ??
+      session?.overall_average ??
+      session?.student_score_average ??
+      session?.score;
     setOverallPerformance(Number(score) || 0);
   };
 
@@ -415,10 +426,10 @@ const Main_Prof: React.FC = () => {
 
   const handleDateSelect = (date: Date) => {
     const today = new Date();
-    const isToday = date.getDate() === today.getDate() && 
-                    date.getMonth() === today.getMonth() && 
-                    date.getFullYear() === today.getFullYear();
-    
+    const isToday = date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
+
     if (isToday) {
       handleExitReview();
     } else {
@@ -451,7 +462,7 @@ const Main_Prof: React.FC = () => {
     const today = new Date();
     const dateStr = today.toISOString().split('T')[0];
     localStorage.removeItem(`prefSession_${dateStr}`); // Clear preference for today
-    
+
     setSelectedDate(today);
     fetchDashboardSync(today);
   };
@@ -529,7 +540,7 @@ const Main_Prof: React.FC = () => {
         setInsightsLoading(false);
         return;
       }
-      
+
       const url = getApiUrl(`/ai/class-insights?classId=${targetId}`);
       console.log("[Debug] Fetching:", url);
 
@@ -554,17 +565,17 @@ const Main_Prof: React.FC = () => {
 
         if (data.insights && data.insights.length > 0) {
           const rawInsight = data.insights[0];
-          
+
           // Robust parsing of summary if it's a JSON string
           if (typeof rawInsight.summary === 'string' && rawInsight.summary.trim().startsWith('{')) {
-              try {
-                  const parsed = JSON.parse(rawInsight.summary);
-                  summary = parsed.summary || parsed.general_summary || rawInsight.summary;
-              } catch (e) {
-                  summary = rawInsight.summary;
-              }
+            try {
+              const parsed = JSON.parse(rawInsight.summary);
+              summary = parsed.summary || parsed.general_summary || rawInsight.summary;
+            } catch (e) {
+              summary = rawInsight.summary;
+            }
           } else {
-              summary = rawInsight.summary || "";
+            summary = rawInsight.summary || "";
           }
 
           data.insights.forEach((insight: any) => {
@@ -629,7 +640,7 @@ const Main_Prof: React.FC = () => {
     return (
       <div className="ms-topic-summary-container">
         <p className="ms-summary-text">{summaryText}</p>
-        
+
         {keyIssues.length > 0 && (
           <div className="ms-summary-section">
             <span className="ms-section-label">⚠️ {t('professor.dashboard.keyIssues', 'Key Issues')}:</span>
@@ -643,7 +654,7 @@ const Main_Prof: React.FC = () => {
 
         {recommendedActions.length > 0 && (
           <div className="ms-summary-section">
-            <span className="ms-section-label">✅ {t('professor.dashboard.recommendedActions', 'Recomendaciones')}:</span>
+            <span className="ms-section-label">✅ {t('professor.dashboard.recommendedActions', 'Recommendations')}:</span>
             <div className="ms-summary-tag-group">
               {recommendedActions.map((action, idx) => (
                 <span key={idx} className="ms-summary-tag action">{action}</span>
@@ -670,7 +681,7 @@ const Main_Prof: React.FC = () => {
       setQuestionsLoading(true);
       try {
         const token = localStorage.getItem('authToken');
-        
+
         // 1. Fetch raw questions
         const qUrl = getApiUrl(`/ai/chatbot-questions?limit=20${targetId ? `&classId=${targetId}` : ''}`);
         const qRes = await fetch(qUrl, {
@@ -726,7 +737,7 @@ const Main_Prof: React.FC = () => {
 
   const getColorForPercentage = (percentage: number) => {
     const p = Math.max(0, Math.min(100, percentage));
-    
+
     if (p >= 80) return "#2ecc71"; // Success Green
     if (p >= 60) return "#f39c12"; // Warning Orange/Yellow
     return "#FF5252"; // Danger Red
@@ -740,8 +751,8 @@ const Main_Prof: React.FC = () => {
             <IonMenuButton className="ph-menu-btn">
               <IonIcon icon={menu} />
             </IonMenuButton>
-            
-            <button 
+
+            <button
               className={`ph-refresh-btn ${isRefreshing ? 'spinning' : ''}`}
               onClick={handleManualRefresh}
               title={t('common.refresh', 'Refresh')}
@@ -792,21 +803,21 @@ const Main_Prof: React.FC = () => {
               {focusSession && (!activeSession || focusSession.id_class !== activeSession.id_class) && (
                 (() => {
                   const today = new Date();
-                  const isToday = selectedDate.getDate() === today.getDate() && 
-                                  selectedDate.getMonth() === today.getMonth() && 
-                                  selectedDate.getFullYear() === today.getFullYear();
+                  const isToday = selectedDate.getDate() === today.getDate() &&
+                    selectedDate.getMonth() === today.getMonth() &&
+                    selectedDate.getFullYear() === today.getFullYear();
                   return !isToday;
                 })()
               ) && (
-                <div 
-                  className="ms-return-today-pill"
-                  onClick={handleExitReview}
-                  style={{ top: '65px' }} // Slightly below the calendar title if needed, or adjust CSS
-                >
-                  <IonIcon icon={statsChartOutline} />
-                  <span>{t('common.exitReview')}</span>
-                </div>
-              )}
+                  <div
+                    className="ms-return-today-pill"
+                    onClick={handleExitReview}
+                    style={{ top: '65px' }} // Slightly below the calendar title if needed, or adjust CSS
+                  >
+                    <IonIcon icon={statsChartOutline} />
+                    <span>{t('common.exitReview')}</span>
+                  </div>
+                )}
 
               {showScheduleView && (
                 <div className="ms-timeline-overlay" onClick={() => setShowScheduleView(false)}>
@@ -815,7 +826,7 @@ const Main_Prof: React.FC = () => {
                       <span className="ms-popup-title">
                         {t('professor.dashboard.selectSession', 'Daily Schedule')}
                       </span>
-                      <button 
+                      <button
                         className="ms-popup-close"
                         onClick={() => setShowScheduleView(false)}
                       >
@@ -823,7 +834,7 @@ const Main_Prof: React.FC = () => {
                       </button>
                     </div>
                     <div className="ms-popup-body">
-                      <DailyScheduleView 
+                      <DailyScheduleView
                         date={selectedDate}
                         sessions={dailySessions}
                         onSessionSelect={updateFocus}
@@ -884,7 +895,7 @@ const Main_Prof: React.FC = () => {
                 <div className="ms-topics-scroll-container">
                   <div className="ms-topics-track">
                     {topics.map((topic, index) => (
-                      <ProfessorTopicBubble 
+                      <ProfessorTopicBubble
                         key={`${index}-${topic.id}`}
                         topic={topic}
                         index={index}
@@ -934,7 +945,7 @@ const Main_Prof: React.FC = () => {
                 <div className="ms-topics-scroll-container">
                   <div className="ms-topics-track">
                     {topics.map((topic, index) => (
-                      <ProfessorTopicBubble 
+                      <ProfessorTopicBubble
                         key={`${index}-${topic.id}`}
                         topic={topic}
                         index={index}
@@ -1043,22 +1054,25 @@ const Main_Prof: React.FC = () => {
                         <div style={{ textAlign: 'center', width: '100%' }}>
                           {topics.some(t => t.ai_summary) ? (
                             <div style={{ textAlign: 'left', animation: 'fadeIn 0.5s ease' }}>
-                              <p style={{ fontSize: '12px', fontWeight: '700', marginBottom: '10px', color: 'var(--ion-color-secondary)', opacity: 0.9 }}>
-                                ✨ Resúmenes por Tema (IA):
+                              <p style={{ fontSize: '13px', fontWeight: '800', marginBottom: '10px', color: '#FFD700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                ✨ Topic Summaries (AI):
                               </p>
                               {topics.filter(t => t.ai_summary).map((t, i) => (
                                 <div key={i} style={{ 
-                                  background: 'rgba(255,255,255,0.05)', 
-                                  padding: '10px', 
-                                  borderRadius: '12px', 
-                                  marginBottom: '8px',
-                                  border: '1px solid rgba(255,255,255,0.1)'
+                                  background: '#F0F2F5', 
+                                  padding: '16px', 
+                                  borderRadius: '16px', 
+                                  marginBottom: '12px',
+                                  boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                                  border: '1px solid rgba(255,255,255,0.8)'
                                 }}>
-                                  <div style={{ fontWeight: '700', fontSize: '11px', marginBottom: '8px', color: 'var(--ion-color-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <IonIcon icon={bookOutline} />
+                                  <div style={{ fontWeight: '800', fontSize: '14px', marginBottom: '8px', color: '#1A1A1A', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <IonIcon icon={bookOutline} style={{ color: '#8E53FF' }} />
                                     {t.name}
                                   </div>
-                                  {renderTopicAISummary(t.ai_summary)}
+                                  <div style={{ color: '#2C3E50', fontWeight: '500' }}>
+                                    {renderTopicAISummary(t.ai_summary)}
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -1071,7 +1085,7 @@ const Main_Prof: React.FC = () => {
                                 )}
                               </p>
                               <p style={{ fontSize: '11px', opacity: 0.7, color: 'white' }}>
-                                {t("professor.dashboard.waitingForData", "Analizando actividad de la clase en segundo plano...")}
+                                {t("professor.dashboard.waitingForData", "Analyzing class activity in the background...")}
                               </p>
                             </>
                           )}
@@ -1087,7 +1101,7 @@ const Main_Prof: React.FC = () => {
                     <div className="ms-info-content" style={{ maxHeight: '180px', overflowY: 'auto', padding: '0 4px' }}>
                       {questionsLoading ? (
                         <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontStyle: 'italic' }}>
-                          {t('common.loading', 'Cargando...')}
+                          {t('common.loading', 'Loading...')}
                         </p>
                       ) : (
                         <>
@@ -1102,16 +1116,16 @@ const Main_Prof: React.FC = () => {
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                                 <IonIcon icon={planetOutline} style={{ color: '#8E53FF', fontSize: '18px' }} />
-                                <span style={{ fontWeight: '700', fontSize: '13px', color: 'white' }}>Resumen de Dudas (IA)</span>
-                                <span style={{ 
-                                  marginLeft: 'auto', 
-                                  fontSize: '10px', 
+                                <span style={{ fontWeight: '700', fontSize: '13px', color: 'white' }}>Doubts Summary (AI)</span>
+                                <span style={{
+                                  marginLeft: 'auto',
+                                  fontSize: '10px',
                                   background: questionsSummary.avgFrustration === 'high' ? '#e74c3c' : questionsSummary.avgFrustration === 'medium' ? '#f39c12' : '#2ecc71',
                                   padding: '2px 6px',
                                   borderRadius: '6px',
                                   color: 'white'
                                 }}>
-                                  Frustración: {questionsSummary.avgFrustration}
+                                  Frustration: {questionsSummary.avgFrustration}
                                 </span>
                               </div>
                               <p style={{ fontSize: '12px', lineHeight: '1.5', color: 'rgba(255,255,255,0.9)', margin: '0 0 8px 0' }}>
@@ -1120,10 +1134,10 @@ const Main_Prof: React.FC = () => {
                               {questionsSummary.topDoubts.length > 0 && (
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                                   {questionsSummary.topDoubts.map((doubt, i) => (
-                                    <span key={i} style={{ 
-                                      fontSize: '10px', 
-                                      background: 'rgba(255,255,255,0.1)', 
-                                      padding: '3px 8px', 
+                                    <span key={i} style={{
+                                      fontSize: '10px',
+                                      background: 'rgba(255,255,255,0.1)',
+                                      padding: '3px 8px',
                                       borderRadius: '10px',
                                       color: 'rgba(255,255,255,0.8)'
                                     }}>
@@ -1136,51 +1150,51 @@ const Main_Prof: React.FC = () => {
                           )}
 
                           {chatbotQuestions.length > 0 ? (
-                        chatbotQuestions.map((q: any, idx: number) => (
-                          <div key={q.id || idx} style={{
-                            background: 'rgba(255,255,255,0.08)',
-                            borderRadius: '12px',
-                            padding: '10px 12px',
-                            marginBottom: '8px',
-                            borderLeft: q.frustration === 'high' ? '3px solid #e74c3c'
-                              : q.frustration === 'medium' ? '3px solid #f39c12'
-                              : '3px solid #2ecc71'
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                              <span style={{
-                                fontSize: '10px',
-                                background: 'rgba(255,255,255,0.15)',
-                                padding: '2px 8px',
-                                borderRadius: '10px',
-                                color: 'rgba(255,255,255,0.9)'
+                            chatbotQuestions.map((q: any, idx: number) => (
+                              <div key={q.id || idx} style={{
+                                background: 'rgba(255,255,255,0.08)',
+                                borderRadius: '12px',
+                                padding: '10px 12px',
+                                marginBottom: '8px',
+                                borderLeft: q.frustration === 'high' ? '3px solid #e74c3c'
+                                  : q.frustration === 'medium' ? '3px solid #f39c12'
+                                    : '3px solid #2ecc71'
                               }}>
-                                🏷️ {q.topic}
-                              </span>
-                              <span style={{ fontSize: '12px' }}>
-                                {q.frustration === 'high' ? '😰' : q.frustration === 'medium' ? '😐' : '😊'}
-                              </span>
-                              <span style={{
-                                fontSize: '10px',
-                                color: 'rgba(255,255,255,0.5)',
-                                marginLeft: 'auto'
-                              }}>
-                                {q.studentName}
-                              </span>
-                            </div>
-                            <p style={{
-                              margin: 0,
-                              fontSize: '12px',
-                              lineHeight: '1.4',
-                              color: 'rgba(255,255,255,0.85)'
-                            }}>
-                              "{q.question.length > 120 ? q.question.substring(0, 120) + '...' : q.question}"
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                                  <span style={{
+                                    fontSize: '10px',
+                                    background: 'rgba(255,255,255,0.15)',
+                                    padding: '2px 8px',
+                                    borderRadius: '10px',
+                                    color: 'rgba(255,255,255,0.9)'
+                                  }}>
+                                    🏷️ {q.topic}
+                                  </span>
+                                  <span style={{ fontSize: '12px' }}>
+                                    {q.frustration === 'high' ? '😰' : q.frustration === 'medium' ? '😐' : '😊'}
+                                  </span>
+                                  <span style={{
+                                    fontSize: '10px',
+                                    color: 'rgba(255,255,255,0.5)',
+                                    marginLeft: 'auto'
+                                  }}>
+                                    {q.studentName}
+                                  </span>
+                                </div>
+                                <p style={{
+                                  margin: 0,
+                                  fontSize: '12px',
+                                  lineHeight: '1.4',
+                                  color: 'rgba(255,255,255,0.85)'
+                                }}>
+                                  "{q.question.length > 120 ? q.question.substring(0, 120) + '...' : q.question}"
+                                </p>
+                              </div>
+                            ))) : (
+                            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', fontSize: '13px' }}>
+                              {t('professor.dashboard.noQuestions', 'No hay preguntas registradas aún')}
                             </p>
-                          </div>
-                        ))) : (
-                          <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontStyle: 'italic', fontSize: '13px' }}>
-                            {t('professor.dashboard.noQuestions', 'No hay preguntas registradas aún')}
-                          </p>
-                        )}
+                          )}
                         </>
                       )}
                     </div>

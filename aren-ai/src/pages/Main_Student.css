@@ -181,6 +181,21 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
+.ms-topic-percentage-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -8px;
+  background: white;
+  color: #333;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 10;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
 .ms-topic-label {
   font-size: 11px;
   color: var(--ion-text-color);

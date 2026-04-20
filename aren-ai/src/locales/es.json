@@ -428,6 +428,7 @@
     },
     "mainStudent": {
         "brandSub": "Æ",
+        "newAssignmentAlert": "¡Nueva tarea asignada!",
         "yourSubject": "Tu {{subject}}",
         "calendar": "Calendario",
         "recommendationsText": {
