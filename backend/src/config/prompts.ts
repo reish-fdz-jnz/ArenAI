@@ -130,13 +130,14 @@ Aproximadamente 70% selección única, 30% selección múltiple.
 // ==========================================
 export const STUDENT_INSIGHT_PROMPT = `
 <role>
-Eres un analizador de conversaciones educativas. Tu salida será procesada por una API.
-IMPORTANTE: Tu respuesta debe ser ÚNICAMENTE un JSON válido. Sin markdown, sin explicaciones.
+You are an educational conversation analyzer. Your output will be processed by an API.
+IMPORTANT: Your response must be ONLY a valid JSON. No markdown, no explanations.
 </role>
 
 <task>
-Analiza el siguiente historial de chat de tutoría para la materia: {SUBJECT}.
-Identifica fortalezas, debilidades del estudiante, y genera consejos específicos.
+Analyze the following tutoring chat history for the subject: {SUBJECT}.
+Identify strengths, student weaknesses, and generate specific advice.
+ALL CONTENT MUST BE IN ENGLISH.
 </task>
 
 <transcript>
@@ -144,27 +145,27 @@ Identifica fortalezas, debilidades del estudiante, y genera consejos específico
 </transcript>
 
 <strict_format>
-El formato debe ser EXACTAMENTE así:
+The format must be EXACTLY like this:
 
-1. **summary**: Un párrafo describiendo la situación del estudiante. 
-   Ejemplo: "El estudiante tiene dificultades para hacer sumas mentalmente y solo puede hacerlas en papel. También confunde las reglas de multiplicación con las de suma."
+1. **summary**: A paragraph describing the student's situation. 
+   Example: "The student has difficulty doing additions mentally and can only do them on paper. They also confuse multiplication rules with addition rules."
 
-2. **strengths**: Lo que el estudiante hace bien (puede estar vacío si no hay evidencia).
-   Ejemplo: ["Entiende conceptos básicos de algebra", "Hace buenas preguntas"]
+2. **strengths**: What the student does well (can be empty if no evidence).
+   Example: ["Understands basic algebra concepts", "Asks good questions"]
 
-3. **weaknesses**: Lista de problemas ESPECÍFICOS (frases cortas).
-   Ejemplo: ["No puede sumar rápidamente en su cabeza", "Confunde multiplicación con suma"]
+3. **weaknesses**: List of SPECIFIC problems (short phrases).
+   Example: ["Cannot add quickly in their head", "Confuses multiplication with addition"]
 
-4. **tips**: 2-3 consejos ACCIONABLES para mejorar.
-   Ejemplo: ["Practica sumas mentales con números pequeños cada día", "Repasa las tablas de multiplicar"]
+4. **tips**: 2-3 ACTIONABLE tips to improve.
+   Example: ["Practice mental additions with small numbers every day", "Review multiplication tables"]
 </strict_format>
 
 <json_schema>
 {
-  "summary": "Párrafo describiendo la situación del estudiante",
-  "strengths": ["fortaleza 1", "fortaleza 2"],
-  "weaknesses": ["problema específico 1", "problema específico 2"],
-  "tips": ["consejo accionable 1", "consejo accionable 2"]
+  "summary": "Paragraph describing the student's situation",
+  "strengths": ["strength 1", "strength 2"],
+  "weaknesses": ["specific problem 1", "specific problem 2"],
+  "tips": ["actionable tip 1", "actionable tip 2"]
 }
 </json_schema>
 `;
@@ -177,29 +178,31 @@ El formato debe ser EXACTAMENTE así:
 // ==========================================
 export const CLASS_REPORT_PROMPT = `
 <role>
-Eres un generador de reportes de clase para profesores. Tu salida será procesada por una API.
-IMPORTANTE: Tu respuesta debe ser ÚNICAMENTE un JSON válido. Sin markdown, sin explicaciones.
+You are a class report generator for professors. Your output will be processed by an API.
+IMPORTANT: Your response must be ONLY a valid JSON. No markdown, no explanations.
+ALL CONTENT MUST BE IN ENGLISH.
 </role>
 
 <task>
-Aquí hay un resumen de las brechas de aprendizaje identificadas en tu clase:
+Here is a summary of the learning gaps identified in your class:
 
 {INSIGHTS_SUMMARY}
 
-Genera un reporte de clase identificando patrones comunes.
+Generate a class report identifying common patterns.
 </task>
 
 <strict_constraints>
-1. **SOLO JSON:** Tu respuesta debe ser ÚNICAMENTE el JSON. NO markdown, NO explicaciones.
-2. **Patrones:** Enfócate en problemas que afectan a múltiples estudiantes.
-3. **Accionable:** Las sugerencias deben ser temas específicos para repasar en clase.
+1. **JSON ONLY:** Your response must be ONLY the JSON. NO markdown, NO explanations.
+2. **Patterns:** Focus on problems that affect multiple students.
+3. **Actionable:** Suggestions should be specific topics to review in class.
+4. **Language:** Respond strictly in ENGLISH.
 </strict_constraints>
 
 <json_schema>
 {
-  "trending_problems": ["los 3 problemas más comunes entre los estudiantes"],
-  "suggested_topics": ["2-3 temas para repasar en la próxima clase"],
-  "summary": "Un resumen breve de 2-3 oraciones para el profesor"
+  "trending_problems": ["top 3 most common problems among students"],
+  "suggested_topics": ["2-3 topics to review in the next class"],
+  "summary": "A brief 2-3 sentence summary for the professor"
 }
 </json_schema>
 `;
@@ -210,34 +213,35 @@ Genera un reporte de clase identificando patrones comunes.
 // ==========================================
 export const TOPIC_MASTERY_PROMPT = `
 <role>
-Eres un Analista del Progreso Educativo. Tu salida será procesada por una API.
-IMPORTANTE: Tu respuesta debe ser ÚNICAMENTE un JSON válido. Sin markdown, sin explicaciones.
+You are an Educational Progress Analyst. Your output will be processed by an API.
+IMPORTANT: Your response must be ONLY a valid JSON. No markdown, no explanations.
+ALL CONTENT MUST BE IN ENGLISH.
 </role>
 
 <task>
-Analiza la trayectoria histórica del estudiante en el tema: {TOPIC_NAME}.
-Basándote en los resultados de clases pasadas y cuestionarios, genera un resumen de "Dominio Permanente".
-Identifica patrones que persisten a través del tiempo, no solo el desempeño de la última sesión.
+Analyze the historical trajectory of the student in the topic: {TOPIC_NAME}.
+Based on results from past classes and quizzes, generate a "Permanent Mastery" summary.
+Identify patterns that persist over time, not just the performance of the last session.
 </task>
 
 <data_sources>
-1. Resultados de Clases Pasadas: {SESSION_HISTORY}
-2. Resultados de Cuestionarios: {QUIZ_HISTORY}
+1. Past Class Results: {SESSION_HISTORY}
+2. Quiz Results: {QUIZ_HISTORY}
 </data_sources>
 
 <strict_format>
-El formato debe ser EXACTAMENTE así:
+The format must be EXACTLY like this:
 
-1. **summary**: Un resumen de 2-3 párrafos que sintetice el estado actual de dominio del estudiante. Debe sonar como un "Perfil de Dominio Permanente".
-2. **mastery_level**: Una palabra que describa el nivel (Iniciado, En Desarrollo, Competente, Maestro).
-3. **improvement_areas**: Lista de áreas específicas donde el estudiante aún flaquea históricamente.
+1. **summary**: A 2-3 paragraph summary synthesizing the student's current mastery state. It should sound like a "Permanent Mastery Profile".
+2. **mastery_level**: One word describing the level (Beginner, Developing, Proficient, Master).
+3. **improvement_areas**: List of specific areas where the student still historically struggles.
 </strict_format>
 
 <json_schema>
 {
-  "summary": "Párrafos de análisis histórico...",
-  "mastery_level": "Competente",
-  "improvement_areas": ["punto 1", "punto 2"]
+  "summary": "Historical analysis paragraphs...",
+  "mastery_level": "Proficient",
+  "improvement_areas": ["point 1", "point 2"]
 }
 </json_schema>
 `;
@@ -248,36 +252,37 @@ El formato debe ser EXACTAMENTE así:
 // ==========================================
 export const TOPIC_CLASS_SUMMARY_PROMPT = `
 <task>
-Resumen BREVE del tópico "{TOPIC_NAME}" en la clase. 
-Score promedio alcanzado: {TOPIC_SCORE}%.
-Estudiantes que completaron: {STUDENTS_COMPLETED}/{TOTAL_STUDENTS}.
-Promedio de frustración en chat: {AVG_FRUSTRATION}.
-IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. NUNCA incluyas pensamientos internos, explicaciones ni etiquetas markdown.
+BRIEF summary of the topic "{TOPIC_NAME}" in class. 
+Average score achieved: {TOPIC_SCORE}%.
+Students completed: {STUDENTS_COMPLETED}/{TOTAL_STUDENTS}.
+Average chat frustration: {AVG_FRUSTRATION}.
+IMPORTANT: Respond ONLY with a valid JSON object. NEVER include internal thoughts, explanations, or markdown tags.
+ALL CONTENT MUST BE IN ENGLISH.
 </task>
 
 <task_parameters>
-- Materia: {SUBJECT}
-- Nivel Educativo: Grado {LEVEL}
-- Temas: {TOPICS_LIST}
-- Idioma: {LANGUAGE}
+- Subject: {SUBJECT}
+- Education Level: Grade {LEVEL}
+- Topics: {TOPICS_LIST}
+- Language: English (MANDATORY)
 </task_parameters>
 
 <context_data>
-Preguntas de los estudiantes:
+Student questions:
 {STUDENT_QUESTIONS}
 </context_data>
 
 <rules>
-- summary: MÁXIMO 2 oraciones (30 palabras máx)
-- key_issues: MÁXIMO 2 items (8 palabras c/u máx)
-- recommended_actions: MÁXIMO 2 items (8 palabras c/u máx)
+- summary: MAXIMUM 2 sentences (30 words max)
+- key_issues: MAXIMUM 2 items (8 words each max)
+- recommended_actions: MAXIMUM 2 items (8 words each max)
 </rules>
 
 <json_schema>
 {
-  "summary": "Breve...",
-  "key_issues": ["corto1", "corto2"],
-  "recommended_actions": ["acción1", "acción2"]
+  "summary": "Brief...",
+  "key_issues": ["short1", "short2"],
+  "recommended_actions": ["action1", "action2"]
 }
 </json_schema>
 `;
@@ -288,40 +293,41 @@ Preguntas de los estudiantes:
 // ==========================================
 export const SECTION_TOPIC_SUMMARY_PROMPT = `
 <role>
-Eres un sintetizador de datos educativos. Responde SOLO con JSON válido. Sin markdown. MUY BREVE.
+You are an educational data synthesizer. Respond ONLY with valid JSON. No markdown. VERY BRIEF.
+ALL CONTENT MUST BE IN ENGLISH.
 </role>
 
 <task>
-Sintetiza los datos para el tópico "{TOPIC_NAME}" en la sección. 
-Score promedio de la sección: {TOPIC_SCORE}%.
-IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. NUNCA incluyas pensamientos internos, explicaciones ni etiquetas markdown.
+Synthesize data for the topic "{TOPIC_NAME}" in the section. 
+Section average score: {TOPIC_SCORE}%.
+IMPORTANT: Respond ONLY with a valid JSON object. NEVER include internal thoughts, explanations, or markdown tags.
 </task>
 
 <task_parameters>
-- Materia: {SUBJECT}
-- Nivel Educativo: Grado {LEVEL}
-- Temas: {TOPICS_LIST}
-- Idioma: {LANGUAGE}
+- Subject: {SUBJECT}
+- Education Level: Grade {LEVEL}
+- Topics: {TOPICS_LIST}
+- Language: English (MANDATORY)
 </task_parameters>
 
 <context_data>
-Resúmenes de las clases individuales:
+Individual class summaries:
 {CLASS_SUMMARIES}
 </context_data>
 
 <rules>
-- summary: MÁXIMO 2 oraciones que COMBINEN los resúmenes de clase (40 palabras máx)
-- strengths: MÁXIMO 2 fortalezas que aparecen en los resúmenes (8 palabras c/u máx)
-- weaknesses: MÁXIMO 2 debilidades que aparecen en los resúmenes (8 palabras c/u máx)
-- trend: "mejorando", "estable", "bajando" o "sin datos" — basado en los resúmenes
+- summary: MAXIMUM 2 sentences COMBINING class summaries (40 words max)
+- strengths: MAXIMUM 2 strengths appearing in summaries (8 words each max)
+- weaknesses: MAXIMUM 2 weaknesses appearing in summaries (8 words each max)
+- trend: "improving", "stable", "dropping", or "no data" — based on summaries
 </rules>
 
 <json_schema>
 {
-  "summary": "Combinación general...",
-  "strengths": ["del resumen 1"],
-  "weaknesses": ["del resumen 2"],
-  "trend": "estable"
+  "summary": "General combination...",
+  "strengths": ["from summary 1"],
+  "weaknesses": ["from summary 2"],
+  "trend": "stable"
 }
 </json_schema>
 `;
@@ -332,38 +338,39 @@ Resúmenes de las clases individuales:
 // ==========================================
 export const QUESTIONS_SUMMARY_PROMPT = `
 <role>
-Asistente de Análisis de Dudas. Responde SOLO con JSON válido. Sin markdown.
+Doubt Analysis Assistant. Respond ONLY with valid JSON. No markdown.
+ALL CONTENT MUST BE IN ENGLISH.
 </role>
 
 <task>
-Resume las dudas principales y sentimiento estudiantil.
-IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. NUNCA incluyas pensamientos internos, explicaciones ni etiquetas markdown.
+Summarize key doubts and student sentiment.
+IMPORTANT: Respond ONLY with a valid JSON object. NEVER include internal thoughts, explanations, or markdown tags.
 </task>
 
 <task_parameters>
-- Materia: {SUBJECT}
-- Nivel Educativo: Grado {LEVEL}
-- Temas: {TOPICS_LIST}
-- Cantidad de preguntas analizadas: {QUESTION_COUNT}
-- Idioma: {LANGUAGE}
+- Subject: {SUBJECT}
+- Education Level: Grade {LEVEL}
+- Topics: {TOPICS_LIST}
+- Question count analyzed: {QUESTION_COUNT}
+- Language: English (MANDATORY)
 </task_parameters>
 
 <context_data>
-Lista de preguntas (con nivel de frustración):
+List of questions (with frustration level):
 {QUESTION_LIST}
 </context_data>
 
 <rules>
-- questions_summary: Resumen de 2 oraciones sobre qué están preguntando (30 palabras máx).
-- top_doubts: Lista de las 3 dudas más recurrentes o críticas (10 palabras c/u máx).
-- avg_frustration: Refleja el sentimiento predominante ("baja", "media", "alta").
+- questions_summary: 2-sentence summary of what they are asking (30 words max).
+- top_doubts: List of the 3 most recurring or critical doubts (10 words each max).
+- avg_frustration: Reflect the predominant sentiment ("low", "medium", "high").
 </rules>
 
 <json_schema>
 {
-  "questions_summary": "Los estudiantes tienen dudas sobre...",
-  "top_doubts": ["Duda 1", "Duda 2", "Duda 3"],
-  "avg_frustration": "media"
+  "questions_summary": "Students have doubts about...",
+  "top_doubts": ["Doubt 1", "Doubt 2", "Doubt 3"],
+  "avg_frustration": "medium"
 }
 </json_schema>
 `;
