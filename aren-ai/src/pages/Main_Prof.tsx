@@ -162,6 +162,12 @@ const Main_Prof: React.FC = () => {
     // 2. Session Lifecycle (Live Sync)
     socket.on('class_started', (data: { classId: number; sectionId: number }) => {
       console.log("[Main_Prof] Live Class Started:", data);
+      // Clear current focus preference to ensure it jumps to the new session
+      const dateStr = new Date().toISOString().split('T')[0];
+      localStorage.removeItem(`prefSession_${dateStr}`);
+      
+      setTopics([]); // Clear old topics immediately
+      setOverallPerformance(null);
       fetchDashboardSync();
     });
 
@@ -249,16 +255,18 @@ const Main_Prof: React.FC = () => {
       const storedId = localStorage.getItem(`prefSession_${dateStr}`);
       const isToday = dateStr === new Date().toISOString().split('T')[0];
       
-      let targetFocus: DailySession | null = merged.find(s => String(s.id_class) === storedId) || null;
+      // Force focus on running session if it's today
+      let targetFocus: DailySession | null = null;
+      if (isToday) {
+        targetFocus = merged.find(s => s.status === 'running') || null;
+      }
       
       if (!targetFocus) {
-        if (isToday) {
-          // If it's today, ONLY focus on a running session. Otherwise stay null/idle.
-          targetFocus = merged.find(s => s.status === 'running') || null;
-        } else {
-          // For past dates, fallback to the first session found
-          targetFocus = merged[0] || null;
-        }
+        targetFocus = merged.find(s => String(s.id_class) === storedId) || null;
+      }
+      
+      if (!targetFocus && !isToday) {
+        targetFocus = merged[0] || null;
       }
       
       updateFocus(targetFocus, false);
