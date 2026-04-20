@@ -99,10 +99,6 @@ const Main_Student: React.FC = () => {
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const issueTimeoutRefs = useRef<NodeJS.Timeout[]>([]);
 
-  // Section Topic AI Test State
-  const [sectionTestLoading, setSectionTestLoading] = useState(false);
-  const [sectionTestResult, setSectionTestResult] = useState<any>(null);
-  const [sectionTestError, setSectionTestError] = useState<string | null>(null);
 
   // Persist selectedSubject
   useEffect(() => {
@@ -516,33 +512,6 @@ const Main_Student: React.FC = () => {
     router.push(path, "forward", "push");
   };
 
-  // Section Topic AI Test Handler
-  const handleTestSectionSummary = async () => {
-    setSectionTestLoading(true);
-    setSectionTestResult(null);
-    setSectionTestError(null);
-    try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch(getApiUrl('/ai/generate-section-summaries'), {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await response.json();
-      if (data.success) {
-        setSectionTestResult(data);
-      } else {
-        setSectionTestError(data.error || 'Error generating summaries');
-      }
-    } catch (err: any) {
-      console.error('Section test error:', err);
-      setSectionTestError(err.message || 'Network error');
-    } finally {
-      setSectionTestLoading(false);
-    }
-  };
 
   return (
     <IonPage className="main-student-page">
@@ -848,150 +817,6 @@ const Main_Student: React.FC = () => {
               </>
             )}
 
-            {/* 🧪 Section Topic AI Summary Test Card */}
-            <div style={{
-              margin: '16px 16px 140px',
-              padding: '16px',
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, rgba(155,89,182,0.15), rgba(52,152,219,0.15))',
-              border: '1px solid rgba(155,89,182,0.3)',
-              backdropFilter: 'blur(10px)'
-            }}>
-              <button
-                onClick={handleTestSectionSummary}
-                disabled={sectionTestLoading}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  background: sectionTestLoading 
-                    ? 'rgba(var(--ion-color-primary-rgb), 0.3)' 
-                    : 'linear-gradient(135deg, var(--ion-color-primary), var(--ion-color-primary-shade))',
-                  color: 'white',
-                  fontSize: '14px',
-                  fontWeight: '600',
-                  cursor: sectionTestLoading ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                {sectionTestLoading ? (
-                  <>
-                    <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>⏳</span>
-                    Generando resúmenes con IA...
-                  </>
-                ) : (
-                  <>
-                    🚀 Ejecutar Pipeline AI
-                  </>
-                )}
-              </button>
-
-              {sectionTestError && (
-                <div style={{
-                  marginTop: '10px',
-                  padding: '10px 12px',
-                  borderRadius: '10px',
-                   background: 'rgba(var(--ion-color-danger-rgb), 0.1)',
-                  border: '1px solid rgba(var(--ion-color-danger-rgb), 0.3)',
-                  fontSize: '12px',
-                  color: 'var(--ion-color-danger)'
-                }}>
-                  ❌ {sectionTestError}
-                </div>
-              )}
-
-              {sectionTestResult && (
-                <div style={{ marginTop: '12px' }}>
-                  <div style={{
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    background: 'rgba(var(--ion-color-success-rgb), 0.18)',
-                    border: '1px solid rgba(var(--ion-color-success-rgb), 0.4)',
-                    marginBottom: '10px',
-                    fontSize: '12px',
-                    color: 'var(--ion-color-success)'
-                  }}>
-                    ✅ {sectionTestResult.message} — {sectionTestResult.topicsProcessed} temas procesados
-                  </div>
-                  
-                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                    {sectionTestResult.topics?.slice(0, 5).map((topic: any, idx: number) => {
-                      const summary = topic.aiSummary;
-                      return (
-                        <div key={idx} style={{
-                          padding: '10px 12px',
-                          borderRadius: '12px',
-                          background: 'rgba(var(--ion-color-primary-rgb), 0.12)',
-                          border: '1px solid rgba(var(--ion-color-primary-rgb), 0.25)',
-                          marginBottom: '10px'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <strong style={{ fontSize: '13px', color: 'var(--ion-color-primary)' }}>📘 {topic.topicName}</strong>
-                            <span style={{
-                              fontSize: '12px',
-                              padding: '2px 8px',
-                              borderRadius: '8px',
-                               background: (topic.score || 0) >= 80 ? 'rgba(var(--ion-color-success-rgb), 0.18)' : (topic.score || 0) >= 60 ? 'rgba(var(--ion-color-warning-rgb), 0.18)' : 'rgba(var(--ion-color-danger-rgb), 0.18)',
-                              color: (topic.score || 0) >= 80 ? 'var(--ion-color-success-shade)' : (topic.score || 0) >= 60 ? 'var(--ion-color-warning-shade)' : 'var(--ion-color-danger-shade)',
-                              fontWeight: '700'
-                            }}>
-                              {topic.score || 0}%
-                            </span>
-                          </div>
-                           {summary && (
-                            <>
-                              <p style={{ fontSize: '12px', color: 'var(--ion-color-primary-shade)', margin: '0 0 8px', lineHeight: '1.5', fontWeight: '500' }}>
-                                {typeof summary === 'object' ? summary.summary : summary}
-                              </p>
-                              {summary.trend && (
-                                <span style={{
-                                  fontSize: '10px', padding: '2px 8px', borderRadius: '6px', marginBottom: '6px', display: 'inline-block',
-                                   background: summary.trend === 'mejorando' ? 'rgba(var(--ion-color-success-rgb), 0.18)' : summary.trend === 'bajando' ? 'rgba(var(--ion-color-danger-rgb), 0.18)' : 'rgba(var(--ion-color-warning-rgb), 0.18)',
-                                  color: summary.trend === 'mejorando' ? 'var(--ion-color-success-shade)' : summary.trend === 'bajando' ? 'var(--ion-color-danger-shade)' : 'var(--ion-color-warning-shade)',
-                                  fontWeight: '700'
-                                }}>
-                                  {summary.trend === 'mejorando' ? '📈' : summary.trend === 'bajando' ? '📉' : '➡️'} {summary.trend}
-                                </span>
-                              )}
-                              {summary.strengths && summary.strengths.length > 0 && (
-                                <div style={{ marginTop: '4px' }}>
-                                  <span style={{ fontSize: '10px', color: 'var(--ion-color-success)', fontWeight: '700' }}>✅ Fortalezas:</span>
-                                  <ul style={{ margin: '2px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'var(--ion-text-color)', opacity: 0.85 }}>
-                                    {summary.strengths.map((s: string, i: number) => (
-                                      <li key={i}>{s}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                              {summary.weaknesses && summary.weaknesses.length > 0 && (
-                                <div style={{ marginTop: '4px' }}>
-                                  <span style={{ fontSize: '10px', color: 'var(--ion-color-danger)', fontWeight: '700' }}>⚠️ Dificultades:</span>
-                                  <ul style={{ margin: '2px 0 0', paddingLeft: '14px', fontSize: '10px', color: 'var(--ion-text-color)', opacity: 0.85 }}>
-                                    {summary.weaknesses.map((w: string, i: number) => (
-                                      <li key={i}>{w}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {sectionTestResult.topics?.length > 5 && (
-                      <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textAlign: 'center', margin: '8px 0 0' }}>
-                        ... y {sectionTestResult.topics.length - 5} temas más
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
           </div>
         </PageTransition>
       </IonContent>
