@@ -4,20 +4,13 @@ import {
   IonContent,
   IonPage,
   IonIcon,
-  IonMenuButton,
   IonText,
   useIonRouter,
   IonSkeletonText,
   useIonViewWillEnter,
 } from "@ionic/react";
 import {
-  calculator,
-  flask,
-  globe,
-  language,
-  book,
   trophyOutline,
-  chatbubbleEllipsesOutline,
   settingsOutline,
   homeOutline,
   americanFootballOutline,
@@ -187,14 +180,27 @@ const Main_Student: React.FC = () => {
                 setTopics(formattedTopics);
                 setOverallPerformance(Number(activeSessionData.student_score_average) || 0);
 
-                const summary = activeSessionData.student_ai_summary || activeSessionData.class_ai_summary || "Class is active. Monitoring your progress...";
-                setStudentInsights({ summary, issues: [] });
-                setDisplayedSummary(summary);
+                let summaryText = activeSessionData.student_ai_summary || activeSessionData.class_ai_summary || "Class is active. Monitoring your progress...";
+                let weaknesses: string[] = [];
+
+                // Parallel robust parsing logic for active session summaries
+                if (typeof summaryText === 'string' && summaryText.trim().startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(summaryText);
+                        summaryText = parsed.summary || parsed.general_summary || summaryText;
+                        if (parsed.key_issues && Array.isArray(parsed.key_issues)) {
+                            weaknesses = parsed.key_issues;
+                        }
+                    } catch (e) { /* ignore */ }
+                }
+
+                setStudentInsights({ summary: summaryText, issues: weaknesses });
+                setDisplayedSummary(summaryText);
+                setDisplayedIssues(weaknesses);
+                setIsLoading(false);
+                return; // Skip normal fetching if active session is present!
             }
-            setIsLoading(false);
-            return; // Skip normal fetching if active session is present!
           } else {
-            // Explicitly clear active session if API confirms NO session is running
             setActiveSession(null);
           }
         } else {
@@ -334,9 +340,11 @@ const Main_Student: React.FC = () => {
       const user = userStr ? JSON.parse(userStr) : null;
       const userId = user?.id;
 
+      const classId = activeSession?.id_class || 1;
+
       if (userId && token) {
         const response = await fetch(
-          getApiUrl(`/ai/student-insights?userId=${userId}&classId=1`),
+          getApiUrl(`/ai/student-insights?userId=${userId}&classId=${classId}`),
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -347,17 +355,31 @@ const Main_Student: React.FC = () => {
 
         if (response.ok) {
           const data = await response.json();
-          console.log("[Debug] Student insights response:", data);
-
+          
           if (data.insights && data.insights.length > 0) {
-            const latestInsight = data.insights[0];
+            const raw = data.insights[0];
+            let summaryText = raw.summary || "";
+            let weaknesses = raw.weaknesses || [];
+
+            // Robust parsing if the summary itself is a JSON string
+            if (typeof summaryText === 'string' && summaryText.trim().startsWith('{')) {
+                try {
+                    const parsed = JSON.parse(summaryText);
+                    summaryText = parsed.summary || parsed.general_summary || summaryText;
+                    if (parsed.key_issues && Array.isArray(parsed.key_issues)) {
+                        weaknesses = [...new Set([...weaknesses, ...parsed.key_issues])];
+                    }
+                } catch (e) {
+                    // Fallback to raw text
+                }
+            }
+
             const newInsights = {
-              summary: latestInsight.summary || "",
-              issues: latestInsight.weaknesses || [],
+              summary: summaryText,
+              issues: weaknesses,
             };
             setStudentInsights(newInsights);
 
-            // Trigger typing animation if requested (new summary)
             if (animate && newInsights.summary) {
               startTypingAnimation(newInsights.summary, newInsights.issues);
             } else {
@@ -372,7 +394,12 @@ const Main_Student: React.FC = () => {
         } else {
           setStudentInsights(null);
           setDisplayedSummary("");
+          setDisplayedIssues([]);
         }
+      } else {
+        setStudentInsights(null);
+        setDisplayedSummary("");
+        setDisplayedIssues([]);
       }
     } catch (err) {
       console.error("Error fetching student insights:", err);
@@ -405,11 +432,15 @@ const Main_Student: React.FC = () => {
         const currentUserId = user?.id;
 
         if (data.data.userId === currentUserId) {
-          console.log(
-            "[Main_Student] New summary for current user - refetching with animation",
-          );
-          fetchStudentInsights(true); // Refetch with animation
+          console.log("[Main_Student] New summary for current user - refetching");
+          fetchStudentInsights(true);
         }
+      }
+      
+      // Also refresh session state if the pipeline just finished a pass
+      if (data.data?.status === "pipeline_complete" || data.data?.status === "report_saved") {
+          console.log("[Main_Student] Global pipeline update - refreshing session state");
+          fetchSessionState();
       }
     };
 
@@ -846,9 +877,22 @@ const Main_Student: React.FC = () => {
                           setTopics(formattedTopics);
                           setOverallPerformance(Number((session as any).student_score_average) || 0);
                           
-                          const summary = (session as any).student_ai_summary || (session as any).ai_summary || "Session details loaded.";
-                          setStudentInsights({ summary, issues: [] });
-                          setDisplayedSummary(summary);
+                          let summaryText = (session as any).student_ai_summary || (session as any).ai_summary || "Session details loaded.";
+                          let weaknesses: string[] = [];
+
+                          if (typeof summaryText === 'string' && summaryText.trim().startsWith('{')) {
+                              try {
+                                  const parsed = JSON.parse(summaryText);
+                                  summaryText = parsed.summary || parsed.general_summary || summaryText;
+                                  if (parsed.key_issues && Array.isArray(parsed.key_issues)) {
+                                      weaknesses = parsed.key_issues;
+                                  }
+                              } catch (e) { /* ignore */ }
+                          }
+
+                          setStudentInsights({ summary: summaryText, issues: weaknesses });
+                          setDisplayedSummary(summaryText);
+                          setDisplayedIssues(weaknesses);
                       }
                   }}
                   selectedSessionId={activeSession?.id_class}

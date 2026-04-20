@@ -8,7 +8,7 @@ export { default as ThemeSelectionModal } from './ThemeSelectionModal';
 export { default as AvatarSelector } from './AvatarSelector';
 export { default as BattleResultModal } from './BattleResultModal';
 export { default as BattleLobby } from './BattleLobby';
-export { TopicBubble } from './TopicBubble';
+export { default as TopicBubble } from './TopicBubble';
 
 // Named exports (components using 'export const' or 'export interface')
 export * from './CalendarSelector';
@@ -17,4 +17,3 @@ export * from './TopicConnectionsGraph';
 export * from './TopicGlobe';
 export * from './QuestionCard';
 export * from './TopicBubble';
-export * from './BattleLobby';

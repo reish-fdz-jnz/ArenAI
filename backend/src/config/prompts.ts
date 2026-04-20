@@ -252,6 +252,7 @@ Resumen BREVE del tópico "{TOPIC_NAME}" en la clase.
 Score promedio alcanzado: {TOPIC_SCORE}%.
 Estudiantes que completaron: {STUDENTS_COMPLETED}/{TOTAL_STUDENTS}.
 Promedio de frustración en chat: {AVG_FRUSTRATION}.
+IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. NUNCA incluyas pensamientos internos, explicaciones ni etiquetas markdown.
 </task>
 
 <task_parameters>
@@ -291,8 +292,9 @@ Eres un sintetizador de datos educativos. Responde SOLO con JSON válido. Sin ma
 </role>
 
 <task>
-COMBINA los resúmenes de clase en UN resumen general del tópico "{TOPIC_NAME}" para la sección. 
+Sintetiza los datos para el tópico "{TOPIC_NAME}" en la sección. 
 Score promedio de la sección: {TOPIC_SCORE}%.
+IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. NUNCA incluyas pensamientos internos, explicaciones ni etiquetas markdown.
 </task>
 
 <task_parameters>
@@ -334,7 +336,8 @@ Asistente de Análisis de Dudas. Responde SOLO con JSON válido. Sin markdown.
 </role>
 
 <task>
-Resume las principales dudas y el sentimiento general de los estudiantes basándote en sus preguntas recientes.
+Resume las dudas principales y sentimiento estudiantil.
+IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido. NUNCA incluyas pensamientos internos, explicaciones ni etiquetas markdown.
 </task>
 
 <task_parameters>
