@@ -605,6 +605,56 @@ const Main_Prof: React.FC = () => {
     }
   };
 
+  const renderTopicAISummary = (aiSummary: string | null) => {
+    if (!aiSummary) return null;
+
+    let summaryText = "";
+    let keyIssues: string[] = [];
+    let recommendedActions: string[] = [];
+
+    // Attempt to parse JSON
+    if (typeof aiSummary === "string" && aiSummary.trim().startsWith("{")) {
+      try {
+        const parsed = JSON.parse(aiSummary);
+        summaryText = parsed.summary || "";
+        keyIssues = parsed.key_issues || [];
+        recommendedActions = parsed.recommended_actions || [];
+      } catch (e) {
+        summaryText = aiSummary;
+      }
+    } else {
+      summaryText = aiSummary;
+    }
+
+    return (
+      <div className="ms-topic-summary-container">
+        <p className="ms-summary-text">{summaryText}</p>
+        
+        {keyIssues.length > 0 && (
+          <div className="ms-summary-section">
+            <span className="ms-section-label">⚠️ {t('professor.dashboard.keyIssues', 'Key Issues')}:</span>
+            <div className="ms-summary-tag-group">
+              {keyIssues.map((issue, idx) => (
+                <span key={idx} className="ms-summary-tag issue">{issue}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {recommendedActions.length > 0 && (
+          <div className="ms-summary-section">
+            <span className="ms-section-label">✅ {t('professor.dashboard.recommendedActions', 'Recomendaciones')}:</span>
+            <div className="ms-summary-tag-group">
+              {recommendedActions.map((action, idx) => (
+                <span key={idx} className="ms-summary-tag action">{action}</span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Initial fetch on mount/subject change
   useEffect(() => {
     fetchClassInsights(false);
@@ -1004,10 +1054,11 @@ const Main_Prof: React.FC = () => {
                                   marginBottom: '8px',
                                   border: '1px solid rgba(255,255,255,0.1)'
                                 }}>
-                                  <div style={{ fontWeight: '700', fontSize: '11px', marginBottom: '4px', color: 'white' }}>🏷️ {t.name}</div>
-                                  <div style={{ fontSize: '12px', opacity: 0.85, lineHeight: '1.4' }}>
-                                    {typeof t.ai_summary === 'string' ? t.ai_summary : (t.ai_summary as any).summary || JSON.stringify(t.ai_summary)}
+                                  <div style={{ fontWeight: '700', fontSize: '11px', marginBottom: '8px', color: 'var(--ion-color-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <IonIcon icon={bookOutline} />
+                                    {t.name}
                                   </div>
+                                  {renderTopicAISummary(t.ai_summary)}
                                 </div>
                               ))}
                             </div>

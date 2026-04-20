@@ -558,3 +558,59 @@ html[data-force-dark] .ms-popup-close {
   background: rgba(var(--ion-color-primary-rgb), 0.3);
   color: white;
 }
+
+/* Structured AI Summary Styles */
+.ms-topic-summary-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ms-summary-text {
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  margin: 0 !important;
+  text-align: left !important;
+}
+
+.ms-summary-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ms-section-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.ms-summary-tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ms-summary-tag {
+  font-size: 10.5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.ms-summary-tag.issue {
+  background: rgba(255, 82, 82, 0.12);
+  color: #ff8e8e;
+  border-color: rgba(255, 82, 82, 0.2);
+}
+
+.ms-summary-tag.action {
+  background: rgba(46, 204, 113, 0.12);
+  color: #a2f2c2;
+  border-color: rgba(46, 204, 113, 0.2);
+}
