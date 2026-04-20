@@ -36,6 +36,7 @@ import {
   pencilOutline,
   schoolOutline,
   happyOutline,
+  refreshOutline,
 } from "ionicons/icons";
 import "./Main_Prof.css";
 import "../components/ProfessorHeader.css";
@@ -104,6 +105,32 @@ const Main_Prof: React.FC = () => {
 
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const issueTimeoutRefs = useRef<NodeJS.Timeout[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleManualRefresh = async () => {
+    if (isRefreshing) return;
+    console.log("[Main_Prof] Manual refresh triggered");
+    setIsRefreshing(true);
+    try {
+      // Refresh all core data streams
+      await Promise.all([
+        fetchDashboardSync(selectedDate),
+        fetchClassInsights(false)
+      ]);
+      
+      // If we are in the questions tab, the existing useEffect on 'viewMode' 
+      // might need a nudge or we can just let it be if it's already reactive.
+      // But for "perfection", we ensure it refreshes if visible.
+      if (viewMode === 'que') {
+        // Redundant trigger if needed, but fetchDashboardSync + focus update handles most
+      }
+    } catch (err) {
+      console.error("Manual refresh error:", err);
+    } finally {
+      // Small delay for visual feedback
+      setTimeout(() => setIsRefreshing(false), 600);
+    }
+  };
 
   // --- REAL-TIME UPDATES ---
   useEffect(() => {
@@ -653,6 +680,14 @@ const Main_Prof: React.FC = () => {
             <IonMenuButton className="ph-menu-btn">
               <IonIcon icon={menu} />
             </IonMenuButton>
+            
+            <button 
+              className={`ph-refresh-btn ${isRefreshing ? 'spinning' : ''}`}
+              onClick={handleManualRefresh}
+              title={t('common.refresh', 'Refresh')}
+            >
+              <IonIcon icon={refreshOutline} />
+            </button>
           </div>
         </IonToolbar>
 

@@ -510,6 +510,44 @@ html[data-force-dark] .ms-timeline-popup {
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
   color: white;
 }
+
+/* Refresh Button Header */
+.ph-refresh-btn {
+  background: transparent;
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  margin-left: 10px;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.ph-refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+}
+
+.ph-refresh-btn:active {
+  transform: scale(0.9);
+}
+
+.ph-refresh-btn ion-icon {
+  font-size: 20px;
+}
+
+.ph-refresh-btn.spinning ion-icon {
+  animation: phSpin 0.6s linear infinite;
+}
+
+@keyframes phSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 html[data-force-dark] .ms-popup-header {
   border-bottom-color: rgba(var(--ion-color-primary-rgb), 0.25);
 }
