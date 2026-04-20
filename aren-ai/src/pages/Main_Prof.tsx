@@ -524,16 +524,24 @@ const Main_Prof: React.FC = () => {
         const allWeaknesses: string[] = [];
 
         if (data.insights && data.insights.length > 0) {
-          console.log("[Debug] Found", data.insights.length, "insights");
-          summary = data.insights[0].summary || "";
-          console.log("[Debug] First insight summary:", summary);
+          const rawInsight = data.insights[0];
+          
+          // Robust parsing of summary if it's a JSON string
+          if (typeof rawInsight.summary === 'string' && rawInsight.summary.trim().startsWith('{')) {
+              try {
+                  const parsed = JSON.parse(rawInsight.summary);
+                  summary = parsed.summary || parsed.general_summary || rawInsight.summary;
+              } catch (e) {
+                  summary = rawInsight.summary;
+              }
+          } else {
+              summary = rawInsight.summary || "";
+          }
 
           data.insights.forEach((insight: any) => {
             const weaknesses = insight.weaknesses || [];
             allWeaknesses.push(...weaknesses);
           });
-        } else {
-          console.log("[Debug] No insights in response");
         }
 
         const uniqueWeaknesses = [...new Set(allWeaknesses)];
@@ -624,31 +632,7 @@ const Main_Prof: React.FC = () => {
     fetchData();
   }, [viewMode, activeSession, focusSession]);
 
-  const handleGenerateAIReport = async () => {
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem('authToken');
-      const url = getApiUrl('/ai/generate-section-summaries'); // This triggers full pipeline (Phase 4, 4.5, 5)
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        console.log("AI Report triggered successfully");
-        // Reload insights and questions summary
-        await fetchClassInsights(true);
-        if (viewMode === 'que') {
-          // Re-trigger the useEffect for questions
-          setViewMode('state');
-          setTimeout(() => setViewMode('que'), 100);
-        }
-      }
-    } catch (err) {
-      console.error("Error generating AI report:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Logic for manual generation removed in favor of background automation
 
 
   const navigateTo = (path: string) => router.push(path, 'forward', 'push');
@@ -966,30 +950,7 @@ const Main_Prof: React.FC = () => {
                               )}
                             </ul>
                           )}
-                          
-                          <button 
-                            className="ms-generate-ai-btn"
-                            onClick={handleGenerateAIReport}
-                            style={{
-                              marginTop: '20px',
-                              padding: '8px 16px',
-                              borderRadius: '20px',
-                              background: 'linear-gradient(45deg, #FF6B6B, #FF8E53)',
-                              border: 'none',
-                              color: 'white',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                              boxShadow: '0 4px 15px rgba(255, 107, 107, 0.3)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              margin: '20px auto 0'
-                            }}
-                          >
-                            <IonIcon icon={planetOutline} />
-                            {t("professor.dashboard.generateReport", "Generar Reporte AI")}
-                          </button>
+                          {/* Manual button removed in favor of periodic background updates */}
                         </>
                       ) : (
                         <div style={{ textAlign: 'center' }}>
@@ -999,27 +960,9 @@ const Main_Prof: React.FC = () => {
                               "Nothing to summarize yet",
                             )}
                           </p>
-                          <button 
-                            className="ms-generate-ai-btn"
-                            onClick={handleGenerateAIReport}
-                            style={{
-                              padding: '8px 16px',
-                              borderRadius: '20px',
-                              background: 'linear-gradient(45deg, #6B6BFF, #8E53FF)',
-                              border: 'none',
-                              color: 'white',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              margin: '0 auto'
-                            }}
-                          >
-                            <IonIcon icon={planetOutline} />
-                            {t("professor.dashboard.startAnalysis", "Iniciar Análisis AI")}
-                          </button>
+                          <p style={{ fontSize: '11px', opacity: 0.7, color: 'white' }}>
+                            {t("professor.dashboard.waitingForData", "Analizando actividad de la clase en segundo plano...")}
+                          </p>
                         </div>
                       )}
                     </div>

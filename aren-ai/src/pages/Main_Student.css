@@ -701,4 +701,15 @@ html[data-force-dark] .ms-popup-close {
     border-color: rgba(255, 82, 82, 0.3);
   }
 }
+
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
 

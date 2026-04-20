@@ -4,6 +4,7 @@ import * as sessionRepo from '../repositories/classRepository.js';
 import * as sectionRepo from '../repositories/sectionRepository.js';
 import { ApiError } from '../middleware/errorHandler.js';
 import { io } from '../server.js';
+import { runFullInsightPipeline } from '../services/insightService.js';
 
 export async function listTemplates(req: Request, res: Response, next: NextFunction) {
   try {
@@ -266,6 +267,11 @@ export async function endSession(req: Request, res: Response, next: NextFunction
         sectionId: classRecord.id_section
       });
       console.log(`[Socket] Broadcasted class_finished to section_${classRecord.id_section}`);
+      
+      // Trigger final AI insight pipeline (non-blocking)
+      runFullInsightPipeline(classId).catch(err => {
+        console.error(`[AI Trigger] Failed final pipeline for class ${classId}:`, err);
+      });
     }
 
     res.status(204).send();
