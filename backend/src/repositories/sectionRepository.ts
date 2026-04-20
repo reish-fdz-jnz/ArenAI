@@ -85,7 +85,14 @@ export async function getSectionTopicProgress(sectionId: number, subjectName: st
       `SELECT 
           t.id_topic, 
           t.name as name_topic, 
-          ct.score_average as score,
+          COALESCE(
+            (SELECT AVG(cst.score) 
+             FROM class_student_topic cst 
+             JOIN class_student cs ON cs.id_class = cst.id_class AND cs.id_user = cst.id_user
+             WHERE cst.id_class = ct.id_class AND cst.id_topic = ct.id_topic
+               AND (cs.attendance = 1 OR cs.score_average IS NOT NULL)),
+            ct.score_average
+          ) as score,
           ct.ai_summary
        FROM class_topic ct
        INNER JOIN topic t ON t.id_topic = ct.id_topic

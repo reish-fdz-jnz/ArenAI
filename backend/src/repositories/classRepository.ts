@@ -62,7 +62,10 @@ export async function listClasses(filters: { professorId?: number; sectionId?: n
         c.id_institution,
         c.start_time,
         c.end_time,
-        c.score_average,
+        COALESCE(
+          (SELECT AVG(cs.score_average) FROM class_student cs WHERE cs.id_class = c.id_class AND (cs.attendance = 1 OR cs.score_average IS NOT NULL)),
+          c.score_average
+        ) as score_average,
         c.ai_summary,
         c.status,
         ct.name_template,
@@ -503,7 +506,7 @@ export async function recalculateClassAverages(classId: number) {
     const overallRes = await client.query<{ avg: number | null }>(
       `SELECT AVG(score_average) as avg 
        FROM class_student 
-       WHERE id_class = ? AND (attendance = 1 OR attendance = true) AND score_average IS NOT NULL`,
+       WHERE id_class = ? AND (attendance = 1 OR attendance = true OR score_average IS NOT NULL) AND score_average IS NOT NULL`,
       [classId]
     );
     const newClassAvg = overallRes.rows[0]?.avg !== null ? Math.round(overallRes.rows[0].avg) : null;
@@ -518,7 +521,7 @@ export async function recalculateClassAverages(classId: number) {
       `SELECT cst.id_topic, AVG(cst.score) as avg_score
        FROM class_student_topic cst
        INNER JOIN class_student cs ON cs.id_class = cst.id_class AND cs.id_user = cst.id_user
-       WHERE cst.id_class = ? AND (cs.attendance = 1 OR cs.attendance = true)
+       WHERE cst.id_class = ? AND (cs.attendance = 1 OR cs.attendance = true OR cs.score_average IS NOT NULL)
        GROUP BY cst.id_topic`,
       [classId]
     );
