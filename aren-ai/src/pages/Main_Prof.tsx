@@ -304,6 +304,7 @@ const Main_Prof: React.FC = () => {
               name: t.name_topic || t.name,
               percentage: score,
               base_score_session: t.base_score_session,
+              ai_summary: t.ai_summary,
               icon: getIconForTopic(t.name_topic || t.name)
             };
           });
@@ -378,6 +379,7 @@ const Main_Prof: React.FC = () => {
         name: t.name_topic || t.name,
         nameKey: t.name_topic || t.name,
         percentage: score,
+        ai_summary: t.ai_summary,
         icon: getIconForTopic(t.name_topic || t.name),
       };
     });
@@ -988,16 +990,40 @@ const Main_Prof: React.FC = () => {
                           {/* Manual button removed in favor of periodic background updates */}
                         </>
                       ) : (
-                        <div style={{ textAlign: 'center' }}>
-                          <p style={{ fontStyle: "italic", opacity: 0.9, color: "white", textAlign: "center", width: "100%", marginBottom: '16px' }}>
-                            {t(
-                              "professor.dashboard.nothingToSummarize",
-                              "Nothing to summarize yet",
-                            )}
-                          </p>
-                          <p style={{ fontSize: '11px', opacity: 0.7, color: 'white' }}>
-                            {t("professor.dashboard.waitingForData", "Analizando actividad de la clase en segundo plano...")}
-                          </p>
+                        <div style={{ textAlign: 'center', width: '100%' }}>
+                          {topics.some(t => t.ai_summary) ? (
+                            <div style={{ textAlign: 'left', animation: 'fadeIn 0.5s ease' }}>
+                              <p style={{ fontSize: '12px', fontWeight: '700', marginBottom: '10px', color: 'var(--ion-color-secondary)', opacity: 0.9 }}>
+                                ✨ Resúmenes por Tema (IA):
+                              </p>
+                              {topics.filter(t => t.ai_summary).map((t, i) => (
+                                <div key={i} style={{ 
+                                  background: 'rgba(255,255,255,0.05)', 
+                                  padding: '10px', 
+                                  borderRadius: '12px', 
+                                  marginBottom: '8px',
+                                  border: '1px solid rgba(255,255,255,0.1)'
+                                }}>
+                                  <div style={{ fontWeight: '700', fontSize: '11px', marginBottom: '4px', color: 'white' }}>🏷️ {t.name}</div>
+                                  <div style={{ fontSize: '12px', opacity: 0.85, lineHeight: '1.4' }}>
+                                    {typeof t.ai_summary === 'string' ? t.ai_summary : (t.ai_summary as any).summary || JSON.stringify(t.ai_summary)}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <>
+                              <p style={{ fontStyle: "italic", opacity: 0.9, color: "white", textAlign: "center", width: "100%", marginBottom: '16px' }}>
+                                {t(
+                                  "professor.dashboard.nothingToSummarize",
+                                  "Nothing to summarize yet",
+                                )}
+                              </p>
+                              <p style={{ fontSize: '11px', opacity: 0.7, color: 'white' }}>
+                                {t("professor.dashboard.waitingForData", "Analizando actividad de la clase en segundo plano...")}
+                              </p>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>

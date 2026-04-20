@@ -6,7 +6,7 @@ import { getStudentTopicMastery, getTopicSessionHistory } from '../repositories/
 import { findSectionByGradeAndNumber, getSectionTopicMastery, getSectionTopicHistory } from '../repositories/sectionRepository.js';
 import { findUserByUsername } from '../repositories/userRepository.js';
 import { requireAuth } from '../middleware/auth.js';
-import { generateTopicMasteryInsight } from '../services/insightService.js';
+// import { generateTopicMasteryInsight } from '../services/insightService.js';
 import { db } from '../db/pool.js';
 
 
@@ -69,12 +69,13 @@ router.get('/:topicId', requireAuth, async (req, res, next) => {
       console.warn(`[TopicDetail] Error fetching session history for topic ${topicId}:`, e);
     }
 
-    // 5. Trigger Background Analysis if summary is missing
+    /* 
     if (!mastery.ai_summary && history.length > 0) {
       generateTopicMasteryInsight(userId, topicId).catch(err => {
         console.error(`[TopicDetail] Background analysis error:`, err);
       });
     }
+    */
 
     // Combine result
     res.json({
